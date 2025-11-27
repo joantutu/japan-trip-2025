@@ -27,12 +27,12 @@
     @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
     @keyframes pulse-soft { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
 
-    /* 櫻花按鈕 */
-    .sakura-btn-container { position: relative; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin: 0 2px; overflow: visible; }
+    /* 🌸 櫻花按鈕修正: 增加邊距防止裁切 */
+    .sakura-btn-container { position: relative; width: 54px; height: 54px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin: 0 4px; overflow: visible; }
     .sakura-icon-active { transform-origin: center center; filter: drop-shadow(0 4px 6px rgba(244, 63, 94, 0.5)); animation: pop-bloom 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards, spin-sakura 12s linear infinite 0.6s; }
     @keyframes pop-bloom { 0% { transform: scale(0) rotate(-45deg); opacity: 0; } 60% { transform: scale(1.35) rotate(10deg); opacity: 1; } 100% { transform: scale(1.25) rotate(0deg); opacity: 1; } }
     @keyframes spin-sakura { from { transform: scale(1.25) rotate(0deg); } to { transform: scale(1.25) rotate(360deg); } }
-    .sakura-icon-inactive { transform: scale(0.9); opacity: 0.5; transition: all 0.3s ease; }
+    .sakura-icon-inactive { transform: scale(0.9); opacity: 0.6; transition: all 0.3s ease; }
     .sakura-text-active { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #FEF08A !important; font-size: 16px; font-weight: 900; text-shadow: 0 2px 2px rgba(0,0,0,0.2); z-index: 50; pointer-events: none; }
     .sakura-text-inactive { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 12px; font-weight: 700; z-index: 50; pointer-events: none; }
 
@@ -408,7 +408,7 @@ function App(){
         <div className={`h-[100dvh] flex flex-col font-sans text-slate-800 bg-[#fff7ed] ${sort ? 'sort-mode-bg' : ''}`}>
             <div className="bg-gradient-to-r from-rose-500 to-orange-400 shadow-md pt-safe z-30 shrink-0 relative">
                 <div className="h-1.5 w-full bg-black/10 absolute top-0 left-0"><div className="h-full bg-yellow-300 transition-all duration-500" style={{width:`${((idx+1)/data.length)*100}%`}}/></div>
-                <div className="px-4 py-3 text-white"> {/* Reduced Padding */}
+                <div className="px-4 py-3 text-white">
                     <div className="flex justify-between items-end">
                         <div className="flex flex-col justify-center">
                             <div className="text-[10px] font-bold text-white/90 tracking-widest mb-0.5 ml-1">{day.date.startsWith('12') ? '2025' : '2026'}</div>
@@ -432,9 +432,11 @@ function App(){
                             </button>
                         </div>
                     </div>
-                    <div className={`flex justify-center gap-3 hide-scrollbar py-2 px-2 overflow-x-auto mt-1 scroll-smooth-mobile ${sort?'opacity-30 pointer-events-none':''}`}>
+                    
+                    {/* 🌸 櫻花列表修正：增加 py-4 防止裁切，移除 justify-center 改為預設靠左 */}
+                    <div className={`flex gap-2 hide-scrollbar py-4 px-2 overflow-x-auto mt-1 scroll-smooth-mobile ${sort?'opacity-30 pointer-events-none':''}`}>
                         {data.map((d,i)=>(<button key={d.id} onClick={()=>{setIdx(i);setSort(false)}} className={`flex-shrink-0 rounded-full transition-all shadow-none tap-transparent sakura-btn-container ${idx===i?'sakura-active':''}`}>
-                            {idx===i ? (<div className="sakura-icon-active text-rose-200"><Icon n="Sakura" s={50} c="w-full h-full"/></div>) : (<div className="sakura-icon-inactive text-white"><Icon n="Sakura" s={42} c="w-full h-full"/></div>)}
+                            {idx===i ? (<div className="sakura-icon-active text-rose-200"><Icon n="Sakura" s={54} c="w-full h-full"/></div>) : (<div className="sakura-icon-inactive text-white"><Icon n="Sakura" s={46} c="w-full h-full"/></div>)}
                             <span className={idx===i ? 'sakura-text-active' : 'sakura-text-inactive'}>D{i+1}</span>
                         </button>))}
                     </div>
@@ -454,7 +456,9 @@ function App(){
                     )}
                     
                     <div ref={sortableRef} className="relative">
-                        {!sort && <div className="absolute left-[7px] top-2 bottom-2 w-0.5 bg-slate-300/50 z-0"/>}
+                        {/* 🔍 時間軸加粗：w-0.5 -> w-1，顏色加深 */}
+                        {!sort && <div className="absolute left-[20px] top-4 bottom-4 w-1 bg-slate-300 z-0"/>}
+                        
                         {day.items.map((item,i)=>{
                             const cat=CATS[item.category];const next=day.items[i+1];const dur=next?calcDur(item.time,next.time):null;
                             const totalItemJPY = (item.expenses || []).filter(e=>e.currency!=='NT').reduce((s,x)=>s+Number(x.amount||0),0);
@@ -462,16 +466,26 @@ function App(){
                             const isExpanded = expandedNotes.has(item.id);
                             
                             return (
-                                <div key={item.id} className={`relative ${sort?'mb-3 px-4':'mb-6 pl-3 pr-6'}`} /* Adjusted padding */
+                                <div key={item.id} className={`relative ${sort?'mb-3 px-4':'mb-8 pl-14 pr-6'}`} /* 調整左側間距給大按鈕 */
                                      onTouchStart={startLongPress} onTouchEnd={endLongPress} onMouseDown={startLongPress} onMouseUp={endLongPress} onMouseLeave={endLongPress}>
-                                    {!sort && (<><div onClick={(e)=>{e.stopPropagation();toggle(item.id)}} className={`absolute left-0 top-1 w-4 h-4 rounded-full border-2 border-[#fff7ed] z-20 flex items-center justify-center transition-colors shadow-sm cursor-pointer ${item.completed?'bg-emerald-500 text-white':cat.c} ring-2 ring-white`}>{item.completed && <Icon n="Check" s={10}/>}</div>{dur && <div className="absolute left-[1px] -bottom-4 z-10 flex flex-col items-center w-4 pointer-events-none"><div className="bg-white border border-slate-200 rounded-full px-1 py-0.5 text-[8px] text-slate-400 font-bold shadow-sm scale-75 whitespace-nowrap">{dur.t}</div></div>}</>)}
+                                    
+                                    {/* 👆 打卡按鈕巨大化：w-10 h-10，增加白邊讓它更明顯 */}
+                                    {!sort && (
+                                        <>
+                                            <div onClick={(e)=>{e.stopPropagation();toggle(item.id)}} className={`absolute left-0 top-0 w-10 h-10 rounded-full border-4 border-[#fff7ed] z-20 flex items-center justify-center transition-colors shadow-md cursor-pointer ${item.completed?'bg-emerald-500 text-white':cat.c} ring-2 ring-white`}>
+                                                {item.completed ? <Icon n="Check" s={20}/> : <Icon n={cat.i} s={20}/>}
+                                            </div>
+                                            {dur && <div className="absolute left-[2px] -bottom-6 z-10 flex flex-col items-center w-10 pointer-events-none"><div className="bg-white border border-slate-200 rounded-full px-1.5 py-0.5 text-[9px] text-slate-400 font-bold shadow-sm whitespace-nowrap">{dur.t}</div></div>}
+                                        </>
+                                    )}
+
                                     <div 
                                         onClick={()=>!sort && toggleNote(item.id)} 
                                         className={`bg-white rounded-2xl border border-slate-100 relative z-10 transition-all tap-transparent ${sort?'p-0 border-blue-400 border-2 shadow-lg flex items-stretch bg-blue-50/20 overflow-hidden':'p-4 hover:shadow-lg active:scale-[0.98] card-shadow '+(item.completed?'bg-slate-50/80 grayscale-[0.5]':'')}`}
                                     >
                                         {sort?(
                                             <>
-                                                <div className="drag-handle w-12 bg-slate-100 flex items-center justify-center flex-shrink-0 border-r border-slate-200 cursor-grab active:cursor-grabbing touch-none">
+                                                <div className="drag-handle w-14 bg-slate-100 flex items-center justify-center flex-shrink-0 border-r border-slate-200 cursor-grab active:cursor-grabbing touch-none">
                                                      <Icon n="DragHandle" s={24} c="text-slate-400"/>
                                                 </div>
                                                 <div className="flex-1 p-3 pointer-events-none select-none flex flex-col justify-center min-w-0">
@@ -492,7 +506,6 @@ function App(){
                                                 <div className={`note-expand ${isExpanded || (item.note && isExpanded) ? 'open' : ''} ${!isExpanded && item.note ? 'max-h-0 opacity-0' : ''}`}>{item.note && (<div onClick={(e)=>{e.stopPropagation(); toggleNote(item.id)}} className="cursor-pointer text-sm font-medium text-slate-600 bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-400 leading-relaxed whitespace-pre-line active:bg-yellow-100 transition-colors">{item.note}</div>)}</div>
                                                 {!isExpanded && item.note && <div onClick={()=>toggleNote(item.id)} className="text-[10px] text-slate-400 text-center cursor-pointer hover:text-blue-500 font-bold">📝 點擊查看備註...</div>}
                                                 
-                                                {/* Compact Footer */}
                                                 <div className="mt-2 pt-2 border-t border-slate-50 flex justify-between items-center">
                                                     <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-bold text-slate-500 items-center">
                                                         {(totalItemJPY > 0 || totalItemNT > 0) && (
