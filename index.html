@@ -49,8 +49,14 @@
 <script type="text/babel">
 const {useState,useEffect,useRef,useCallback}=React;
 
+// 🎨 優化後的圖示集
 const Icons={
     MapPin:<g><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="10" r="3"/></g>,
+    // 🚀 新增：導航箭頭 (用於單點導航)
+    Navigation:<path d="M3 11l19-9-9 19-2-8-8-2z" strokeLinecap="round" strokeLinejoin="round"/>,
+    // 🛣️ 新增：路線圖 (用於總路線)
+    Route:<g><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></g>,
+    
     Plus:<path d="M12 5v14M5 12h14" strokeLinecap="round" strokeLinejoin="round"/>,
     X:<path d="M18 6 6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round"/>,
     Save:<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" strokeLinecap="round" strokeLinejoin="round"/>,
@@ -75,7 +81,6 @@ const Icons={
     Search:<g><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3" strokeLinecap="round" strokeLinejoin="round"/></g>,
     Check:<polyline points="20 6 9 17 4 12" strokeLinecap="round" strokeLinejoin="round"/>,
     Clock:<g><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14" strokeLinecap="round" strokeLinejoin="round"/></g>,
-    Map:<polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" strokeLinecap="round" strokeLinejoin="round"/>,
     Download:<g><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></g>,
     Upload:<g><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></g>,
     Link:<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" strokeLinecap="round" strokeLinejoin="round"/>,
@@ -90,8 +95,7 @@ const Icons={
     DragHandle:<path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" strokeLinejoin="round"/>,
     Snowflake:<g><line x1="12" y1="3" x2="12" y2="21" strokeWidth="2"/><line x1="4.2" y1="7.5" x2="19.8" y2="16.5" strokeWidth="2"/><line x1="4.2" y1="16.5" x2="19.8" y2="7.5" strokeWidth="2"/><path d="M8 3.5 12 8 16 3.5" strokeWidth="1.5" fill="none"/><path d="M8 20.5 12 16 16 20.5" strokeWidth="1.5" fill="none"/><path d="M2.5 11 7 12 2.5 13" strokeWidth="1.5" fill="none"/><path d="M21.5 11 17 12 21.5 13" strokeWidth="1.5" fill="none"/></g>,
     Sakura:<g><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(0 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(72 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(144 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(216 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(288 12 12)" fill="currentColor"/><circle cx="12" cy="12" r="5.5" fill="currentColor"/></g>,
-    // 🌍 新增 Globe 圖示用於 Mapcode 查詢
-    Globe:<g><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></g>
+    ExternalLink:<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6m4-3h6v6m-11 5L21 3" strokeLinecap="round" strokeLinejoin="round"/>
 };
 
 const Icon=({n,s=24,c=""})=>Icons[n]?<svg xmlns="http://www.w3.org/2000/svg" width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={c} overflow="visible">{Icons[n]}</svg>:null;
@@ -117,7 +121,6 @@ const LOCATIONS_COORD = [
 ];
 const fmtMoney=(v)=>v.toString().replace(/\B(?=(\d{3})+(?!\d))/g,",");
 
-// 🌤️ 根據 Open-Meteo Code 判斷天氣類型
 const getWeatherTypeFromCode = (code) => {
     if (code === undefined || code === null) return 'sunny';
     if (code <= 1) return 'sunny'; 
@@ -138,7 +141,7 @@ const INITIAL_ITINERARY = [
 
 function App(){
     const [data,setData]=useState(()=>{
-        const saved=localStorage.getItem('kanto_v2025_final_stable_v2'); // 更新版本號，強制載入修正後的資料
+        const saved=localStorage.getItem('kanto_v2025_final_stable_v2');
         if(saved) { try { return JSON.parse(saved); } catch(e){} }
         return INITIAL_ITINERARY;
     });
@@ -297,8 +300,7 @@ function App(){
     const currentSteps = Number(day.steps) > 0 ? Number(day.steps) : planSteps; 
     const displaySteps = day.steps > 0 ? day.steps : planSteps;
 
-    // 🌤️ 計算即時天氣樣式
-    const liveWeatherType = liveWeather ? getWeatherTypeFromCode(liveWeather.code) : null; // 如果沒載入就先不顯示或用預設
+    const liveWeatherType = liveWeather ? getWeatherTypeFromCode(liveWeather.code) : null;
     const weatherIconName = liveWeatherType ? W_ICONS[liveWeatherType] : W_ICONS[day.weather];
     const weatherColorClass = liveWeatherType ? WEATHER_COLORS[liveWeatherType] : WEATHER_COLORS[day.weather];
     const weatherAnimClass = (liveWeatherType || day.weather)==='sunny'?'weather-spin':(liveWeatherType || day.weather)==='cloudy'?'weather-float':'weather-pulse';
@@ -366,7 +368,6 @@ function App(){
     const updateExpense=(idx, field, val)=>{const newExps=[...editItem.expenses];newExps[idx][field]=val;setEditItem({...editItem, expenses:newExps})};
     const removeExpense=(idx)=>{const newExps=editItem.expenses.filter((_,i)=>i!==idx);setEditItem({...editItem, expenses:newExps})};
     
-    // Restore fetchCoords and clearCoords
     const fetchCoords = async () => {
         const query = editItem.searchKeyword || editItem.title;
         if (!query) return alert("請先輸入標題或搜尋關鍵字");
@@ -381,7 +382,6 @@ function App(){
     };
     const clearCoords = () => { if(confirm('清除定位？')) setEditItem({ ...editItem, lat: null, lng: null }); };
 
-    // --- Memo Logic ---
     const saveMemo = () => {
         if (!editMemoItem.title) return;
         const newMemos = { ...memos, [editMemoItem.id]: editMemoItem };
@@ -468,11 +468,9 @@ function App(){
                         <div className="flex flex-col items-end gap-2">
                             <div className="flex flex-col items-end gap-0.5 bg-white/10 px-2 py-1 rounded-lg backdrop-blur-md border border-white/20 shadow-md cursor-pointer relative" onClick={toggleWeather}>
                                 <div className="flex items-center gap-1">
-                                    {/* 🌤️ 天氣圖示根據 API 自動變換 */}
                                     <div className={`${weatherColorClass} ${weatherAnimClass}`}>
                                         <Icon n={weatherIconName} s={20} />
                                     </div>
-                                    {/* 🌡️ 讀取中顯示 ... */}
                                     <span className="font-bold text-lg text-white drop-shadow-sm">
                                         {liveWeather ? `${liveWeather.temp}°` : '...'}
                                     </span>
@@ -533,7 +531,11 @@ function App(){
                                                     {item.completed ? <Icon n="Check" s={24}/> : <Icon n={cat.i} s={20}/>}
                                                 </div>
                                             </div>
-                                            {dur && <div className="absolute left-[6px] -bottom-6 z-10 flex flex-col items-center w-10 pointer-events-none"><div className="bg-white border border-slate-200 rounded-full px-1.5 py-0.5 text-[9px] text-slate-400 font-bold shadow-sm whitespace-nowrap">{dur.t}</div></div>}
+                                            {dur && <div className="absolute left-[6px] -bottom-6 z-10 flex flex-col items-center w-10 pointer-events-none">
+                                                <div className="bg-white border border-slate-200 rounded-full px-1.5 py-0.5 text-[9px] text-slate-400 font-bold shadow-sm whitespace-nowrap flex items-center gap-1">
+                                                    <Icon n="Car" s={10}/>{dur.t}
+                                                </div>
+                                            </div>}
                                         </>
                                     )}
 
@@ -585,7 +587,7 @@ function App(){
                                                         )}
                                                     </div>
                                                     <a href={gMap(item)} target="_blank" onClick={e=>e.stopPropagation()} className="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-500 rounded-full active:scale-90 transition-transform shadow-sm border border-blue-100">
-                                                        <Icon n="MapPin" s={16}/>
+                                                        <Icon n="Navigation" s={16}/>
                                                     </a>
                                                 </div>
                                             </div>
@@ -595,7 +597,7 @@ function App(){
                             );
                         })}
                     </div>
-                    {!sort && <div className="mt-6 mb-4 flex justify-center"><a href={getDailyRouteUrl(day.items)} target="_blank" className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-6 py-3 rounded-full shadow-lg font-bold text-sm flex items-center gap-2 active:scale-95 transition-transform hover:shadow-xl border-2 border-white/50"><Icon n="Map" s={20}/> 🗺️ Google Maps 路線</a></div>}
+                    {!sort && <div className="mt-6 mb-4 flex justify-center"><a href={getDailyRouteUrl(day.items)} target="_blank" className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-6 py-3 rounded-full shadow-lg font-bold text-sm flex items-center gap-2 active:scale-95 transition-transform hover:shadow-xl border-2 border-white/50"><Icon n="Route" s={20}/> 🚗 查看今日總路線</a></div>}
                 </div>
             </div>
 
@@ -652,7 +654,7 @@ function App(){
                 <div className="bg-white w-full sm:w-[95%] max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[85vh] h-[85vh]">
                     <div className="px-6 py-5 border-b flex justify-between items-center bg-blue-50 rounded-t-3xl"><h2 className="font-bold text-xl text-blue-600 flex items-center gap-2"><Icon n="Wallet" s={24}/> 旅遊帳本</h2><button onClick={()=>setLedgerModal(false)} className="p-2 bg-white rounded-full shadow-sm text-slate-500"><Icon n="X" s={20}/></button></div>
                     <div className="p-6 overflow-y-auto flex-1 space-y-6">
-                        <div className="grid grid-cols-1 gap-4">
+                        <div className="grid grid-cols-1 gap-4"> {/* Vertical Stack for clarity */}
                             <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-white shadow-lg"><div className="text-xs font-bold opacity-80 mb-1">總支出 (NT)</div><div className="text-2xl font-black font-mono">NT${fmtMoney(totalNT)}</div></div>
                             <div className="bg-gradient-to-br from-orange-400 to-orange-500 rounded-2xl p-4 text-white shadow-lg"><div className="text-xs font-bold opacity-80 mb-1">總支出 (JPY)</div><div className="text-2xl font-black font-mono">¥{fmtMoney(totalJPY)}</div></div>
                         </div>
