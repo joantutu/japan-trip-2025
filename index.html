@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>關東新春自駕遊 🎌 (V10)</title>
+<title>關東新春自駕遊 🎌 (V11)</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
@@ -93,7 +93,11 @@ const Icons={
     Sort:<g><path d="M3 6h18"/><path d="M7 12h10"/><path d="M10 18h4"/></g>,
     DragHandle:<path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" strokeLinejoin="round"/>,
     Snowflake:<g><line x1="12" y1="3" x2="12" y2="21" strokeWidth="2"/><line x1="4.2" y1="7.5" x2="19.8" y2="16.5" strokeWidth="2"/><line x1="4.2" y1="16.5" x2="19.8" y2="7.5" strokeWidth="2"/><path d="M8 3.5 12 8 16 3.5" strokeWidth="1.5" fill="none"/><path d="M8 20.5 12 16 16 20.5" strokeWidth="1.5" fill="none"/><path d="M2.5 11 7 12 2.5 13" strokeWidth="1.5" fill="none"/><path d="M21.5 11 17 12 21.5 13" strokeWidth="1.5" fill="none"/></g>,
-    Sakura:<g><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(0 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(72 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(144 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(216 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(288 12 12)" fill="currentColor"/><circle cx="12" cy="12" r="5.5" fill="currentColor"/></g>
+    Sakura:<g><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(0 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(72 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(144 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(216 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(288 12 12)" fill="currentColor"/><circle cx="12" cy="12" r="5.5" fill="currentColor"/></g>,
+    ExternalLink:<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6m4-3h6v6m-11 5L21 3" strokeLinecap="round" strokeLinejoin="round"/>,
+    Navigation:<path d="M3 11l19-9-9 19-2-8-8-2z" strokeLinecap="round" strokeLinejoin="round"/>,
+    Route:<g><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></g>,
+    Globe:<g><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></g>
 };
 
 const Icon=({n,s=24,c=""})=>Icons[n]?<svg xmlns="http://www.w3.org/2000/svg" width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={c} overflow="visible">{Icons[n]}</svg>:null;
@@ -109,7 +113,7 @@ const CATS={
 const W_ICONS={sunny:'Sun',cloudy:'Cloud',snow:'Snowflake',rain:'CloudRain'};
 const WEATHER_COLORS = { sunny: 'text-yellow-300', cloudy: 'text-white/80', rain: 'text-blue-300', snow: 'text-white' };
 
-// 恢復 Weather Locations 對照表 (Fix Crash)
+// 天氣地點代碼 (Open-Meteo 使用經緯度，這邊用於點擊跳轉 Tenki.jp)
 const WEATHER_LOCATIONS = { 
     'day1': '327-0102', // 佐野
     'day2': '321-2611', // 日光
@@ -139,19 +143,55 @@ const getWeatherTypeFromCode = (code) => {
     return 'rain'; 
 };
 
+// 整合後的完整行程資料 (V11)
 const INITIAL_ITINERARY = [
-    {id:'day1',date:'12/28',dayOfWeek:'(日)',weather:'sunny',location:'成田 -> 佐野',items:[{id:'1-1',time:'11:25',title:'抵達成田國際機場',category:'transport',expenses:[{id:'1',label:'機票/交通',amount:0,currency:'NT',category:'transport'}],note:'11:25 吉 BR108 NRT T1\n12:00 王方 BR184 NRT T1',mapcode:'',searchKeyword:'',completed:false,steps:500, lat:35.7719, lng:140.3929},{id:'1-2',time:'13:00',title:'取車 Sakura Rent A Car',category:'transport',expenses:[{id:'1',label:'租車費',amount:25446,currency:'NT',category:'transport'}],note:'Toyota Estima 4WD\n取車點: 成田空港 P1駐車場',mapcode:'',searchKeyword:'成田空港 P1駐車場',completed:false,steps:200},{id:'1-3',time:'15:00',title:'午餐：佐野拉麵',category:'food',expenses:[{id:'1',label:'預估餐費',amount:3000,currency:'JPY',category:'food'}],note:'推薦：青竹手打拉麵 大和 或 小倉屋。佐野拉麵以清湯和Q彈麵條聞名。',mapcode:'64 695 540*84',searchKeyword:'佐野ラーメン',completed:false,steps:0},{id:'1-4',time:'16:30',title:'磯山弁財天',category:'sightseeing',expenses:[{id:'1',label:'門票/香油',amount:0,currency:'JPY',category:'sightseeing'}],note:'日本名水百選之一，風景優美。',mapcode:'64 695 571*64',searchKeyword:'磯山弁財天',completed:false,steps:1500},{id:'1-5',time:'18:00',title:'足利花卉公園 (光之花庭)',category:'sightseeing',expenses:[{id:'1',label:'夜間門票',amount:0,currency:'JPY',category:'sightseeing'}],note:'日本三大燈飾之一，夜景非常壯觀。夜間票 15:30~21:30',mapcode:'64 512 293*12',searchKeyword:'あしかがフラワーパーク',completed:false,steps:6000},{id:'1-6',time:'20:00',title:'晚餐：大衆割烹 三岩',category:'food',expenses:[{id:'1',label:'預估餐費',amount:5000,currency:'JPY',category:'food'}],note:'Google 評分高，在地老字號居酒屋。燒鳥、刺身、炸物美味。\n位於佐野站前，非常順路。',mapcode:'64 727 523*55',searchKeyword:'大衆割烹 三岩',completed:false,steps:0},{id:'1-7',time:'21:30',title:'ホテル一乃館',category:'accommodation',expenses:[{id:'1',label:'住宿費',amount:13332,currency:'NT',category:'accommodation'}],note:'含早餐',mapcode:'64 695 540*84',searchKeyword:'ホテル一乃館',completed:false,steps:100}]},
-    {id:'day2',date:'12/29',dayOfWeek:'(一)',weather:'cloudy',location:'佐野 -> 奧日光',items:[{id:'2-1',time:'09:30',title:'前往日光 (移動)',category:'transport',expenses:[],note:'移動時間約1小時',mapcode:'',searchKeyword:'',completed:false,steps:0},{id:'2-2',time:'11:00',title:'日光東照宮 & 神橋',category:'sightseeing',expenses:[{id:'1',label:'門票',amount:2600,currency:'JPY',category:'sightseeing'}],note:'世界遺產巡禮。參觀陽明門、眠貓、三猿。',mapcode:'367 312 407*16',searchKeyword:'日光東照宮',completed:false,steps:5000},{id:'2-3',time:'13:00',title:'午餐：ゆば料理 油源',category:'food',expenses:[{id:'1',label:'預估餐費',amount:2500,currency:'JPY',category:'food'}],note:'創業160年以上老店，推薦「湯波御膳」。位於神橋附近，順路方便。\n地址: 1028-3 Kamihatsuishimachi',mapcode:'367 313 001*35',searchKeyword:'ゆば料理 油源',completed:false,steps:0},{id:'2-4',time:'15:00',title:'伊羅哈坂 & 華嚴瀑布',category:'sightseeing',expenses:[],note:'著名的髮夾彎山道，接著參觀壯觀的華嚴瀑布(可能結冰)。',mapcode:'367 240 168*34',searchKeyword:'華厳の滝',completed:false,steps:2000},{id:'2-5',time:'17:00',title:'Iwaiyado Jyuan (川治溫泉)',category:'accommodation',expenses:[{id:'1',label:'住宿費',amount:18311,currency:'NT',category:'accommodation'}],note:'日式四人房，有晚餐。好好享受溫泉消除疲勞。',mapcode:'367 835 100*67',searchKeyword:'祝い宿 寿庵',completed:false,steps:0}]},
-    {id:'day3',date:'12/30',dayOfWeek:'(二)',weather:'snow',location:'奧日光',items:[{id:'3-1',time:'10:00',title:'龍王峽',category:'sightseeing',expenses:[],note:'鬼怒川上游的溪谷美景，冬天雪景別有一番風味。',mapcode:'367 686 704*87',searchKeyword:'龍王峡',completed:false,steps:3000},{id:'3-2',time:'12:00',title:'午餐：山產蕎麥麵/川魚',category:'food',expenses:[{id:'1',label:'預估餐費',amount:3000,currency:'JPY',category:'food'}],note:'往湯西川溫泉沿途的在地食堂。',mapcode:'',searchKeyword:'湯西川溫泉 ランチ',completed:false,steps:0},{id:'3-3',time:'14:00',title:'平家之里',category:'sightseeing',expenses:[{id:'1',label:'門票',amount:1020,currency:'JPY',category:'sightseeing'}],note:'復原平家落人村落的茅草屋建築，雪景非常夢幻。',mapcode:'716 161 037*14',searchKeyword:'平家の里',completed:false,steps:2000},{id:'3-4',time:'15:30',title:'Honke Bankyu 本家伴久',category:'accommodation',expenses:[{id:'1',label:'住宿費',amount:24134,currency:'NT',category:'accommodation'}],note:'歷史悠久的溫泉旅館，享受圍爐裏晚餐和露天溫泉。',mapcode:'548 033 135*52',searchKeyword:'本家伴久',completed:false,steps:0}]},
-    {id:'day4',date:'12/31',dayOfWeek:'(三)',weather:'sunny',location:'日光 -> 大洗',items:[{id:'4-1',time:'10:00',title:'出發往宇都宮',category:'transport',expenses:[],note:'下山路段小心駕駛。',mapcode:'',searchKeyword:'',completed:false,steps:0},{id:'4-2',time:'12:00',title:'午餐：宇都宮餃子',category:'food',expenses:[{id:'1',label:'預估餐費',amount:2000,currency:'JPY',category:'food'}],note:'推薦：Kirasse (來らっせ)，可以一次吃到多家名店的餃子。',mapcode:'39 483 574*25',searchKeyword:'来らっせ 本店',completed:false,steps:0},{id:'4-3',time:'15:00',title:'大洗磯前神社 (海上鳥居)',category:'sightseeing',expenses:[],note:'著名的「神磯之鳥居」，屹立在太平洋岩石上。',mapcode:'239 535 445*58',searchKeyword:'大洗磯前神社',completed:false,steps:2000},{id:'4-4',time:'16:30',title:'大洗 Seaside Station',category:'shopping',expenses:[],note:'購買跨年晚餐食材與補給品。',mapcode:'239 506 461*34',searchKeyword:'大洗シーサイドステーション',completed:false,steps:1500},{id:'4-5',time:'18:00',title:'一棟貸しの宿 水戸ハウス',category:'accommodation',expenses:[{id:'1',label:'住宿費',amount:9316,currency:'NT',category:'accommodation'}],note:'包棟民宿，適合跨年聚餐。MITO HOUSE。',mapcode:'47 161 388*03',searchKeyword:'一棟貸しの宿 貸別荘 水戸ハウス',completed:false,steps:0}]},
-    {id:'day5',date:'1/1',dayOfWeek:'(四)',weather:'sunny',location:'大洗 -> 筑波',items:[{id:'5-1',time:'10:00',title:'筑波山神社 (初詣)',category:'sightseeing',expenses:[],note:'新年第一拜(初詣)，祈求新的一年平安順利。',mapcode:'123 477 072*85',searchKeyword:'筑波山神社',completed:false,steps:3000},{id:'5-2',time:'12:30',title:'午餐：那珂湊魚市場',category:'food',expenses:[{id:'1',label:'預估餐費',amount:5000,currency:'JPY',category:'food'}],note:'迴轉壽司或海鮮丼。新年期間可能人多，要有排隊準備。',mapcode:'47 027 304*48',searchKeyword:'那珂湊おさかな市場',completed:false,steps:1000},{id:'5-3',time:'15:00',title:'筑波山纜車',category:'sightseeing',expenses:[{id:'1',label:'纜車票',amount:2000,currency:'JPY',category:'sightseeing'}],note:'搭乘纜車上山，天氣好可遠眺富士山與關東平原日落。',mapcode:'',searchKeyword:'筑波山ロープウェイ',completed:false,steps:2000},{id:'5-4',time:'17:00',title:'亀の井ホテル 筑波山',category:'accommodation',expenses:[{id:'1',label:'住宿費',amount:23951,currency:'NT',category:'accommodation'}],note:'日式四人房，有晚餐、早餐。',mapcode:'123 477 064*47',searchKeyword:'亀の井ホテル 筑波山',completed:false,steps:0}]},
-    {id:'day6',date:'1/2',dayOfWeek:'(五)',weather:'cloudy',location:'筑波 -> 東京',items:[{id:'6-1',time:'09:30',title:'GRANBERRY 草莓採摘',category:'food',expenses:[{id:'1',label:'體驗費',amount:2800,currency:'JPY',category:'food'}],note:'40分鐘吃到飽，享受當季日本草莓。',mapcode:'18 853 864*14',searchKeyword:'GRANBERRY 大地',completed:false,steps:500},{id:'6-2',time:'11:30',title:'牛久大佛',category:'sightseeing',expenses:[{id:'1',label:'門票',amount:800,currency:'JPY',category:'sightseeing'}],note:'世界最大青銅佛像(120m)，非常壯觀。',mapcode:'65 086 720*25',searchKeyword:'牛久大仏',completed:false,steps:2000},{id:'6-3',time:'13:30',title:'午餐：鰻魚飯 (牛久/成田)',category:'food',expenses:[{id:'1',label:'預估餐費',amount:6000,currency:'JPY',category:'food'}],note:'牛久沼或成田周邊的鰻魚飯很有名。',mapcode:'',searchKeyword:'牛久 鰻',completed:false,steps:0},{id:'6-4',time:'16:00',title:'阿美橫丁 (上野)',category:'shopping',expenses:[],note:'採買藥妝、零食、伴手禮。感受東京熱鬧氣氛。',mapcode:'',searchKeyword:'アメ横',completed:false,steps:5000},{id:'6-5',time:'18:00',title:'上野悠悠之家',category:'accommodation',expenses:[{id:'1',label:'住宿費',amount:10115,currency:'NT',category:'accommodation'}],note:'包棟，沒早餐，有廚房。',mapcode:'769 494*86',searchKeyword:'上野悠悠之家',completed:false,steps:0}]},
-    {id:'day7',date:'1/3',dayOfWeek:'(六)',weather:'sunny',location:'東京 -> 回家',items:[{id:'7-1',time:'08:30',title:'前往成田機場',category:'transport',expenses:[],note:'預留塞車時間，早點出發。',mapcode:'',searchKeyword:'',completed:false,steps:0},{id:'7-2',time:'10:30',title:'機場還車 (P1駐車場)',category:'transport',expenses:[],note:'還車地點：成田空港P1駐車場。還車前記得加滿油。',mapcode:'137 647 682*14',searchKeyword:'成田空港 P1駐車場',completed:false,steps:500},{id:'7-3',time:'12:25',title:'搭機返台 (成田國際機場)',category:'transport',expenses:[],note:'12:25 吉 BR107 NRT T1\n13:00 王方 BR183 NRT T1',mapcode:'',searchKeyword:'',completed:false,steps:2000}]}
+    {id:'day1',date:'12/28',dayOfWeek:'(日)',weather:'sunny',location:'成田 -> 佐野',items:[
+        {id:'1-1',time:'11:25',title:'吉 抵達 (BR108)',category:'transport',expenses:[{id:'1',label:'機票',amount:0,currency:'NT',category:'transport'}],note:'11:25 吉 BR108 NRT T1',mapcode:'',searchKeyword:'',completed:false,steps:500},
+        {id:'1-1b',time:'12:00',title:'王方 抵達 (BR184)',category:'transport',expenses:[],note:'12:00 王方 BR184 NRT T1',mapcode:'',searchKeyword:'',completed:false,steps:0},
+        {id:'1-2',time:'13:00',title:'取車 Sakura Rent A Car',category:'transport',expenses:[{id:'1',label:'租車費',amount:25446,currency:'NT',category:'transport'}],note:'Toyota Estima 4WD\n取車點: 成田空港 P1駐車場',mapcode:'137 647 682*14',searchKeyword:'成田空港 P1駐車場',completed:false,steps:200},
+        {id:'1-3',time:'15:00',title:'佐野拉麵 & 磯山弁財天',category:'sightseeing',expenses:[{id:'1',label:'預估餐費',amount:3000,currency:'JPY',category:'food'}],note:'磯山弁財天、出流原弁天池。風景優美，日本名水百選。',mapcode:'64 695 571*64',searchKeyword:'磯山弁財天',completed:false,steps:2000},
+        {id:'1-4',time:'18:00',title:'足利花卉公園 (光之花庭)',category:'sightseeing',expenses:[{id:'1',label:'夜間門票',amount:0,currency:'JPY',category:'sightseeing'}],note:'夜間票 15:30~21:30。日本三大燈飾之一。',mapcode:'64 512 293*12',searchKeyword:'あしかがフラワーパーク',completed:false,steps:6000},
+        {id:'1-5',time:'21:00',title:'ホテル一乃館',category:'accommodation',expenses:[{id:'1',label:'住宿費',amount:13332,currency:'NT',category:'accommodation'}],note:'一間房，有早餐。\n地址：1262 Izuruharacho, Sano, Tochigi 327-0102\n電話：283-25-0228',mapcode:'64 695 540*84',searchKeyword:'ホテル一乃館',completed:false,steps:100}
+    ]},
+    {id:'day2',date:'12/29',dayOfWeek:'(一)',weather:'cloudy',location:'佐野 -> 奧日光',items:[
+        {id:'2-1',time:'10:00',title:'前往日光 (移動)',category:'transport',expenses:[],note:'足利往奧日光，車程約1.5小時。',mapcode:'',searchKeyword:'',completed:false,steps:0},
+        {id:'2-2',time:'12:00',title:'日光東照宮',category:'sightseeing',expenses:[{id:'1',label:'門票',amount:2600,currency:'JPY',category:'sightseeing'}],note:'世界遺產。',mapcode:'367 312 407*16',searchKeyword:'日光東照宮',completed:false,steps:5000},
+        {id:'2-3',time:'16:00',title:'Iwaiyado Jyuan (壽庵)',category:'accommodation',expenses:[{id:'1',label:'住宿費',amount:18311,currency:'NT',category:'accommodation'}],note:'日式四人房，有早餐。\n地址：321-2611 櫪木縣, 日光, Kawaji 52\n電話：288-78-1101',mapcode:'367 835 100*67',searchKeyword:'祝い宿 寿庵',completed:false,steps:0}
+    ]},
+    {id:'day3',date:'12/30',dayOfWeek:'(二)',weather:'snow',location:'奧日光',items:[
+        {id:'3-1',time:'10:00',title:'龍王峽',category:'sightseeing',expenses:[],note:'鬼怒川上游的溪谷美景，冬天雪景別有一番風味。',mapcode:'367 686 704*87',searchKeyword:'龍王峡',completed:false,steps:3000},
+        {id:'3-2',time:'12:00',title:'午餐：山產/蕎麥麵',category:'food',expenses:[{id:'1',label:'預估餐費',amount:3000,currency:'JPY',category:'food'}],note:'往湯西川溫泉沿途的在地食堂。',mapcode:'',searchKeyword:'湯西川溫泉 ランチ',completed:false,steps:0},
+        {id:'3-3',time:'14:00',title:'平家之里',category:'sightseeing',expenses:[{id:'1',label:'門票',amount:1020,currency:'JPY',category:'sightseeing'}],note:'復原平家落人村落的茅草屋建築，雪景非常夢幻。',mapcode:'716 161 037*14',searchKeyword:'平家の里',completed:false,steps:2000},
+        {id:'3-4',time:'16:00',title:'Honke Bankyu (本家伴久)',category:'accommodation',expenses:[{id:'1',label:'住宿費',amount:24134,currency:'NT',category:'accommodation'}],note:'日式四人房，有晚餐、早餐。\n地址：321-2601 櫪木縣, 日光, Yunishikawa 749\n電話：288-98-0011',mapcode:'716 161 037*14',searchKeyword:'本家伴久',completed:false,steps:0}
+    ]},
+    {id:'day4',date:'12/31',dayOfWeek:'(三)',weather:'sunny',location:'日光 -> 大洗',items:[
+        {id:'4-1',time:'10:00',title:'前往大洗 (移動)',category:'transport',expenses:[],note:'奧日光往大洗，車程較長。',mapcode:'',searchKeyword:'',completed:false,steps:0},
+        {id:'4-2',time:'13:00',title:'大洗磯前神社',category:'sightseeing',expenses:[],note:'海上鳥居。',mapcode:'239 535 445*58',searchKeyword:'大洗磯前神社',completed:false,steps:2000},
+        {id:'4-3',time:'15:00',title:'大洗 Seaside Station',category:'shopping',expenses:[],note:'採買跨年晚餐食材。',mapcode:'239 506 461*34',searchKeyword:'大洗シーサイドステーション',completed:false,steps:1500},
+        {id:'4-4',time:'17:00',title:'Mito House (水戶)',category:'accommodation',expenses:[{id:'1',label:'住宿費',amount:9316,currency:'NT',category:'accommodation'}],note:'包棟，沒早餐。\n地址：1 Chome-2-55 Kanemachi, Mito, Ibaraki 310-0066\n電話：90-5639-7300',mapcode:'47 161 388*03',searchKeyword:'一棟貸しの宿 水戸ハウス',completed:false,steps:0}
+    ]},
+    {id:'day5',date:'1/1',dayOfWeek:'(四)',weather:'sunny',location:'大洗 -> 筑波',items:[
+        {id:'5-1',time:'10:00',title:'筑波山神社 (初詣)',category:'sightseeing',expenses:[],note:'新年參拜。',mapcode:'123 477 072*85',searchKeyword:'筑波山神社',completed:false,steps:3000},
+        {id:'5-2',time:'12:00',title:'那珂湊魚市場',category:'food',expenses:[{id:'1',label:'預估餐費',amount:5000,currency:'JPY',category:'food'}],note:'午餐。',mapcode:'47 027 304*48',searchKeyword:'那珂湊おさかな市場',completed:false,steps:1000},
+        {id:'5-3',time:'15:00',title:'筑波山纜車',category:'sightseeing',expenses:[{id:'1',label:'纜車票',amount:2000,currency:'JPY',category:'sightseeing'}],note:'遠眺關東平原。',mapcode:'',searchKeyword:'筑波山ロープウェイ',completed:false,steps:2000},
+        {id:'5-4',time:'17:00',title:'Kamenoi Hotel Tsukubasan',category:'accommodation',expenses:[{id:'1',label:'住宿費',amount:23951,currency:'NT',category:'accommodation'}],note:'日式四人房，有晚餐、早餐。\n地址：1050-1 Tsukuba, Ibaraki 300-4352\n電話：29-866-1111',mapcode:'123 477 064*47',searchKeyword:'亀の井ホテル 筑波山',completed:false,steps:0}
+    ]},
+    {id:'day6',date:'1/2',dayOfWeek:'(五)',weather:'cloudy',location:'筑波 -> 東京',items:[
+        {id:'6-1',time:'09:30',title:'GRANBERRY 草莓採摘',category:'food',expenses:[{id:'1',label:'體驗費',amount:2800,currency:'JPY',category:'food'}],note:'40分鐘吃到飽。\nMapcode: 18 853 864*14',mapcode:'18 853 864*14',searchKeyword:'GRANBERRY 大地',completed:false,steps:500},
+        {id:'6-2',time:'12:00',title:'牛久大佛',category:'sightseeing',expenses:[{id:'1',label:'門票',amount:800,currency:'JPY',category:'sightseeing'}],note:'世界最大青銅佛像。',mapcode:'65 086 720*25',searchKeyword:'牛久大仏',completed:false,steps:2000},
+        {id:'6-3',time:'14:00',title:'前往東京 (阿美橫丁)',category:'shopping',expenses:[],note:'上野逛街採買。',mapcode:'',searchKeyword:'アメ横',completed:false,steps:5000},
+        {id:'6-4',time:'18:00',title:'上野悠悠之家',category:'accommodation',expenses:[{id:'1',label:'住宿費',amount:10115,currency:'NT',category:'accommodation'}],note:'包棟，沒早餐，有廚房。\n地址：2 Chome-4-9 Kitaueno, Taito City, Tokyo 110-0014\n電話：70-8960-5885',mapcode:'769 494*86',searchKeyword:'上野悠悠之家',completed:false,steps:0}
+    ]},
+    {id:'day7',date:'1/3',dayOfWeek:'(六)',weather:'sunny',location:'東京 -> 回家',items:[
+        {id:'7-1',time:'08:30',title:'前往成田機場',category:'transport',expenses:[],note:'預留塞車時間，早點出發。',mapcode:'',searchKeyword:'',completed:false,steps:0},
+        {id:'7-2',time:'10:30',title:'機場還車 (P1駐車場)',category:'transport',expenses:[],note:'還車地點：成田空港P1駐車場。',mapcode:'137 647 682*14',searchKeyword:'成田空港 P1駐車場',completed:false,steps:500},
+        {id:'7-3',time:'12:25',title:'搭機返台 (成田T1)',category:'transport',expenses:[],note:'12:25 吉 BR107 NRT T1\n13:00 王方 BR183 NRT T1',mapcode:'',searchKeyword:'',completed:false,steps:2000}
+    ]}
 ];
 
 function App(){
     const [data,setData]=useState(()=>{
-        const saved=localStorage.getItem('kanto_v2025_final_stable_v10'); // 更新版本號 V10
+        const saved=localStorage.getItem('kanto_v2025_final_stable_v11'); // 更新版本號 V11
         if(saved) { try { return JSON.parse(saved); } catch(e){} }
         return INITIAL_ITINERARY;
     });
@@ -186,7 +226,7 @@ function App(){
     const sortableInstance = useRef(null);
     const longPressTimer = useRef(null);
 
-    useEffect(()=>{localStorage.setItem('kanto_v2025_final_stable_v10',JSON.stringify(data))},[data]);
+    useEffect(()=>{localStorage.setItem('kanto_v2025_final_stable_v11',JSON.stringify(data))},[data]);
     useEffect(()=>{localStorage.setItem('kanto_v2025_memos',JSON.stringify(memos))},[memos]);
     useEffect(()=>{
         if(stepModal) {
@@ -325,41 +365,6 @@ function App(){
         setTimeout(() => setSaveBtnText('儲存紀錄'), 1500);
     };
 
-    const toggleWeather = (e) => {
-        e.stopPropagation();
-        const newData = [...data];
-        const current = newData[idx].weather;
-        const currentIndex = WEATHER_TYPES.indexOf(current);
-        const nextIndex = (currentIndex + 1) % WEATHER_TYPES.length;
-        newData[idx].weather = WEATHER_TYPES[nextIndex];
-        setData(newData);
-    };
-
-    const exportData=()=>{
-        const backup = { itinerary: data, memos: memos };
-        const a=document.createElement('a');
-        a.href=URL.createObjectURL(new Blob([JSON.stringify(backup)],{type:'application/json'}));
-        a.download='行程與筆記備份.json';a.click()
-    };
-    const importData=(e)=>{
-        const r=new FileReader();
-        r.onload=(ev)=>{
-            try{
-                const d=JSON.parse(ev.target.result);
-                if(d.itinerary){
-                    setData(d.itinerary);
-                    setMemos(d.memos || {});
-                } else if(Array.isArray(d)) {
-                     setData(d);
-                }
-                alert('✅ 讀取成功！');setSort(false)
-            }catch(err){alert('❌ 檔案錯誤'); }
-        };
-        if(e.target.files[0])r.readAsText(e.target.files[0]);
-        e.target.value=''
-    };
-    const calcDur=(s,e)=>{if(!s||!e)return null;const [sh,sm]=s.split(':').map(Number);const [eh,em]=e.split(':').map(Number);const diff=(eh*60+em)-(sh*60+sm);if(diff<0)return{t:'重疊',bad:true};const h=Math.floor(diff/60),m=diff%60;if(h===0&&m===0)return{t:'無空檔',bad:false};return{t:(h>0?h+'時':'')+(m>0?m+'分':''),bad:false}};
-    const gMap=(i)=>`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(i.searchKeyword?.trim()||`${i.title} 日本`)}`;
     const getWeatherUrl = () => { const zip = WEATHER_LOCATIONS[day.id] || '282-0004'; return `https://tenki.jp/search/?keyword=${encodeURIComponent(zip)}`; };
     const getDailyRouteUrl = (items) => `https://www.google.com/maps/dir/${items.map(item => encodeURIComponent(item.searchKeyword?.trim() || item.title)).join('/')}`;
 
@@ -508,7 +513,6 @@ function App(){
 
             <div className={`flex-1 overflow-y-auto relative scroll-smooth-mobile -mt-2 pt-4`}>
                 <div className="py-2 pb-32 space-y-6">
-                    {/* 🚨 智慧型警示卡片：雪/雨/隱藏 */}
                     {!sort && liveWeather && (getWeatherTypeFromCode(liveWeather.code) === 'snow' || getWeatherTypeFromCode(liveWeather.code) === 'rain') && (
                         <div className={`mx-4 border-2 rounded-3xl p-3 shadow-sm flex items-center gap-3 mb-4 animate-fade-in ${getWeatherTypeFromCode(liveWeather.code) === 'snow' ? 'bg-gradient-to-r from-cyan-50 to-blue-50 border-cyan-200' : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'}`}>
                             <div className={getWeatherTypeFromCode(liveWeather.code) === 'snow' ? 'text-cyan-500' : 'text-blue-500'}>
@@ -524,7 +528,6 @@ function App(){
                     )}
                     
                     <div ref={sortableRef} className="relative">
-                        {/* 🔍 時間軸加粗加深 */}
                         {!sort && <div className="absolute left-[24px] top-4 bottom-4 w-[3px] bg-slate-300 rounded-full z-0"/>}
                         
                         {day.items.map((item,i)=>{
@@ -809,12 +812,9 @@ function App(){
                 
                 <div className="space-y-2"><label className="text-sm font-bold text-slate-500 flex items-center gap-1"><Icon n="Footprints" s={16} c="text-blue-500"/> 步數 (選填)</label><input type="number" value={editItem.steps||''} onChange={e=>setEditItem({...editItem,steps:e.target.value})} placeholder="例如: 5000" className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-3 font-mono text-base outline-none focus:border-blue-400"/></div>
                 
-                {/* 備註與定位 (乾淨版 - 移除自動定位) */}
+                {/* 備註與定位 (乾淨版) */}
                 <div className="space-y-2"><label className="text-sm font-bold text-slate-500">備註</label><textarea value={editItem.note} onChange={e=>setEditItem({...editItem,note:e.target.value})} placeholder="輸入備註..." className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-3 text-base h-24 outline-none focus:border-blue-400"/></div>
-                {/* 🗺️ Mapcode 查詢按鈕優化：與輸入框等高，使用地球儀圖示 */}
-                <div className="bg-slate-50 p-4 rounded-2xl mb-4 border border-slate-100"><div className="space-y-3"><div><label className="text-xs text-slate-400 block mb-1">車載導航 Mapcode</label><div className="flex gap-2"><input type="text" value={editItem.mapcode} onChange={e=>setEditItem({...editItem,mapcode:e.target.value})} placeholder="Mapcode" className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-400 font-mono"/><a href="https://japanmapcode.com/zh-TW" target="_blank" rel="noopener noreferrer" className="p-3 bg-white text-slate-500 border border-slate-200 rounded-2xl hover:bg-slate-50 active:scale-95 flex items-center justify-center"><Icon n="Globe" s={20}/></a></div></div>
-                {/* 僅保留關鍵字輸入，移除按鈕 */}
-                <div><label className="text-xs text-slate-400 block mb-1">Google Maps 搜尋關鍵字 (連結修正)</label><div className="flex gap-2"><input type="text" value={editItem.searchKeyword} onChange={e=>setEditItem({...editItem,searchKeyword:e.target.value})} placeholder="例如: 晴空塔 (若自動連結錯誤時使用)" className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-400"/><a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(editItem.searchKeyword||editItem.title)}`} target="_blank" className="p-3 bg-white text-slate-500 border border-slate-200 rounded-2xl hover:bg-slate-50 active:scale-95 flex items-center justify-center"><Icon n="Search" s={20}/></a></div></div></div></div>
+                <div className="bg-slate-50 p-4 rounded-2xl mb-4 border border-slate-100"><div className="space-y-3"><div><label className="text-xs text-slate-400 block mb-1">車載導航 Mapcode</label><div className="flex gap-2"><input type="text" value={editItem.mapcode} onChange={e=>setEditItem({...editItem,mapcode:e.target.value})} placeholder="Mapcode" className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-400 font-mono"/><a href="https://japanmapcode.com/zh-TW" target="_blank" rel="noopener noreferrer" className="p-3 bg-white text-slate-500 border border-slate-200 rounded-2xl hover:bg-slate-50 active:scale-95 flex items-center justify-center"><Icon n="Globe" s={20}/></a></div></div><div><label className="text-xs text-slate-400 block mb-1">Google Maps 搜尋關鍵字 (連結修正)</label><div className="flex gap-2"><input type="text" value={editItem.searchKeyword} onChange={e=>setEditItem({...editItem,searchKeyword:e.target.value})} placeholder="例如: 晴空塔 (若自動連結錯誤時使用)" className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-400"/><a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(editItem.searchKeyword||editItem.title)}`} target="_blank" className="p-3 bg-white text-slate-500 border border-slate-200 rounded-2xl hover:bg-slate-50 active:scale-95 flex items-center justify-center"><Icon n="Search" s={20}/></a></div></div></div></div>
             </div><div className="p-5 border-t flex gap-4 bg-white pb-safe"><button onClick={delItem} className="p-4 rounded-2xl bg-red-50 text-red-500 border-2 border-red-100 hover:bg-red-100 transition-colors"><Icon n="Trash2" s={24}/></button><button onClick={saveItem} className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-2xl font-bold text-lg shadow-lg shadow-blue-200 active:scale-95 transition-transform py-4 flex justify-center items-center gap-2"><Icon n="Save" s={20}/> 儲存</button></div></div></div>}
             
             {stepModal && <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center px-4 animate-fade-in" onClick={(e) => e.target === e.currentTarget && setStepModal(false)}>
