@@ -27,7 +27,7 @@
     @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
     @keyframes pulse-soft { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
 
-    /* 🌸 櫻花按鈕修正 */
+    /* 🌸 櫻花按鈕 */
     .sakura-btn-container { position: relative; width: 54px; height: 54px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin: 0 4px; overflow: visible; }
     .sakura-icon-active { transform-origin: center center; filter: drop-shadow(0 4px 6px rgba(244, 63, 94, 0.5)); animation: pop-bloom 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards, spin-sakura 12s linear infinite 0.6s; }
     @keyframes pop-bloom { 0% { transform: scale(0) rotate(-45deg); opacity: 0; } 60% { transform: scale(1.35) rotate(10deg); opacity: 1; } 100% { transform: scale(1.25) rotate(0deg); opacity: 1; } }
@@ -104,19 +104,25 @@ const CATS={
 };
 const W_ICONS={sunny:'Sun',cloudy:'Cloud',snow:'Snowflake',rain:'CloudRain'};
 const WEATHER_COLORS = { sunny: 'text-yellow-300', cloudy: 'text-white/80', rain: 'text-blue-300', snow: 'text-white' };
-const WEATHER_LOCATIONS = { 'day1': '327-0102', 'day2': '321-2611', 'day3': '321-2601', 'day4': '311-1301', 'day5': '300-4352', 'day6': '110-0005', 'day7': '282-0004' };
-const WEATHER_TYPES = ['sunny', 'cloudy', 'rain', 'snow'];
-// 定義每一天的經緯度座標 (用於 Open-Meteo API)
 const LOCATIONS_COORD = [
-    { id: 'day1', lat: 36.3146, lng: 139.5797 }, // 佐野
-    { id: 'day2', lat: 36.7490, lng: 139.5033 }, // 日光
-    { id: 'day3', lat: 36.7959, lng: 139.4337 }, // 奧日光
-    { id: 'day4', lat: 36.3144, lng: 140.5743 }, // 大洗
-    { id: 'day5', lat: 36.2048, lng: 140.1067 }, // 筑波
-    { id: 'day6', lat: 35.7140, lng: 139.7741 }, // 東京(上野)
-    { id: 'day7', lat: 35.7767, lng: 140.3188 }  // 成田
+    { id: 'day1', lat: 36.3146, lng: 139.5797 }, 
+    { id: 'day2', lat: 36.7490, lng: 139.5033 }, 
+    { id: 'day3', lat: 36.7959, lng: 139.4337 }, 
+    { id: 'day4', lat: 36.3144, lng: 140.5743 }, 
+    { id: 'day5', lat: 36.2048, lng: 140.1067 }, 
+    { id: 'day6', lat: 35.7140, lng: 139.7741 }, 
+    { id: 'day7', lat: 35.7767, lng: 140.3188 }  
 ];
 const fmtMoney=(v)=>v.toString().replace(/\B(?=(\d{3})+(?!\d))/g,",");
+
+// 🌤️ 根據 Open-Meteo Code 判斷天氣類型
+const getWeatherTypeFromCode = (code) => {
+    if (code === undefined || code === null) return 'sunny';
+    if (code <= 1) return 'sunny'; // 0,1: 晴朗
+    if (code <= 3 || code === 45 || code === 48) return 'cloudy'; // 2,3: 多雲, 45,48: 霧
+    if (code >= 71 && code <= 77 || code >= 85) return 'snow'; // 71-77, 85-86: 雪
+    return 'rain'; // 51-67, 80-82, 95-99: 雨/雷雨
+};
 
 const INITIAL_ITINERARY = [
     {id:'day1',date:'12/28',dayOfWeek:'(日)',weather:'sunny',location:'成田 -> 佐野',items:[{id:'1-1',time:'11:25',title:'抵達成田國際機場',category:'transport',expenses:[{id:'1',label:'機票/交通',amount:0,currency:'NT',category:'transport'}],note:'11:25 吉 BR108 NRT T1\n12:00 王方 BR184 NRT T1',mapcode:'',searchKeyword:'',completed:false,steps:500, lat:35.7719, lng:140.3929},{id:'1-2',time:'13:00',title:'取車 Sakura Rent A Car',category:'transport',expenses:[{id:'1',label:'租車費',amount:25446,currency:'NT',category:'transport'}],note:'Toyota Estima 4WD\n取車點: 成田空港 P1駐車場',mapcode:'',searchKeyword:'成田空港 P1駐車場',completed:false,steps:200},{id:'1-3',time:'15:00',title:'午餐：佐野拉麵',category:'food',expenses:[{id:'1',label:'預估餐費',amount:3000,currency:'JPY',category:'food'}],note:'推薦：青竹手打拉麵 大和 或 小倉屋。佐野拉麵以清湯和Q彈麵條聞名。',mapcode:'64 695 540*84',searchKeyword:'佐野ラーメン',completed:false,steps:0},{id:'1-4',time:'16:30',title:'磯山弁財天',category:'sightseeing',expenses:[{id:'1',label:'門票/香油',amount:0,currency:'JPY',category:'sightseeing'}],note:'日本名水百選之一，風景優美。',mapcode:'64 695 571*64',searchKeyword:'磯山弁財天',completed:false,steps:1500},{id:'1-5',time:'18:00',title:'足利花卉公園 (光之花庭)',category:'sightseeing',expenses:[{id:'1',label:'夜間門票',amount:0,currency:'JPY',category:'sightseeing'}],note:'日本三大燈飾之一，夜景非常壯觀。夜間票 15:30~21:30',mapcode:'64 512 293*12',searchKeyword:'あしかがフラワーパーク',completed:false,steps:6000},{id:'1-6',time:'20:00',title:'晚餐：大衆割烹 三岩',category:'food',expenses:[{id:'1',label:'預估餐費',amount:5000,currency:'JPY',category:'food'}],note:'Google 評分高，在地老字號居酒屋。燒鳥、刺身、炸物美味。\n位於佐野站前，非常順路。',mapcode:'64 727 523*55',searchKeyword:'大衆割烹 三岩',completed:false,steps:0},{id:'1-7',time:'21:30',title:'ホテル一乃館',category:'accommodation',expenses:[{id:'1',label:'住宿費',amount:13332,currency:'NT',category:'accommodation'}],note:'含早餐',mapcode:'64 695 540*84',searchKeyword:'ホテル一乃館',completed:false,steps:100}]},
@@ -153,7 +159,7 @@ function App(){
     const [footerExpanded, setFooterExpanded] = useState(true); 
     const [expandedNotes, setExpandedNotes] = useState(new Set()); 
     const [filterCategory, setFilterCategory] = useState(null);
-    const [liveWeather, setLiveWeather] = useState(null); // Store fetched weather
+    const [liveWeather, setLiveWeather] = useState(null); 
 
     const fileRef=useRef(null);
     const stepRef=useRef(null);
@@ -177,7 +183,7 @@ function App(){
         const fetchWeather = async () => {
             const coord = LOCATIONS_COORD.find(c => c.id === data[idx].id);
             if (!coord) return;
-            setLiveWeather(null); // Reset while loading
+            setLiveWeather(null); 
             try {
                 const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${coord.lat}&longitude=${coord.lng}&current=temperature_2m,weather_code&timezone=Asia%2FTokyo`);
                 const json = await res.json();
@@ -288,6 +294,12 @@ function App(){
     const planSteps = day.items.reduce((sum, i) => sum + Number(i.steps || 0), 0);
     const currentSteps = Number(day.steps) > 0 ? Number(day.steps) : planSteps; 
     const displaySteps = day.steps > 0 ? day.steps : planSteps;
+
+    // 🌤️ 計算即時天氣樣式
+    const liveWeatherType = liveWeather ? getWeatherTypeFromCode(liveWeather.code) : day.weather;
+    const weatherIconName = W_ICONS[liveWeatherType];
+    const weatherColorClass = WEATHER_COLORS[liveWeatherType];
+    const weatherAnimClass = liveWeatherType==='sunny'?'weather-spin':liveWeatherType==='cloudy'?'weather-float':'weather-pulse';
 
     const saveStep=()=>{
         const newData=[...data];
@@ -454,8 +466,8 @@ function App(){
                         <div className="flex flex-col items-end gap-2">
                             <div className="flex flex-col items-end gap-0.5 bg-white/10 px-2 py-1 rounded-lg backdrop-blur-md border border-white/20 shadow-md cursor-pointer relative" onClick={toggleWeather}>
                                 <div className="flex items-center gap-1">
-                                    <div className={`${WEATHER_COLORS[day.weather]} ${day.weather==='sunny'?'weather-spin':day.weather==='cloudy'?'weather-float':'weather-pulse'}`}>
-                                        <Icon n={W_ICONS[day.weather]} s={20} />
+                                    <div className={`${weatherColorClass} ${weatherAnimClass}`}>
+                                        <Icon n={weatherIconName} s={20} />
                                     </div>
                                     {/* 🌡️ 顯示真實 API 氣溫 */}
                                     <span className="font-bold text-lg text-white drop-shadow-sm">
@@ -463,7 +475,7 @@ function App(){
                                     </span>
                                 </div>
                                 <span className="text-[9px] font-bold text-yellow-100 opacity-80">
-                                    {liveWeather ? '目前氣溫' : '預測氣溫'}
+                                    {liveWeather ? '目前天氣' : '預測天氣'}
                                 </span>
                             </div>
                             <button onClick={()=>{setTStep(day.steps||'');setStepModal(true)}} className="flex items-center gap-1 text-xs text-rose-600 font-black bg-white px-3 py-1 rounded-full shadow-lg active:scale-95 transition-transform border border-rose-100">
@@ -736,7 +748,7 @@ function App(){
                 <div className="space-y-2"><label className="text-sm font-bold text-slate-500">備註</label><textarea value={editItem.note} onChange={e=>setEditItem({...editItem,note:e.target.value})} placeholder="輸入備註..." className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-3 text-base h-24 outline-none focus:border-blue-400"/></div>
                 <div className="bg-slate-50 p-4 rounded-2xl mb-4 border border-slate-100"><div className="space-y-3"><div><label className="text-xs text-slate-400 block mb-1">車載導航 Mapcode</label><div className="flex gap-2"><input type="text" value={editItem.mapcode} onChange={e=>setEditItem({...editItem,mapcode:e.target.value})} placeholder="Mapcode" className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-400 font-mono"/><a href="https://japanmapcode.com/zh-TW" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center bg-white text-slate-500 border border-slate-200 rounded-xl px-3 text-xs font-bold hover:bg-slate-50">🔗 查詢代碼</a></div></div>
                 {/* 僅保留關鍵字輸入，移除按鈕 */}
-                <div><label className="text-xs text-slate-400 block mb-1">Google Maps 搜尋關鍵字 (連結修正)</label><input type="text" value={editItem.searchKeyword} onChange={e=>setEditItem({...editItem,searchKeyword:e.target.value})} placeholder="例如: 晴空塔 (若自動連結錯誤時使用)" className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-400"/></div></div></div>
+                <div><label className="text-xs text-slate-400 block mb-1">Google Maps 搜尋關鍵字 (連結修正)</label><div className="flex gap-2"><input type="text" value={editItem.searchKeyword} onChange={e=>setEditItem({...editItem,searchKeyword:e.target.value})} placeholder="例如: 晴空塔 (若自動連結錯誤時使用)" className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-400"/><a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(editItem.searchKeyword||editItem.title)}`} target="_blank" className="p-3 bg-white text-slate-500 border border-slate-200 rounded-2xl hover:bg-slate-50 active:scale-95 flex items-center justify-center"><Icon n="Search" s={20}/></a></div></div></div></div>
             </div><div className="p-5 border-t flex gap-4 bg-white pb-safe"><button onClick={delItem} className="p-4 rounded-2xl bg-red-50 text-red-500 border-2 border-red-100 hover:bg-red-100 transition-colors"><Icon n="Trash2" s={24}/></button><button onClick={saveItem} className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-2xl font-bold text-lg shadow-lg shadow-blue-200 active:scale-95 transition-transform py-4 flex justify-center items-center gap-2"><Icon n="Save" s={20}/> 儲存</button></div></div></div>}
             
             {stepModal && <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center px-4 animate-fade-in" onClick={(e) => e.target === e.currentTarget && setStepModal(false)}>
