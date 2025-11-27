@@ -178,7 +178,7 @@ const INITIAL_ITINERARY = [
 
 function App(){
     const [data,setData]=useState(()=>{
-        const saved=localStorage.getItem('kanto_v2025_final_stable_v14'); // 版本 V14
+        const saved=localStorage.getItem('kanto_v2025_final_stable_v15'); // 版本 V15
         if(saved) { try { return JSON.parse(saved); } catch(e){} }
         return INITIAL_ITINERARY;
     });
@@ -204,7 +204,7 @@ function App(){
     const [liveWeather, setLiveWeather] = useState(null); 
     const [menuOpen, setMenuOpen] = useState(false); 
     const [viewImgIdx, setViewImgIdx] = useState(null); 
-    const [showLargeInput, setShowLargeInput] = useState(false); // 新增：控制圖片備註大輸入框
+    const [showLargeInput, setShowLargeInput] = useState(false); 
 
     const fileRef=useRef(null);
     const stepRef=useRef(null);
@@ -214,7 +214,7 @@ function App(){
     const sortableInstance = useRef(null);
     const longPressTimer = useRef(null);
 
-    useEffect(()=>{localStorage.setItem('kanto_v2025_final_stable_v14',JSON.stringify(data))},[data]);
+    useEffect(()=>{localStorage.setItem('kanto_v2025_final_stable_v15',JSON.stringify(data))},[data]);
     useEffect(()=>{localStorage.setItem('kanto_v2025_memos',JSON.stringify(memos))},[memos]);
     useEffect(()=>{
         if(stepModal) {
@@ -581,7 +581,7 @@ function App(){
                                                     {item.completed ? <Icon n="Check" s={24}/> : <Icon n={cat.i} s={20}/>}
                                                 </div>
                                             </div>
-                                            {dur && <div className="absolute left-[6px] -bottom-6 z-10 flex flex-col items-center w-10 pointer-events-none"><div className="bg-white border border-slate-200 rounded-full px-1.5 py-0.5 text-[9px] text-slate-400 font-bold shadow-sm whitespace-nowrap flex items-center gap-1"><Icon n="Car" s={10}/>{dur.t}</div></div>}
+                                            {dur && <div className="absolute left-[6px] -bottom-6 z-10 flex flex-col items-center w-10 pointer-events-none"><div className="bg-white border border-slate-200 rounded-full px-1.5 py-0.5 text-[9px] text-slate-400 font-bold shadow-sm whitespace-nowrap flex items-center gap-1"><Icon n="Clock" s={10}/>{dur.t}</div></div>}
                                         </>
                                     )}
 
