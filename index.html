@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>關東新春自駕遊 🎌 (V11)</title>
+<title>關東新春自駕遊 2026 🎌</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
@@ -91,13 +91,9 @@ const Icons={
     ChevronLeft:<path d="m15 18-6-6 6-6" strokeLinecap="round" strokeLinejoin="round"/>,
     ChevronRight:<path d="m9 18 6-6-6-6" strokeLinecap="round" strokeLinejoin="round"/>,
     Sort:<g><path d="M3 6h18"/><path d="M7 12h10"/><path d="M10 18h4"/></g>,
-    DragHandle:<path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" strokeLinejoin="round"/>,
+    DragHandle:<g><line x1="4" y1="9" x2="20" y2="9" strokeWidth="2.5" strokeLinecap="round"/><line x1="4" y1="15" x2="20" y2="15" strokeWidth="2.5" strokeLinecap="round"/></g>,
     Snowflake:<g><line x1="12" y1="3" x2="12" y2="21" strokeWidth="2"/><line x1="4.2" y1="7.5" x2="19.8" y2="16.5" strokeWidth="2"/><line x1="4.2" y1="16.5" x2="19.8" y2="7.5" strokeWidth="2"/><path d="M8 3.5 12 8 16 3.5" strokeWidth="1.5" fill="none"/><path d="M8 20.5 12 16 16 20.5" strokeWidth="1.5" fill="none"/><path d="M2.5 11 7 12 2.5 13" strokeWidth="1.5" fill="none"/><path d="M21.5 11 17 12 21.5 13" strokeWidth="1.5" fill="none"/></g>,
-    Sakura:<g><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(0 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(72 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(144 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(216 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(288 12 12)" fill="currentColor"/><circle cx="12" cy="12" r="5.5" fill="currentColor"/></g>,
-    ExternalLink:<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6m4-3h6v6m-11 5L21 3" strokeLinecap="round" strokeLinejoin="round"/>,
-    Navigation:<path d="M3 11l19-9-9 19-2-8-8-2z" strokeLinecap="round" strokeLinejoin="round"/>,
-    Route:<g><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></g>,
-    Globe:<g><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></g>
+    Sakura:<g><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(0 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(72 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(144 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(216 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(288 12 12)" fill="currentColor"/><circle cx="12" cy="12" r="5.5" fill="currentColor"/></g>
 };
 
 const Icon=({n,s=24,c=""})=>Icons[n]?<svg xmlns="http://www.w3.org/2000/svg" width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={c} overflow="visible">{Icons[n]}</svg>:null;
@@ -112,18 +108,7 @@ const CATS={
 };
 const W_ICONS={sunny:'Sun',cloudy:'Cloud',snow:'Snowflake',rain:'CloudRain'};
 const WEATHER_COLORS = { sunny: 'text-yellow-300', cloudy: 'text-white/80', rain: 'text-blue-300', snow: 'text-white' };
-
-// 天氣地點代碼 (Open-Meteo 使用經緯度，這邊用於點擊跳轉 Tenki.jp)
-const WEATHER_LOCATIONS = { 
-    'day1': '327-0102', // 佐野
-    'day2': '321-2611', // 日光
-    'day3': '321-2601', // 奧日光
-    'day4': '311-1301', // 大洗
-    'day5': '300-4352', // 筑波
-    'day6': '110-0005', // 上野
-    'day7': '282-0004'  // 成田
-};
-
+const WEATHER_LOCATIONS = { 'day1': '327-0102', 'day2': '321-2611', 'day3': '321-2601', 'day4': '311-1301', 'day5': '300-4352', 'day6': '110-0005', 'day7': '282-0004' };
 const LOCATIONS_COORD = [
     { id: 'day1', lat: 36.3146, lng: 139.5797 }, 
     { id: 'day2', lat: 36.7490, lng: 139.5033 }, 
@@ -143,7 +128,6 @@ const getWeatherTypeFromCode = (code) => {
     return 'rain'; 
 };
 
-// 整合後的完整行程資料 (V11)
 const INITIAL_ITINERARY = [
     {id:'day1',date:'12/28',dayOfWeek:'(日)',weather:'sunny',location:'成田 -> 佐野',items:[
         {id:'1-1',time:'11:25',title:'吉 抵達 (BR108)',category:'transport',expenses:[{id:'1',label:'機票',amount:0,currency:'NT',category:'transport'}],note:'11:25 吉 BR108 NRT T1',mapcode:'',searchKeyword:'',completed:false,steps:500},
@@ -191,7 +175,7 @@ const INITIAL_ITINERARY = [
 
 function App(){
     const [data,setData]=useState(()=>{
-        const saved=localStorage.getItem('kanto_v2025_final_stable_v11'); // 更新版本號 V11
+        const saved=localStorage.getItem('kanto_v2025_final_stable_v11'); // 強制更新版本 V11
         if(saved) { try { return JSON.parse(saved); } catch(e){} }
         return INITIAL_ITINERARY;
     });
@@ -365,6 +349,41 @@ function App(){
         setTimeout(() => setSaveBtnText('儲存紀錄'), 1500);
     };
 
+    const toggleWeather = (e) => {
+        e.stopPropagation();
+        const newData = [...data];
+        const current = newData[idx].weather;
+        const currentIndex = WEATHER_TYPES.indexOf(current);
+        const nextIndex = (currentIndex + 1) % WEATHER_TYPES.length;
+        newData[idx].weather = WEATHER_TYPES[nextIndex];
+        setData(newData);
+    };
+
+    const exportData=()=>{
+        const backup = { itinerary: data, memos: memos };
+        const a=document.createElement('a');
+        a.href=URL.createObjectURL(new Blob([JSON.stringify(backup)],{type:'application/json'}));
+        a.download='行程與筆記備份.json';a.click()
+    };
+    const importData=(e)=>{
+        const r=new FileReader();
+        r.onload=(ev)=>{
+            try{
+                const d=JSON.parse(ev.target.result);
+                if(d.itinerary){
+                    setData(d.itinerary);
+                    setMemos(d.memos || {});
+                } else if(Array.isArray(d)) {
+                     setData(d);
+                }
+                alert('✅ 讀取成功！');setSort(false)
+            }catch(err){alert('❌ 檔案錯誤'); }
+        };
+        if(e.target.files[0])r.readAsText(e.target.files[0]);
+        e.target.value=''
+    };
+    const calcDur=(s,e)=>{if(!s||!e)return null;const [sh,sm]=s.split(':').map(Number);const [eh,em]=e.split(':').map(Number);const diff=(eh*60+em)-(sh*60+sm);if(diff<0)return{t:'重疊',bad:true};const h=Math.floor(diff/60),m=diff%60;if(h===0&&m===0)return{t:'無空檔',bad:false};return{t:(h>0?h+'時':'')+(m>0?m+'分':''),bad:false}};
+    const gMap=(i)=>`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(i.searchKeyword?.trim()||`${i.title} 日本`)}`;
     const getWeatherUrl = () => { const zip = WEATHER_LOCATIONS[day.id] || '282-0004'; return `https://tenki.jp/search/?keyword=${encodeURIComponent(zip)}`; };
     const getDailyRouteUrl = (items) => `https://www.google.com/maps/dir/${items.map(item => encodeURIComponent(item.searchKeyword?.trim() || item.title)).join('/')}`;
 
@@ -658,7 +677,7 @@ function App(){
                                         <Icon n="Menu" s={20}/>
                                     </button>
                                     
-                                    {/* Menu Popover - 使用 state 控制顯示 */}
+                                    {/* Menu Popover */}
                                     {menuOpen && (
                                         <>
                                             <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)}></div>
