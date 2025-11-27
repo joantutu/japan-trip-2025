@@ -94,7 +94,9 @@ const Icons={
     DragHandle:<g><line x1="4" y1="9" x2="20" y2="9" strokeWidth="2.5" strokeLinecap="round"/><line x1="4" y1="15" x2="20" y2="15" strokeWidth="2.5" strokeLinecap="round"/></g>,
     Snowflake:<g><line x1="12" y1="3" x2="12" y2="21" strokeWidth="2"/><line x1="4.2" y1="7.5" x2="19.8" y2="16.5" strokeWidth="2"/><line x1="4.2" y1="16.5" x2="19.8" y2="7.5" strokeWidth="2"/><path d="M8 3.5 12 8 16 3.5" strokeWidth="1.5" fill="none"/><path d="M8 20.5 12 16 16 20.5" strokeWidth="1.5" fill="none"/><path d="M2.5 11 7 12 2.5 13" strokeWidth="1.5" fill="none"/><path d="M21.5 11 17 12 21.5 13" strokeWidth="1.5" fill="none"/></g>,
     Sakura:<g><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(0 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(72 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(144 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(216 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(288 12 12)" fill="currentColor"/><circle cx="12" cy="12" r="5.5" fill="currentColor"/></g>,
-    Map: <path d="M14.1 16.1l-2.4 2.4-2.4-2.4a5 5 0 0 1 4.8 0zM12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7z" strokeLinecap="round" strokeLinejoin="round"/>
+    Map: <path d="M14.1 16.1l-2.4 2.4-2.4-2.4a5 5 0 0 1 4.8 0zM12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7z" strokeLinecap="round" strokeLinejoin="round"/>,
+    Maximize: <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" strokeLinecap="round" strokeLinejoin="round"/>,
+    Minimize: <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7" strokeLinecap="round" strokeLinejoin="round"/>
 };
 
 const Icon=({n,s=24,c=""})=>Icons[n]?<svg xmlns="http://www.w3.org/2000/svg" width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={c} overflow="visible">{Icons[n]}</svg>:null;
@@ -176,7 +178,7 @@ const INITIAL_ITINERARY = [
 
 function App(){
     const [data,setData]=useState(()=>{
-        const saved=localStorage.getItem('kanto_v2025_final_stable_v13'); // 版本 V13
+        const saved=localStorage.getItem('kanto_v2025_final_stable_v14'); // 版本 V14
         if(saved) { try { return JSON.parse(saved); } catch(e){} }
         return INITIAL_ITINERARY;
     });
@@ -201,7 +203,8 @@ function App(){
     const [filterCategory, setFilterCategory] = useState(null);
     const [liveWeather, setLiveWeather] = useState(null); 
     const [menuOpen, setMenuOpen] = useState(false); 
-    const [viewImgIdx, setViewImgIdx] = useState(null); // 修改：使用 Index 追蹤圖片
+    const [viewImgIdx, setViewImgIdx] = useState(null); 
+    const [showLargeInput, setShowLargeInput] = useState(false); // 新增：控制圖片備註大輸入框
 
     const fileRef=useRef(null);
     const stepRef=useRef(null);
@@ -211,7 +214,7 @@ function App(){
     const sortableInstance = useRef(null);
     const longPressTimer = useRef(null);
 
-    useEffect(()=>{localStorage.setItem('kanto_v2025_final_stable_v13',JSON.stringify(data))},[data]);
+    useEffect(()=>{localStorage.setItem('kanto_v2025_final_stable_v14',JSON.stringify(data))},[data]);
     useEffect(()=>{localStorage.setItem('kanto_v2025_memos',JSON.stringify(memos))},[memos]);
     useEffect(()=>{
         if(stepModal) {
@@ -219,6 +222,11 @@ function App(){
             setSaveBtnText('儲存紀錄');
         }
     },[stepModal]);
+
+    // 重置大輸入框狀態
+    useEffect(() => {
+        if(viewImgIdx === null) setShowLargeInput(false);
+    }, [viewImgIdx]);
 
     // 📡 Fetch Real-time Weather from Open-Meteo
     useEffect(() => {
@@ -447,7 +455,6 @@ function App(){
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
                 const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-                // 修改：存成物件結構 {url, text}
                 setEditMemoItem(prev => ({...prev, images: [...(prev.images||[]), {url: dataUrl, text: ''}]}));
             }
             img.src = event.target.result;
@@ -459,7 +466,6 @@ function App(){
         if(urlInputRef.current && urlInputRef.current.value){
             const val = urlInputRef.current.value.trim();
             if(val) {
-                 // 修改：存成物件結構 {url, text}
                 setEditMemoItem(prev => ({...prev, images: [...(prev.images||[]), {url: val, text: ''}]}));
                 urlInputRef.current.value = '';
             }
@@ -602,7 +608,6 @@ function App(){
                                                     </div>
                                                 </div>
                                                 <h3 className={`font-black text-lg leading-snug font-rounded flex items-start gap-1 ${item.completed?'text-slate-400 line-through decoration-slate-300':'text-slate-800'}`}>
-                                                    {/* 修改：移除 MapPin Icon */}
                                                     {item.title}
                                                 </h3>
                                                 <div className={`note-expand ${isExpanded || (item.note && isExpanded) ? 'open' : ''} ${!isExpanded && item.note ? 'max-h-0 opacity-0' : ''}`}>{item.note && (<div onClick={(e)=>{e.stopPropagation(); toggleNote(item.id)}} className="cursor-pointer text-sm font-medium text-slate-600 bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-400 leading-relaxed whitespace-pre-line active:bg-yellow-100 transition-colors">{item.note}</div>)}</div>
@@ -802,7 +807,7 @@ function App(){
                 </div>
             </div>}
 
-            {/* 🔍 修改：進化版圖片燈箱 (Lightbox) - 可編輯備註 - 修正：移除自動對焦 */}
+            {/* 🔍 修改：進化版圖片燈箱 (Lightbox) - 可展開式輸入框 */}
             {viewImgIdx !== null && editMemoItem && (
                 <div className="fixed inset-0 z-[120] bg-black/95 flex flex-col items-center justify-center p-4 animate-fade-in" onClick={()=>setViewImgIdx(null)}>
                     <button onClick={()=>setViewImgIdx(null)} className="absolute top-6 right-6 text-white/80 hover:text-white bg-white/10 rounded-full p-2 backdrop-blur-sm z-50"><Icon n="X" s={24}/></button>
@@ -815,21 +820,29 @@ function App(){
                         />
                     </div>
 
-                    {/* 文字備註編輯區 - 點擊才開始輸入 */}
-                    <div className="w-full max-w-lg bg-white rounded-2xl p-3 flex gap-3 items-center shrink-0 mb-safe" onClick={e=>e.stopPropagation()}>
-                        <div className="text-slate-400"><Icon n="Edit" s={20}/></div>
-                        <textarea 
-                            placeholder="輸入圖片備註 (例如: 必買藥妝)..."
-                            value={typeof editMemoItem.images[viewImgIdx] === 'string' ? '' : (editMemoItem.images[viewImgIdx].text || '')}
-                            onChange={(e)=>{
-                                const newImgs = [...editMemoItem.images];
-                                const currentItem = newImgs[viewImgIdx];
-                                const url = typeof currentItem === 'string' ? currentItem : currentItem.url;
-                                newImgs[viewImgIdx] = { url: url, text: e.target.value };
-                                setEditMemoItem({...editMemoItem, images: newImgs});
-                            }}
-                            className="flex-1 bg-transparent text-slate-800 font-bold text-sm outline-none resize-none h-10 py-2 leading-relaxed"
-                        />
+                    {/* 文字備註編輯區 - 支援展開 */}
+                    <div className={`w-full max-w-lg bg-white transition-all duration-300 ease-out ${showLargeInput ? 'h-[50vh] rounded-t-3xl rounded-b-none' : 'rounded-2xl h-auto'} p-3 flex flex-col gap-2 shrink-0 mb-safe shadow-xl z-50`} onClick={e=>e.stopPropagation()}>
+                        <div className="flex gap-3 items-start h-full">
+                             <div className="text-slate-400 mt-2 shrink-0"><Icon n="Edit" s={20}/></div>
+                             <textarea 
+                                placeholder="輸入圖片備註 (例如: 必買藥妝)..."
+                                value={typeof editMemoItem.images[viewImgIdx] === 'string' ? '' : (editMemoItem.images[viewImgIdx].text || '')}
+                                onChange={(e)=>{
+                                    const newImgs = [...editMemoItem.images];
+                                    const currentItem = newImgs[viewImgIdx];
+                                    const url = typeof currentItem === 'string' ? currentItem : currentItem.url;
+                                    newImgs[viewImgIdx] = { url: url, text: e.target.value };
+                                    setEditMemoItem({...editMemoItem, images: newImgs});
+                                }}
+                                className={`flex-1 bg-transparent text-slate-800 font-bold text-sm outline-none resize-none leading-relaxed transition-all ${showLargeInput ? 'h-full p-2' : 'h-10 py-2'}`}
+                            />
+                            <button 
+                                onClick={()=>setShowLargeInput(!showLargeInput)}
+                                className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-xl transition-colors shrink-0"
+                            >
+                                <Icon n={showLargeInput ? "Minimize" : "Maximize"} s={20}/>
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
