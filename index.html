@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>關東新春自駕遊 🎌</title>
+<title>關東新春自駕遊 🎌 (V3)</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
@@ -49,6 +49,7 @@
 <script type="text/babel">
 const {useState,useEffect,useRef,useCallback}=React;
 
+// 🎨 圖示集 (包含 Globe 和 MapPin)
 const Icons={
     MapPin:<g><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="10" r="3"/></g>,
     Plus:<path d="M12 5v14M5 12h14" strokeLinecap="round" strokeLinejoin="round"/>,
@@ -455,8 +456,9 @@ function App(){
                 <div className="px-4 py-3 text-white">
                     <div className="flex justify-between items-end">
                         <div className="flex flex-col justify-center">
-                            <div className="text-[10px] font-bold text-white/90 tracking-widest mb-0.5 ml-1">{day.date.startsWith('12') ? '2025' : '2026'}</div>
+                            {/* 📅 2025 年份位置優化 */}
                             <div className="flex items-baseline gap-2">
+                                <span className="text-sm font-bold text-white/90 tracking-widest">{day.date.startsWith('12') ? '2025' : '2026'}</span>
                                 <h1 className="font-black text-3xl tracking-wide leading-none drop-shadow-md">{day.date}</h1>
                                 <span className="text-lg font-bold opacity-90">{day.dayOfWeek}</span>
                             </div>
@@ -493,7 +495,6 @@ function App(){
 
             <div className={`flex-1 overflow-y-auto relative scroll-smooth-mobile -mt-2 pt-4`}>
                 <div className="py-2 pb-32 space-y-6">
-                    {/* 🚨 智慧型警示卡片：雪/雨/隱藏 */}
                     {!sort && liveWeather && (getWeatherTypeFromCode(liveWeather.code) === 'snow' || getWeatherTypeFromCode(liveWeather.code) === 'rain') && (
                         <div className={`mx-4 border-2 rounded-3xl p-3 shadow-sm flex items-center gap-3 mb-4 animate-fade-in ${getWeatherTypeFromCode(liveWeather.code) === 'snow' ? 'bg-gradient-to-r from-cyan-50 to-blue-50 border-cyan-200' : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'}`}>
                             <div className={getWeatherTypeFromCode(liveWeather.code) === 'snow' ? 'text-cyan-500' : 'text-blue-500'}>
@@ -509,7 +510,6 @@ function App(){
                     )}
                     
                     <div ref={sortableRef} className="relative">
-                        {/* 🔍 時間軸加粗加深 */}
                         {!sort && <div className="absolute left-[24px] top-4 bottom-4 w-[3px] bg-slate-300 rounded-full z-0"/>}
                         
                         {day.items.map((item,i)=>{
@@ -522,7 +522,6 @@ function App(){
                                 <div key={item.id} className={`relative ${sort?'mb-3 px-4':'mb-8 pl-16 pr-6'}`}
                                      onTouchStart={startLongPress} onTouchEnd={endLongPress} onMouseDown={startLongPress} onMouseUp={endLongPress} onMouseLeave={endLongPress}>
                                     
-                                    {/* 👆 打卡按鈕巨大化 */}
                                     {!sort && (
                                         <>
                                             <div onClick={(e)=>{e.stopPropagation();toggle(item.id)}} className={`absolute left-0 top-0 w-12 h-12 rounded-full border-[4px] border-[#fff7ed] z-20 flex items-center justify-center transition-all shadow-md cursor-pointer ${item.completed?'bg-emerald-500 text-white scale-90':'bg-white text-slate-400 ' + cat.c.replace('bg-', 'text-').replace('text-', 'border-')} ring-1 ring-slate-100`}>
@@ -552,12 +551,12 @@ function App(){
                                             <div className="relative flex flex-col gap-2">
                                                 <div className="flex justify-between items-start">
                                                     <div className="flex items-baseline gap-2">
+                                                        {/* 🕰️ 時間軸字體放大：text-xl */}
                                                         <span className="text-xl font-black text-slate-800 font-mono tracking-tight">{item.time}</span>
                                                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${cat.c.replace('text-','border-').replace('100','200')}`}>{cat.l}</span>
                                                     </div>
                                                     <button onClick={(e)=>{e.stopPropagation();setEditItem({...item, dayId: day.id});setModal(true)}} className="text-slate-300 hover:text-blue-500 active:scale-90 transition-transform"><Icon n="Edit" s={16}/></button>
                                                 </div>
-                                                {/* 📍 標題旁的 MapPin 圖示已修復 */}
                                                 <h3 className={`font-black text-lg leading-snug font-rounded flex items-center gap-1 ${item.completed?'text-slate-400 line-through decoration-slate-300':'text-slate-800'}`}>
                                                     <Icon n="MapPin" s={18} c="text-slate-300 shrink-0"/>
                                                     {item.title}
@@ -596,7 +595,8 @@ function App(){
                             );
                         })}
                     </div>
-                    {!sort && <div className="mt-6 mb-4 flex justify-center"><a href={getDailyRouteUrl(day.items)} target="_blank" className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-6 py-3 rounded-full shadow-lg font-bold text-sm flex items-center gap-2 active:scale-95 transition-transform hover:shadow-xl border-2 border-white/50"><Icon n="Route" s={20}/> 🚗 查看今日總路線</a></div>}
+                    {/* 📍 總路線按鈕微調：加高 py-3 -> py-4 */}
+                    {!sort && <div className="mt-6 mb-4 flex justify-center"><a href={getDailyRouteUrl(day.items)} target="_blank" className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-8 py-4 rounded-full shadow-lg font-bold text-base flex items-center gap-2 active:scale-95 transition-transform hover:shadow-xl border-2 border-white/50"><Icon n="Route" s={22}/> 🚗 查看今日總路線</a></div>}
                 </div>
             </div>
 
@@ -653,7 +653,7 @@ function App(){
                 <div className="bg-white w-full sm:w-[95%] max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[85vh] h-[85vh]">
                     <div className="px-6 py-5 border-b flex justify-between items-center bg-blue-50 rounded-t-3xl"><h2 className="font-bold text-xl text-blue-600 flex items-center gap-2"><Icon n="Wallet" s={24}/> 旅遊帳本</h2><button onClick={()=>setLedgerModal(false)} className="p-2 bg-white rounded-full shadow-sm text-slate-500"><Icon n="X" s={20}/></button></div>
                     <div className="p-6 overflow-y-auto flex-1 space-y-6">
-                        <div className="grid grid-cols-1 gap-4"> {/* Vertical Stack for clarity */}
+                        <div className="grid grid-cols-1 gap-4"> 
                             <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-white shadow-lg"><div className="text-xs font-bold opacity-80 mb-1">總支出 (NT)</div><div className="text-2xl font-black font-mono">NT${fmtMoney(totalNT)}</div></div>
                             <div className="bg-gradient-to-br from-orange-400 to-orange-500 rounded-2xl p-4 text-white shadow-lg"><div className="text-xs font-bold opacity-80 mb-1">總支出 (JPY)</div><div className="text-2xl font-black font-mono">¥{fmtMoney(totalJPY)}</div></div>
                         </div>
@@ -666,86 +666,32 @@ function App(){
                 </div>
             </div>}
 
-            {/* Memo Modal */}
-            {memoModal && <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center animate-fade-in">
-                <div className="bg-white w-full sm:w-[95%] max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[90vh] h-[90vh]">
-                    <div className="px-6 py-5 border-b flex justify-between items-center bg-rose-50 rounded-t-3xl">
-                        <h2 className="font-bold text-xl text-rose-600 flex items-center gap-2"><Icon n="Book" s={24}/> 旅遊筆記</h2>
-                        <div className="flex gap-2">
-                             {!editMemoItem && <button onClick={()=>setEditMemoItem({id:Date.now().toString(), title:'', category:'sightseeing', content:'', images:[]})} className="bg-rose-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-sm active:scale-95">+ 新增</button>}
-                             <button onClick={()=>{setMemoModal(false);setEditMemoItem(null)}} className="p-2 bg-white rounded-full shadow-sm text-slate-500"><Icon n="X" s={20}/></button>
-                        </div>
+            {/* Edit Modal (Itinerary) - REFINED - ELDERLY FRIENDLY */}
+            {modal && editItem && <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center animate-fade-in"><div className="bg-white w-full sm:w-[95%] max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[95vh]"><div className="px-6 py-5 border-b flex justify-between items-center bg-slate-50/50 rounded-t-3xl"><h2 className="font-bold text-2xl text-slate-800 font-rounded">{editItem.id&&day.items.some(i=>i.id===editItem.id)?'編輯行程':'新增行程'}</h2><button onClick={()=>setModal(false)} className="p-3 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200 transition-colors"><Icon n="X" s={28}/></button></div><div className="p-6 overflow-y-auto space-y-6">
+                
+                {/* ✏️ 時間與標題 (巨大化輸入框 & 分行顯示) */}
+                <div className="space-y-4">
+                    <div>
+                        <label className="text-base font-bold text-slate-500 mb-1 block">時間</label>
+                        <TimeScroll val={editItem.time} setVal={(v)=>setEditItem({...editItem,time:v})}/>
                     </div>
-                    <div className="p-6 overflow-y-auto flex-1 space-y-4 bg-slate-50">
-                        {editMemoItem ? (
-                            <div className="space-y-4 animate-fade-in">
-                                <input type="text" value={editMemoItem.title} onChange={e=>setEditMemoItem({...editMemoItem, title:e.target.value})} placeholder="筆記標題 (例如: 必買清單)" className="w-full bg-white p-4 rounded-2xl font-bold text-lg border-2 border-rose-100 outline-none focus:border-rose-400"/>
-                                <div className="flex gap-2 overflow-x-auto pb-2">
-                                    {Object.entries(CATS).map(([k, v]) => (
-                                        <button key={k} onClick={()=>setEditMemoItem({...editMemoItem, category:k})} className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border transition-all ${editMemoItem.category===k ? 'bg-rose-500 text-white border-rose-500' : 'bg-white text-slate-500 border-slate-200'}`}>{v.l}</button>
-                                    ))}
-                                </div>
-                                <textarea value={editMemoItem.content} onChange={e=>setEditMemoItem({...editMemoItem, content:e.target.value})} placeholder="輸入詳細內容..." className="w-full bg-white p-4 rounded-2xl text-base border-2 border-slate-100 outline-none focus:border-rose-400 h-40"/>
-                                <div>
-                                    <div className="text-sm font-bold text-slate-500 mb-2">圖片 (上傳/貼連結)</div>
-                                    <div className="flex gap-2 mb-2">
-                                        <input ref={urlInputRef} type="text" placeholder="貼上圖片網址..." className="flex-1 bg-white px-3 py-2 rounded-xl text-sm border border-slate-200 outline-none focus:border-rose-400"/>
-                                        {/* 旅遊筆記「+ 加入」按鈕優化：使用 Plus 圖示 */}
-                                        <button onClick={handleAddUrl} className="bg-rose-100 text-rose-600 p-2.5 rounded-xl border border-rose-200 active:scale-95 flex items-center justify-center"><Icon n="Plus" s={20}/></button>
-                                        <button onClick={()=>imgInputRef.current.click()} className="bg-slate-200 text-slate-600 px-3 py-2 rounded-xl text-sm font-bold active:scale-95"><Icon n="Image" s={18}/></button>
-                                        <input type="file" ref={imgInputRef} className="hidden" accept="image/*" onChange={handleImageUpload}/>
-                                    </div>
-                                    <div className="grid grid-cols-3 gap-2">
-                                        {editMemoItem.images.map((img, i) => (
-                                            <div key={i} className="relative aspect-square rounded-xl overflow-hidden border-2 border-slate-200 bg-white group shadow-sm">
-                                                <img src={img} className="w-full h-full object-cover"/>
-                                                {i===0 && <div className="absolute top-0 left-0 bg-yellow-400 text-white text-[10px] font-bold px-2 py-0.5 rounded-br-lg shadow-sm z-10">👑 封面</div>}
-                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-1 z-20">
-                                                    <button onClick={(e)=>{e.stopPropagation(); setEditMemoItem({...editMemoItem, images: editMemoItem.images.filter((_, idx)=>idx!==i)})}} className="self-end text-white bg-red-500/80 rounded-full p-1 hover:bg-red-600"><Icon n="X" s={14}/></button>
-                                                    <div className="flex justify-between w-full">
-                                                        {i > 0 && <button onClick={(e)=>moveImg(e, i, -1)} className="text-white bg-slate-500/80 rounded-full p-1 hover:bg-slate-600"><Icon n="ChevronLeft" s={14}/></button>}
-                                                        {i < editMemoItem.images.length - 1 && <button onClick={(e)=>moveImg(e, i, 1)} className="text-white bg-slate-500/80 rounded-full p-1 ml-auto hover:bg-slate-600"><Icon n="ChevronRight" s={14}/></button>}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                                <div className="flex gap-3 pt-4">
-                                     {memos[editMemoItem.id] && <button onClick={(e)=>{e.stopPropagation(); if(confirm('刪除此筆記?')) { deleteMemo(editMemoItem.id); setEditMemoItem(null); }}} className="p-4 rounded-2xl bg-red-50 text-red-500 font-bold"><Icon n="Trash2" s={20}/></button>}
-                                     {!memos[editMemoItem.id] && <button onClick={()=>setEditMemoItem(null)} className="p-4 rounded-2xl bg-slate-100 text-slate-500 font-bold">放棄</button>}
-                                     <button onClick={saveMemo} className="flex-1 bg-rose-500 text-white rounded-2xl py-4 font-bold text-lg shadow-lg shadow-rose-200 active:scale-95">儲存筆記</button>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="space-y-3">
-                                {Object.keys(memos).length === 0 && <div className="text-center py-10 text-slate-400">尚無筆記，點擊右上角新增！</div>}
-                                {Object.values(memos).map(memo => (
-                                    <div key={memo.id} onClick={()=>setEditMemoItem(memo)} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 active:scale-98 transition-transform flex gap-4">
-                                        {memo.images && memo.images.length > 0 && (
-                                            <div className="w-20 h-20 shrink-0 rounded-xl overflow-hidden bg-slate-100 relative border border-slate-100">
-                                                <img src={memo.images[0]} className="w-full h-full object-cover"/>
-                                            </div>
-                                        )}
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex justify-between items-start mb-1">
-                                                <span className={`text-xs px-2 py-0.5 rounded-md font-bold ${CATS[memo.category]?.c.replace('text-', 'bg-').split(' ')[0].replace('100', '50')} ${CATS[memo.category]?.c.split(' ')[1]}`}>{CATS[memo.category]?.l}</span>
-                                            </div>
-                                            <h3 className="font-bold text-slate-800 mb-1 line-clamp-1">{memo.title}</h3>
-                                            <p className="text-xs text-slate-500 line-clamp-2">{memo.content}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                    <div>
+                        <label className="text-base font-bold text-slate-500 mb-1 block">標題</label>
+                        <input type="text" value={editItem.title} onChange={e=>setEditItem({...editItem,title:e.target.value})} className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 font-bold text-xl outline-none focus:border-blue-400 transition-colors" placeholder="請輸入行程名稱"/>
                     </div>
                 </div>
-            </div>}
 
-            {/* Edit Modal (Itinerary) - REFINED - CLEAN */}
-            {modal && editItem && <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center animate-fade-in"><div className="bg-white w-full sm:w-[95%] max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[90vh]"><div className="px-6 py-5 border-b flex justify-between items-center bg-slate-50/50 rounded-t-3xl"><h2 className="font-bold text-xl text-slate-800 font-rounded">{editItem.id&&day.items.some(i=>i.id===editItem.id)?'編輯行程':'新增行程'}</h2><button onClick={()=>setModal(false)} className="p-2 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200 transition-colors"><Icon n="X" s={24}/></button></div><div className="p-6 overflow-y-auto space-y-6">
-                <div className="flex gap-4"><div className="w-1/3 space-y-2"><label className="text-sm font-bold text-slate-500">時間</label><TimeScroll val={editItem.time} setVal={(v)=>setEditItem({...editItem,time:v})}/></div><div className="w-2/3 space-y-2"><label className="text-sm font-bold text-slate-500">標題</label><input type="text" value={editItem.title} onChange={e=>setEditItem({...editItem,title:e.target.value})} className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-3 font-bold text-lg outline-none focus:border-blue-400 transition-colors" placeholder="輸入行程名稱"/></div></div>
-                <div><label className="text-sm font-bold text-slate-500 mb-2 block">分類</label><div className="relative"><select value={editItem.category} onChange={e=>setEditItem({...editItem,category:e.target.value})} className="w-full appearance-none bg-slate-50 border-2 border-slate-100 rounded-2xl p-3 font-bold text-lg outline-none focus:border-blue-400 pr-10">{Object.entries(CATS).map(([k,v])=><option key={k} value={k}>{v.l}</option>)}</select><div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400"><Icon n="ArrowDown" s={20}/></div></div></div>
+                {/* ✏️ 分類 (按鈕化選擇 - 像筆記那樣) */}
+                <div>
+                    <label className="text-base font-bold text-slate-500 mb-2 block">分類</label>
+                    <div className="flex gap-2 overflow-x-auto pb-2 hide-scrollbar">
+                        {Object.entries(CATS).map(([k, v]) => (
+                            <button key={k} onClick={()=>setEditItem({...editItem, category:k})} className={`px-4 py-3 rounded-xl font-bold whitespace-nowrap border-2 transition-all flex items-center gap-2 ${editItem.category===k ? 'bg-blue-500 text-white border-blue-500 shadow-md scale-105' : 'bg-white text-slate-500 border-slate-200'}`}>
+                                <Icon n={v.i} s={20}/> {v.l}
+                            </button>
+                        ))}
+                    </div>
+                </div>
                 
                 {/* 消費明細 - 包含分類選單 */}
                 <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100"><div className="flex justify-between items-center mb-3"><label className="text-sm font-bold text-slate-500">消費明細</label><button onClick={addExpense} className="text-xs bg-blue-100 text-blue-600 px-3 py-1.5 rounded-full font-bold hover:bg-blue-200 transition-colors">+ 新增</button></div>{(!editItem.expenses || editItem.expenses.length === 0) && <div className="text-center text-slate-400 text-sm py-2">尚無消費紀錄</div>}<div className="space-y-2">{(editItem.expenses || []).map((ex, idx) => (<div key={ex.id} className="flex gap-2 items-center flex-wrap sm:flex-nowrap bg-white p-2 rounded-xl border border-slate-100 shadow-sm"><div className="w-full sm:w-auto flex-1 min-w-0"><input type="text" placeholder="項目" value={ex.label} onChange={e => updateExpense(idx, 'label', e.target.value)} className="w-full text-sm font-bold outline-none bg-transparent placeholder:text-slate-300" /></div><div className="flex items-center gap-2 w-full sm:w-auto justify-end mt-2 sm:mt-0"><select value={ex.category || 'other'} onChange={e => updateExpense(idx, 'category', e.target.value)} className="text-xs bg-slate-100 rounded-lg px-2 py-1 outline-none border-0 text-slate-600 max-w-[80px]">{Object.entries(CATS).map(([k,v])=><option key={k} value={k}>{v.l}</option>)}</select><div className="flex items-center bg-slate-50 rounded-lg px-2 py-1"><select value={ex.currency} onChange={e => updateExpense(idx, 'currency', e.target.value)} className="bg-transparent text-xs font-bold outline-none text-slate-500 mr-1"><option value="JPY">¥</option><option value="NT">NT</option></select><input type="number" placeholder="0" value={ex.amount} onChange={e => updateExpense(idx, 'amount', e.target.value)} className="w-12 text-sm font-mono font-bold outline-none bg-transparent text-right" /></div><button onClick={() => removeExpense(idx)} className="text-slate-300 hover:text-red-500 transition-colors"><Icon n="X" s={16}/></button></div></div>))}</div><div className="mt-3 flex justify-end gap-4 text-sm font-bold text-slate-600 border-t border-slate-200 pt-2"><span>¥ {fmtMoney((editItem.expenses||[]).filter(e=>e.currency!=='NT').reduce((s,x)=>s+Number(x.amount||0),0))}</span><span>NT {fmtMoney((editItem.expenses||[]).filter(e=>e.currency==='NT').reduce((s,x)=>s+Number(x.amount||0),0))}</span></div></div>
@@ -754,7 +700,6 @@ function App(){
                 
                 {/* 備註與定位 (乾淨版 - 移除自動定位) */}
                 <div className="space-y-2"><label className="text-sm font-bold text-slate-500">備註</label><textarea value={editItem.note} onChange={e=>setEditItem({...editItem,note:e.target.value})} placeholder="輸入備註..." className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-3 text-base h-24 outline-none focus:border-blue-400"/></div>
-                {/* 🗺️ Mapcode 查詢按鈕優化：與輸入框等高，使用地球儀圖示 */}
                 <div className="bg-slate-50 p-4 rounded-2xl mb-4 border border-slate-100"><div className="space-y-3"><div><label className="text-xs text-slate-400 block mb-1">車載導航 Mapcode</label><div className="flex gap-2"><input type="text" value={editItem.mapcode} onChange={e=>setEditItem({...editItem,mapcode:e.target.value})} placeholder="Mapcode" className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-400 font-mono"/><a href="https://japanmapcode.com/zh-TW" target="_blank" rel="noopener noreferrer" className="p-3 bg-white text-slate-500 border border-slate-200 rounded-2xl hover:bg-slate-50 active:scale-95 flex items-center justify-center"><Icon n="Globe" s={20}/></a></div></div>
                 {/* 僅保留關鍵字輸入，移除按鈕 */}
                 <div><label className="text-xs text-slate-400 block mb-1">Google Maps 搜尋關鍵字 (連結修正)</label><div className="flex gap-2"><input type="text" value={editItem.searchKeyword} onChange={e=>setEditItem({...editItem,searchKeyword:e.target.value})} placeholder="例如: 晴空塔 (若自動連結錯誤時使用)" className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-400"/><a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(editItem.searchKeyword||editItem.title)}`} target="_blank" className="p-3 bg-white text-slate-500 border border-slate-200 rounded-2xl hover:bg-slate-50 active:scale-95 flex items-center justify-center"><Icon n="Search" s={20}/></a></div></div></div></div>
