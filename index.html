@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>關東新春自駕遊 🎌 (V5)</title>
+<title>關東新春自駕遊 🎌 (V6)</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
@@ -139,7 +139,7 @@ const INITIAL_ITINERARY = [
 
 function App(){
     const [data,setData]=useState(()=>{
-        const saved=localStorage.getItem('kanto_v2025_final_stable_v5');
+        const saved=localStorage.getItem('kanto_v2025_final_stable_v6'); // 更新版本號
         if(saved) { try { return JSON.parse(saved); } catch(e){} }
         return INITIAL_ITINERARY;
     });
@@ -163,6 +163,7 @@ function App(){
     const [expandedNotes, setExpandedNotes] = useState(new Set()); 
     const [filterCategory, setFilterCategory] = useState(null);
     const [liveWeather, setLiveWeather] = useState(null); 
+    const [menuOpen, setMenuOpen] = useState(false); // 新增選單開關狀態
 
     const fileRef=useRef(null);
     const stepRef=useRef(null);
@@ -172,7 +173,7 @@ function App(){
     const sortableInstance = useRef(null);
     const longPressTimer = useRef(null);
 
-    useEffect(()=>{localStorage.setItem('kanto_v2025_final_stable_v5',JSON.stringify(data))},[data]);
+    useEffect(()=>{localStorage.setItem('kanto_v2025_final_stable_v6',JSON.stringify(data))},[data]);
     useEffect(()=>{localStorage.setItem('kanto_v2025_memos',JSON.stringify(memos))},[memos]);
     useEffect(()=>{
         if(stepModal) {
@@ -454,15 +455,13 @@ function App(){
             <div className="bg-gradient-to-r from-rose-500 to-orange-400 shadow-md pt-safe z-30 shrink-0 relative">
                 <div className="h-1.5 w-full bg-black/10 absolute top-0 left-0"><div className="h-full bg-yellow-300 transition-all duration-500" style={{width:`${((idx+1)/data.length)*100}%`}}/></div>
                 <div className="px-4 py-3 text-white">
-                    <div className="flex justify-between items-end">
+                    <div className="flex justify-between items-center">
                         <div className="flex flex-col justify-center">
-                            {/* 📅 2025 年份優化：與日期水平平衡 */}
-                            <div className="flex items-start relative">
-                                <span className="absolute -top-3 left-1 text-sm font-black text-yellow-200 tracking-widest">2025</span>
-                                <div className="flex items-baseline mt-1">
-                                     <h1 className="font-black text-5xl tracking-tight leading-none drop-shadow-md">{day.date}</h1>
-                                     <span className="text-2xl font-bold opacity-90 ml-2 self-end mb-1">{day.dayOfWeek}</span>
-                                </div>
+                            {/* 📅 日期顯示優化 (長輩友善版) */}
+                            <div className="flex items-center gap-2 relative">
+                                <span className="text-base font-bold text-white/80 absolute -top-4 left-0.5">2025</span>
+                                <h1 className="font-black text-5xl tracking-wide leading-none drop-shadow-md mt-1">{day.date}</h1>
+                                <span className="text-xl font-bold opacity-90 self-end mb-1">{day.dayOfWeek}</span>
                             </div>
                             <div className="text-sm font-bold text-white flex items-center gap-1 mt-1 drop-shadow-sm"><Icon n="MapPin" s={14} c="shrink-0 text-yellow-200"/><span className="truncate max-w-[220px] leading-none">{day.location}</span></div>
                         </div>
@@ -553,6 +552,7 @@ function App(){
                                             <div className="relative flex flex-col gap-2">
                                                 <div className="flex justify-between items-start">
                                                     <div className="flex items-baseline gap-2">
+                                                        {/* 🕰️ 時間軸字體放大：text-xl */}
                                                         <span className="text-xl font-black text-slate-800 font-mono tracking-tight">{item.time}</span>
                                                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${cat.c.replace('text-','border-').replace('100','200')}`}>{cat.l}</span>
                                                     </div>
@@ -634,11 +634,20 @@ function App(){
                                 <button onClick={()=>{setEditItem({id:Date.now().toString(),time:'12:00',title:'',category:'sightseeing',expenses:[],note:'',mapcode:'',searchKeyword:'',completed:false,dayId:day.id,steps:0});setModal(true)}} className="p-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl shadow-md active:scale-90 transition-transform"><Icon n="Plus" s={20}/></button>
                                 <div className="w-[1px] h-8 bg-slate-100 mx-1"></div>
                                 <div className="relative group">
-                                    <button className="p-3 bg-slate-50 text-slate-500 rounded-xl active:scale-90 transition-transform"><Icon n="Menu" s={20}/></button>
-                                    <div className="absolute bottom-full right-0 mb-2 w-32 bg-white rounded-xl shadow-xl border border-slate-100 hidden group-hover:block active:block p-1">
-                                        <button onClick={exportData} className="w-full text-left px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-lg">備份資料</button>
-                                        <button onClick={()=>fileRef.current.click()} className="w-full text-left px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-lg">讀取備份</button>
-                                    </div>
+                                    <button className={`p-3 rounded-xl active:scale-90 transition-transform ${menuOpen ? 'bg-slate-200 text-slate-800' : 'bg-slate-50 text-slate-500'}`} onClick={() => setMenuOpen(!menuOpen)}>
+                                        <Icon n="Menu" s={20}/>
+                                    </button>
+                                    
+                                    {/* Menu Popover - 使用 state 控制顯示 */}
+                                    {menuOpen && (
+                                        <>
+                                            <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)}></div>
+                                            <div className="absolute bottom-full right-0 mb-2 w-36 bg-white rounded-xl shadow-2xl border border-slate-100 p-1 z-50 animate-fade-in">
+                                                <button onClick={() => { exportData(); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-2"><Icon n="Download" s={16}/> 備份資料</button>
+                                                <button onClick={() => { fileRef.current.click(); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-2"><Icon n="Upload" s={16}/> 讀取備份</button>
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -680,12 +689,9 @@ function App(){
                         {editMemoItem ? (
                             <div className="space-y-4 animate-fade-in">
                                 <input type="text" value={editMemoItem.title} onChange={e=>setEditMemoItem({...editMemoItem, title:e.target.value})} placeholder="筆記標題 (例如: 必買清單)" className="w-full bg-white p-4 rounded-2xl font-bold text-lg border-2 border-rose-100 outline-none focus:border-rose-400"/>
-                                {/* ✏️ 分類按鈕 - 六宮格 */}
-                                <div className="grid grid-cols-6 gap-1 pb-2">
+                                <div className="flex gap-2 overflow-x-auto pb-2">
                                     {Object.entries(CATS).map(([k, v]) => (
-                                        <button key={k} onClick={()=>setEditMemoItem({...editMemoItem, category:k})} className={`h-12 rounded-lg font-bold border transition-all flex flex-col items-center justify-center gap-0 ${editMemoItem.category===k ? 'bg-rose-500 text-white border-rose-500 shadow-md scale-105' : 'bg-white text-slate-500 border-slate-200'}`}>
-                                            <Icon n={v.i} s={16}/> <span className="text-[9px]">{v.l}</span>
-                                        </button>
+                                        <button key={k} onClick={()=>setEditMemoItem({...editMemoItem, category:k})} className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border transition-all ${editMemoItem.category===k ? 'bg-rose-500 text-white border-rose-500' : 'bg-white text-slate-500 border-slate-200'}`}>{v.l}</button>
                                     ))}
                                 </div>
                                 <textarea value={editMemoItem.content} onChange={e=>setEditMemoItem({...editMemoItem, content:e.target.value})} placeholder="輸入詳細內容..." className="w-full bg-white p-4 rounded-2xl text-base border-2 border-slate-100 outline-none focus:border-rose-400 h-40"/>
@@ -745,7 +751,7 @@ function App(){
             </div>}
 
             {/* Edit Modal (Itinerary) - REFINED - ELDERLY FRIENDLY */}
-            {modal && editItem && <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center animate-fade-in"><div className="bg-white w-full sm:w-[95%] max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[95vh]"><div className="px-6 py-5 border-b flex justify-between items-center bg-slate-50/50 rounded-t-3xl"><h2 className="font-bold text-2xl text-slate-800 font-rounded">{editItem.id&&day.items.some(i=>i.id===editItem.id)?'編輯行程':'新增行程'}</h2><button onClick={()=>setModal(false)} className="p-3 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200 transition-colors"><Icon n="X" s={28}/></button></div><div className="p-6 overflow-y-auto space-y-6">
+            {modal && editItem && <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center animate-fade-in"><div className="bg-white w-full sm:w-[95%] max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[95vh]"><div className="px-6 py-5 border-b flex justify-between items-center bg-slate-50/50 rounded-t-3xl"><h2 className="font-bold text-2xl text-slate-800 font-rounded">{editItem.id&&day.items.some(i=>i.id===editItem.id)?'編輯行程':'新增行程'}</h2><button onClick={()=>setModal(false)} className="p-3 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200 transition-colors"><Icon n="X" s={28}/></button></div><div className="p-6 overflow-y-auto space-y-6">
                 
                 {/* ✏️ 時間與標題 (並排 & 巨大化 & 30/70分配) */}
                 <div className="flex gap-2 items-end">
