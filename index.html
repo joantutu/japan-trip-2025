@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>關東新春自駕遊 🎌 (V6)</title>
+<title>關東新春自駕遊 🎌 (V9)</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
@@ -79,6 +79,10 @@ const Icons={
     Download:<g><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></g>,
     Upload:<g><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></g>,
     Link:<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" strokeLinecap="round" strokeLinejoin="round"/>,
+    ExternalLink:<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6m4-3h6v6m-11 5L21 3" strokeLinecap="round" strokeLinejoin="round"/>,
+    Navigation:<path d="M3 11l19-9-9 19-2-8-8-2z" strokeLinecap="round" strokeLinejoin="round"/>,
+    Route:<g><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></g>,
+    Globe:<g><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></g>,
     Book:<g><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></g>,
     Edit:<g><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></g>,
     Fire:<g><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-5-6.33-5-6.33S1 10.62 1 12a2.5 2.5 0 0 0 2.5 2.5 2.5 2.5 0 0 0 2.5-2.5 2.5 2.5 0 0 0 2.5 2.5z" fill="#F472B6"/><path d="M15.5 17.5a3.5 3.5 0 0 0 5-5c0-1.93-7-8.86-7-8.86s-7 6.93-7 8.86a3.5 3.5 0 0 0 5 5 3.5 3.5 0 0 0 4-3.5 3.5 3.5 0 0 0 3.5 3.5z" fill="#F472B6"/></g>,
@@ -139,7 +143,7 @@ const INITIAL_ITINERARY = [
 
 function App(){
     const [data,setData]=useState(()=>{
-        const saved=localStorage.getItem('kanto_v2025_final_stable_v6'); // 更新版本號
+        const saved=localStorage.getItem('kanto_v2025_final_stable_v9');
         if(saved) { try { return JSON.parse(saved); } catch(e){} }
         return INITIAL_ITINERARY;
     });
@@ -163,7 +167,8 @@ function App(){
     const [expandedNotes, setExpandedNotes] = useState(new Set()); 
     const [filterCategory, setFilterCategory] = useState(null);
     const [liveWeather, setLiveWeather] = useState(null); 
-    const [menuOpen, setMenuOpen] = useState(false); // 新增選單開關狀態
+    const [menuOpen, setMenuOpen] = useState(false); 
+    const [viewImage, setViewImage] = useState(null); // 🔍 圖片預覽狀態
 
     const fileRef=useRef(null);
     const stepRef=useRef(null);
@@ -173,7 +178,7 @@ function App(){
     const sortableInstance = useRef(null);
     const longPressTimer = useRef(null);
 
-    useEffect(()=>{localStorage.setItem('kanto_v2025_final_stable_v6',JSON.stringify(data))},[data]);
+    useEffect(()=>{localStorage.setItem('kanto_v2025_final_stable_v9',JSON.stringify(data))},[data]);
     useEffect(()=>{localStorage.setItem('kanto_v2025_memos',JSON.stringify(memos))},[memos]);
     useEffect(()=>{
         if(stepModal) {
@@ -455,18 +460,17 @@ function App(){
             <div className="bg-gradient-to-r from-rose-500 to-orange-400 shadow-md pt-safe z-30 shrink-0 relative">
                 <div className="h-1.5 w-full bg-black/10 absolute top-0 left-0"><div className="h-full bg-yellow-300 transition-all duration-500" style={{width:`${((idx+1)/data.length)*100}%`}}/></div>
                 <div className="px-4 py-3 text-white">
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between items-end">
                         <div className="flex flex-col justify-center">
-                            {/* 📅 日期顯示優化 (長輩友善版) */}
                             <div className="flex items-center gap-2 relative">
-                                <span className="text-base font-bold text-white/80 absolute -top-4 left-0.5">2025</span>
+                                <span className="text-base font-bold text-white/80 absolute -top-4 left-0.5">{day.date.startsWith('12') ? '2025' : '2026'}</span>
                                 <h1 className="font-black text-5xl tracking-wide leading-none drop-shadow-md mt-1">{day.date}</h1>
                                 <span className="text-xl font-bold opacity-90 self-end mb-1">{day.dayOfWeek}</span>
                             </div>
                             <div className="text-sm font-bold text-white flex items-center gap-1 mt-1 drop-shadow-sm"><Icon n="MapPin" s={14} c="shrink-0 text-yellow-200"/><span className="truncate max-w-[220px] leading-none">{day.location}</span></div>
                         </div>
                         <div className="flex flex-col items-end gap-2">
-                            <div className="flex flex-col items-end gap-0.5 bg-white/10 px-2 py-1 rounded-lg backdrop-blur-md border border-white/20 shadow-md cursor-pointer relative" onClick={toggleWeather}>
+                            <a href={getWeatherUrl()} target="_blank" className="flex flex-col items-end gap-0.5 bg-white/10 px-2 py-1 rounded-lg backdrop-blur-md border border-white/20 shadow-md cursor-pointer relative active:scale-95 transition-transform">
                                 <div className="flex items-center gap-1">
                                     <div className={`${weatherColorClass} ${weatherAnimClass}`}>
                                         <Icon n={weatherIconName} s={24} />
@@ -478,7 +482,7 @@ function App(){
                                 <span className="text-[9px] font-bold text-yellow-100 opacity-80">
                                     {liveWeather ? '目前天氣' : '讀取中'}
                                 </span>
-                            </div>
+                            </a>
                             <button onClick={()=>{setTStep(day.steps||'');setStepModal(true)}} className="flex items-center gap-1 text-xs text-rose-600 font-black bg-white px-3 py-1 rounded-full shadow-lg active:scale-95 transition-transform border border-rose-100">
                                 <Icon n="Footprints" s={14}/><span className={`leading-none pt-0.5 ${Number(day.steps) > 0 ? 'text-rose-600' : 'text-slate-400'}`}>{displaySteps.toLocaleString()}</span>
                             </button>
@@ -525,6 +529,12 @@ function App(){
                                     
                                     {!sort && (
                                         <>
+                                            <div className="absolute right-0 top-0 z-20">
+                                                <button onClick={(e)=>{e.stopPropagation();setEditItem({...item, dayId: day.id});setModal(true)}} className="w-9 h-9 bg-blue-50 rounded-full flex items-center justify-center shadow-sm border border-blue-100 text-blue-500 active:scale-90 transition-transform">
+                                                    <Icon n="Edit" s={18}/>
+                                                </button>
+                                            </div>
+
                                             <div onClick={(e)=>{e.stopPropagation();toggle(item.id)}} className={`absolute left-0 top-0 w-12 h-12 rounded-full border-[4px] border-[#fff7ed] z-20 flex items-center justify-center transition-all shadow-md cursor-pointer ${item.completed?'bg-emerald-500 text-white scale-90':'bg-white text-slate-400 ' + cat.c.replace('bg-', 'text-').replace('text-', 'border-')} ring-1 ring-slate-100`}>
                                                 <div className={`w-full h-full rounded-full flex items-center justify-center ${!item.completed && cat.c}`}>
                                                     {item.completed ? <Icon n="Check" s={24}/> : <Icon n={cat.i} s={20}/>}
@@ -550,13 +560,11 @@ function App(){
                                             </>
                                         ):(
                                             <div className="relative flex flex-col gap-2">
-                                                <div className="flex justify-between items-start">
+                                                <div className="flex justify-between items-start pr-10"> 
                                                     <div className="flex items-baseline gap-2">
-                                                        {/* 🕰️ 時間軸字體放大：text-xl */}
                                                         <span className="text-xl font-black text-slate-800 font-mono tracking-tight">{item.time}</span>
                                                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${cat.c.replace('text-','border-').replace('100','200')}`}>{cat.l}</span>
                                                     </div>
-                                                    <button onClick={(e)=>{e.stopPropagation();setEditItem({...item, dayId: day.id});setModal(true)}} className="text-slate-300 hover:text-blue-500 active:scale-90 transition-transform"><Icon n="Edit" s={16}/></button>
                                                 </div>
                                                 <h3 className={`font-black text-lg leading-snug font-rounded flex items-center gap-1 ${item.completed?'text-slate-400 line-through decoration-slate-300':'text-slate-800'}`}>
                                                     <Icon n="MapPin" s={18} c="text-slate-300 shrink-0"/>
@@ -600,7 +608,6 @@ function App(){
                 </div>
             </div>
 
-            {/* 精簡抽屜 & 排序浮動按鈕 */}
             <div className={`fixed bottom-0 w-full z-50 transition-transform duration-300 ${(footerExpanded || sort) ? 'translate-y-0' : 'translate-y-full'}`}>
                 {!sort && (
                     <div 
@@ -634,20 +641,11 @@ function App(){
                                 <button onClick={()=>{setEditItem({id:Date.now().toString(),time:'12:00',title:'',category:'sightseeing',expenses:[],note:'',mapcode:'',searchKeyword:'',completed:false,dayId:day.id,steps:0});setModal(true)}} className="p-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl shadow-md active:scale-90 transition-transform"><Icon n="Plus" s={20}/></button>
                                 <div className="w-[1px] h-8 bg-slate-100 mx-1"></div>
                                 <div className="relative group">
-                                    <button className={`p-3 rounded-xl active:scale-90 transition-transform ${menuOpen ? 'bg-slate-200 text-slate-800' : 'bg-slate-50 text-slate-500'}`} onClick={() => setMenuOpen(!menuOpen)}>
-                                        <Icon n="Menu" s={20}/>
-                                    </button>
-                                    
-                                    {/* Menu Popover - 使用 state 控制顯示 */}
-                                    {menuOpen && (
-                                        <>
-                                            <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)}></div>
-                                            <div className="absolute bottom-full right-0 mb-2 w-36 bg-white rounded-xl shadow-2xl border border-slate-100 p-1 z-50 animate-fade-in">
-                                                <button onClick={() => { exportData(); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-2"><Icon n="Download" s={16}/> 備份資料</button>
-                                                <button onClick={() => { fileRef.current.click(); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-2"><Icon n="Upload" s={16}/> 讀取備份</button>
-                                            </div>
-                                        </>
-                                    )}
+                                    <button className="p-3 bg-slate-50 text-slate-500 rounded-xl active:scale-90 transition-transform"><Icon n="Menu" s={20}/></button>
+                                    <div className="absolute bottom-full right-0 mb-2 w-32 bg-white rounded-xl shadow-xl border border-slate-100 hidden group-hover:block active:block p-1">
+                                        <button onClick={exportData} className="w-full text-left px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-lg">備份資料</button>
+                                        <button onClick={()=>fileRef.current.click()} className="w-full text-left px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-lg">讀取備份</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -689,9 +687,12 @@ function App(){
                         {editMemoItem ? (
                             <div className="space-y-4 animate-fade-in">
                                 <input type="text" value={editMemoItem.title} onChange={e=>setEditMemoItem({...editMemoItem, title:e.target.value})} placeholder="筆記標題 (例如: 必買清單)" className="w-full bg-white p-4 rounded-2xl font-bold text-lg border-2 border-rose-100 outline-none focus:border-rose-400"/>
-                                <div className="flex gap-2 overflow-x-auto pb-2">
+                                {/* ✏️ 分類按鈕 - 六宮格 */}
+                                <div className="grid grid-cols-6 gap-1 pb-2">
                                     {Object.entries(CATS).map(([k, v]) => (
-                                        <button key={k} onClick={()=>setEditMemoItem({...editMemoItem, category:k})} className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border transition-all ${editMemoItem.category===k ? 'bg-rose-500 text-white border-rose-500' : 'bg-white text-slate-500 border-slate-200'}`}>{v.l}</button>
+                                        <button key={k} onClick={()=>setEditMemoItem({...editMemoItem, category:k})} className={`h-12 rounded-lg font-bold border transition-all flex flex-col items-center justify-center gap-0 ${editMemoItem.category===k ? 'bg-rose-500 text-white border-rose-500 shadow-md scale-105' : 'bg-white text-slate-500 border-slate-200'}`}>
+                                            <Icon n={v.i} s={16}/> <span className="text-[9px]">{v.l}</span>
+                                        </button>
                                     ))}
                                 </div>
                                 <textarea value={editMemoItem.content} onChange={e=>setEditMemoItem({...editMemoItem, content:e.target.value})} placeholder="輸入詳細內容..." className="w-full bg-white p-4 rounded-2xl text-base border-2 border-slate-100 outline-none focus:border-rose-400 h-40"/>
@@ -706,11 +707,12 @@ function App(){
                                     <div className="grid grid-cols-3 gap-2">
                                         {editMemoItem.images.map((img, i) => (
                                             <div key={i} className="relative aspect-square rounded-xl overflow-hidden border-2 border-slate-200 bg-white group shadow-sm">
-                                                <img src={img} className="w-full h-full object-cover"/>
+                                                {/* 🔍 圖片預覽：點擊觸發 viewImage */}
+                                                <img src={img} onClick={()=>setViewImage(img)} className="w-full h-full object-cover cursor-zoom-in"/>
                                                 {i===0 && <div className="absolute top-0 left-0 bg-yellow-400 text-white text-[10px] font-bold px-2 py-0.5 rounded-br-lg shadow-sm z-10">👑 封面</div>}
-                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-1 z-20">
-                                                    <button onClick={(e)=>{e.stopPropagation(); setEditMemoItem({...editMemoItem, images: editMemoItem.images.filter((_, idx)=>idx!==i)})}} className="self-end text-white bg-red-500/80 rounded-full p-1 hover:bg-red-600"><Icon n="X" s={14}/></button>
-                                                    <div className="flex justify-between w-full">
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-1 z-20 pointer-events-none">
+                                                    <button onClick={(e)=>{e.stopPropagation(); setEditMemoItem({...editMemoItem, images: editMemoItem.images.filter((_, idx)=>idx!==i)})}} className="self-end text-white bg-red-500/80 rounded-full p-1 hover:bg-red-600 pointer-events-auto"><Icon n="X" s={14}/></button>
+                                                    <div className="flex justify-between w-full pointer-events-auto">
                                                         {i > 0 && <button onClick={(e)=>moveImg(e, i, -1)} className="text-white bg-slate-500/80 rounded-full p-1 hover:bg-slate-600"><Icon n="ChevronLeft" s={14}/></button>}
                                                         {i < editMemoItem.images.length - 1 && <button onClick={(e)=>moveImg(e, i, 1)} className="text-white bg-slate-500/80 rounded-full p-1 ml-auto hover:bg-slate-600"><Icon n="ChevronRight" s={14}/></button>}
                                                     </div>
@@ -750,6 +752,12 @@ function App(){
                 </div>
             </div>}
 
+            {/* 🔍 圖片燈箱 (Lightbox) */}
+            {viewImage && <div className="fixed inset-0 z-[120] bg-black/95 flex items-center justify-center p-4 animate-fade-in cursor-zoom-out" onClick={()=>setViewImage(null)}>
+                <button onClick={()=>setViewImage(null)} className="absolute top-6 right-6 text-white/80 hover:text-white bg-white/10 rounded-full p-2 backdrop-blur-sm"><Icon n="X" s={24}/></button>
+                <img src={viewImage} className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl cursor-default" onClick={e=>e.stopPropagation()}/>
+            </div>}
+
             {/* Edit Modal (Itinerary) - REFINED - ELDERLY FRIENDLY */}
             {modal && editItem && <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center animate-fade-in"><div className="bg-white w-full sm:w-[95%] max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[95vh]"><div className="px-6 py-5 border-b flex justify-between items-center bg-slate-50/50 rounded-t-3xl"><h2 className="font-bold text-2xl text-slate-800 font-rounded">{editItem.id&&day.items.some(i=>i.id===editItem.id)?'編輯行程':'新增行程'}</h2><button onClick={()=>setModal(false)} className="p-3 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200 transition-colors"><Icon n="X" s={28}/></button></div><div className="p-6 overflow-y-auto space-y-6">
                 
@@ -778,7 +786,7 @@ function App(){
                 </div>
                 
                 {/* 消費明細 - 包含分類選單 */}
-                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100"><div className="flex justify-between items-center mb-3"><label className="text-sm font-bold text-slate-500">消費明細</label><button onClick={addExpense} className="text-xs bg-blue-100 text-blue-600 px-3 py-1.5 rounded-full font-bold hover:bg-blue-200 transition-colors">+ 新增</button></div>{(!editItem.expenses || editItem.expenses.length === 0) && <div className="text-center text-slate-400 text-sm py-2">尚無消費紀錄</div>}<div className="space-y-2">{(editItem.expenses || []).map((ex, idx) => (<div key={ex.id} className="flex gap-2 items-center flex-wrap sm:flex-nowrap bg-white p-2 rounded-xl border border-slate-100 shadow-sm"><div className="w-full sm:w-auto flex-1 min-w-0"><input type="text" placeholder="項目" value={ex.label} onChange={e => updateExpense(idx, 'label', e.target.value)} className="w-full text-sm font-bold outline-none bg-transparent placeholder:text-slate-300" /></div><div className="flex items-center gap-2 w-full sm:w-auto justify-end mt-2 sm:mt-0"><select value={ex.category || 'other'} onChange={e => updateExpense(idx, 'category', e.target.value)} className="text-xs bg-slate-100 rounded-lg px-2 py-1 outline-none border-0 text-slate-600 max-w-[80px]">{Object.entries(CATS).map(([k,v])=><option key={k} value={k}>{v.l}</option>)}</select><div className="flex items-center bg-slate-50 rounded-lg px-2 py-1"><select value={ex.currency} onChange={e => updateExpense(idx, 'currency', e.target.value)} className="bg-transparent text-xs font-bold outline-none text-slate-500 mr-1"><option value="JPY">¥</option><option value="NT">NT</option></select><input type="number" placeholder="0" value={ex.amount} onChange={e => updateExpense(idx, 'amount', e.target.value)} className="w-12 text-sm font-mono font-bold outline-none bg-transparent text-right" /></div><button onClick={() => removeExpense(idx)} className="text-slate-300 hover:text-red-500 transition-colors"><Icon n="X" s={16}/></button></div></div>))}</div><div className="mt-3 flex justify-end gap-4 text-sm font-bold text-slate-600 border-t border-slate-200 pt-2"><span>¥ {fmtMoney((editItem.expenses||[]).filter(e=>e.currency!=='NT').reduce((s,x)=>s+Number(x.amount||0),0))}</span><span>NT {fmtMoney((editItem.expenses||[]).filter(e=>e.currency==='NT').reduce((s,x)=>s+Number(x.amount||0),0))}</span></div></div>
+                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100"><div className="flex justify-between items-center mb-3"><label className="text-sm font-bold text-slate-500">消費明細</label><button onClick={addExpense} className="text-xs bg-blue-100 text-blue-600 px-3 py-1.5 rounded-full font-bold hover:bg-blue-200 transition-colors">+ 新增</button></div>{(!editItem.expenses || editItem.expenses.length === 0) && <div className="text-center text-slate-400 text-sm py-2">尚無消費紀錄</div>}<div className="space-y-2">{(editItem.expenses || []).map((ex, idx) => (<div key={ex.id} className="flex gap-2 items-center flex-wrap sm:flex-nowrap bg-white p-2 rounded-xl border border-slate-100 shadow-sm"><div className="w-full sm:w-auto flex-1 min-w-0"><input type="text" placeholder="項目" value={ex.label} onChange={e => updateExpense(idx, 'label', e.target.value)} className="w-full text-sm font-bold outline-none bg-transparent placeholder:text-slate-300" /></div><div className="flex items-center gap-2 w-full sm:w-auto justify-end mt-2 sm:mt-0"><select value={ex.category || 'other'} onChange={e => updateExpense(idx, 'category', e.target.value)} className="text-xs bg-slate-100 rounded-lg px-2 py-1 outline-none border-0 text-slate-600 max-w-[80px]">{Object.entries(CATS).map(([k,v])=><option key={k} value={k}>{v.l}</option>)}</select><div className="flex items-center bg-slate-50 rounded-lg px-2 py-1"><select value={ex.currency} onChange={e => updateExpense(idx, 'currency', e.target.value)} className="bg-transparent text-xs font-bold outline-none text-slate-500 mr-1"><option value="JPY">¥</option><option value="NT">NT</option></select><input type="number" placeholder="0" value={ex.amount} onChange={e => updateExpense(idx, 'amount', e.target.value)} className="w-24 text-sm font-mono font-bold outline-none bg-transparent text-right" /></div><button onClick={() => removeExpense(idx)} className="text-slate-300 hover:text-red-500 transition-colors"><Icon n="X" s={16}/></button></div></div>))}</div><div className="mt-3 flex justify-end gap-4 text-sm font-bold text-slate-600 border-t border-slate-200 pt-2"><span>¥ {fmtMoney((editItem.expenses||[]).filter(e=>e.currency!=='NT').reduce((s,x)=>s+Number(x.amount||0),0))}</span><span>NT {fmtMoney((editItem.expenses||[]).filter(e=>e.currency==='NT').reduce((s,x)=>s+Number(x.amount||0),0))}</span></div></div>
                 
                 <div className="space-y-2"><label className="text-sm font-bold text-slate-500 flex items-center gap-1"><Icon n="Footprints" s={16} c="text-blue-500"/> 步數 (選填)</label><input type="number" value={editItem.steps||''} onChange={e=>setEditItem({...editItem,steps:e.target.value})} placeholder="例如: 5000" className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-3 font-mono text-base outline-none focus:border-blue-400"/></div>
                 
