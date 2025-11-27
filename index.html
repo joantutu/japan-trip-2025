@@ -17,6 +17,7 @@
     .pb-safe{padding-bottom:env(safe-area-inset-bottom,24px)}.pt-safe{padding-top:env(safe-area-inset-top,0px)}
     .card-shadow{box-shadow:0 4px 20px -2px rgba(0,0,0,0.08)}
     .font-rounded{font-weight:800;letter-spacing:0.03em;}
+    /* 確保拖曳把手不會觸發頁面捲動 */
     .drag-handle{cursor:grab;touch-action:none;padding:10px}.drag-handle:active{cursor:grabbing}
     
     /* 天氣動畫 */
@@ -87,7 +88,8 @@ const Icons={
     ChevronLeft:<path d="m15 18-6-6 6-6" strokeLinecap="round" strokeLinejoin="round"/>,
     ChevronRight:<path d="m9 18 6-6-6-6" strokeLinecap="round" strokeLinejoin="round"/>,
     Sort:<g><path d="M3 6h18"/><path d="M7 12h10"/><path d="M10 18h4"/></g>,
-    DragHandle:<g><line x1="4" y1="9" x2="20" y2="9" strokeWidth="2.5" strokeLinecap="round"/><line x1="4" y1="15" x2="20" y2="15" strokeWidth="2.5" strokeLinecap="round"/></g>,
+    // 🌸 修正 DragHandle: 改為三條線 (Hamburger Style) 以符合手機操作習慣
+    DragHandle:<path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" strokeLinejoin="round"/>,
     Snowflake:<g><line x1="12" y1="3" x2="12" y2="21" strokeWidth="2"/><line x1="4.2" y1="7.5" x2="19.8" y2="16.5" strokeWidth="2"/><line x1="4.2" y1="16.5" x2="19.8" y2="7.5" strokeWidth="2"/><path d="M8 3.5 12 8 16 3.5" strokeWidth="1.5" fill="none"/><path d="M8 20.5 12 16 16 20.5" strokeWidth="1.5" fill="none"/><path d="M2.5 11 7 12 2.5 13" strokeWidth="1.5" fill="none"/><path d="M21.5 11 17 12 21.5 13" strokeWidth="1.5" fill="none"/></g>,
     Sakura:<g><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(0 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(72 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(144 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(216 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(288 12 12)" fill="currentColor"/><circle cx="12" cy="12" r="5.5" fill="currentColor"/></g>
 };
@@ -141,7 +143,7 @@ function App(){
     const [stepModal,setStepModal]=useState(false);
     const [tStep,setTStep]=useState('');
     const [saveBtnText, setSaveBtnText] = useState('儲存紀錄');
-    const [footerExpanded, setFooterExpanded] = useState(true); // 預設展開，讓使用者知道有選單
+    const [footerExpanded, setFooterExpanded] = useState(true); // 預設展開
     const [expandedNotes, setExpandedNotes] = useState(new Set()); 
     const [filterCategory, setFilterCategory] = useState(null);
 
@@ -320,6 +322,21 @@ function App(){
     const updateExpense=(idx, field, val)=>{const newExps=[...editItem.expenses];newExps[idx][field]=val;setEditItem({...editItem, expenses:newExps})};
     const removeExpense=(idx)=>{const newExps=editItem.expenses.filter((_,i)=>i!==idx);setEditItem({...editItem, expenses:newExps})};
     
+    // Restore fetchCoords and clearCoords
+    const fetchCoords = async () => {
+        const query = editItem.searchKeyword || editItem.title;
+        if (!query) return alert("請先輸入標題或搜尋關鍵字");
+        const coordMatch = query.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) || query.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+        if (coordMatch) { setEditItem({ ...editItem, lat: parseFloat(coordMatch[1]), lng: parseFloat(coordMatch[2]) }); return alert(`📍 已從連結提取座標！`); }
+        setIsFetching(true);
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&accept-language=ja,zh-TW`);
+            const results = await res.json();
+            if (results && results.length > 0) { setEditItem({ ...editItem, lat: parseFloat(results[0].lat), lng: parseFloat(results[0].lon) }); alert(`📍 已定位`); } else { alert("❌ 找不到此地點"); }
+        } catch (e) { alert("❌ 定位失敗"); } finally { setIsFetching(false); }
+    };
+    const clearCoords = () => { if(confirm('清除定位？')) setEditItem({ ...editItem, lat: null, lng: null }); };
+
     // --- Memo Logic ---
     const saveMemo = () => {
         if (!editMemoItem.title) return;
@@ -453,13 +470,17 @@ function App(){
                                     {!sort && (<><div onClick={(e)=>{e.stopPropagation();toggle(item.id)}} className={`absolute left-0 top-1 w-10 h-10 rounded-full border-4 border-[#fff7ed] z-20 flex items-center justify-center transition-colors shadow-sm active:scale-90 cursor-pointer ${item.completed?'bg-emerald-500 text-white':cat.c}`}>{item.completed?<Icon n="Check" s={20}/>:<Icon n={cat.i} s={18}/>}</div>{dur && <div className="absolute left-[1px] -bottom-8 z-10 flex flex-col items-center w-10 pointer-events-none"><div className="bg-white border border-slate-200 rounded-full px-2 py-0.5 text-[10px] text-slate-500 font-bold shadow-sm scale-90 whitespace-nowrap">▼ {dur.t}</div></div>}</>)}
                                     <div 
                                         onClick={()=>!sort && toggleNote(item.id)} 
-                                        className={`bg-white rounded-3xl border border-slate-100 relative z-10 transition-all tap-transparent ${sort?'p-4 border-blue-400 border-2 shadow-lg flex items-center gap-4 bg-blue-50/50':'p-5 hover:shadow-lg active:scale-[0.98] card-shadow '+(item.completed?'bg-slate-50/80 grayscale-[0.5]':'')}`}
+                                        className={`bg-white rounded-3xl border border-slate-100 relative z-10 transition-all tap-transparent ${sort?'p-0 border-blue-400 border-2 shadow-lg flex items-stretch bg-blue-50/20 overflow-hidden':'p-5 hover:shadow-lg active:scale-[0.98] card-shadow '+(item.completed?'bg-slate-50/80 grayscale-[0.5]':'')}`}
                                     >
                                         {sort?(
                                             <>
-                                                <div className="text-blue-500 drag-handle p-2"><Icon n="DragHandle" s={28}/></div>
-                                                <div className="flex-1 pointer-events-none select-none">
-                                                    <div className="text-sm font-bold text-blue-600">{item.time}</div>
+                                                {/* 獨立的拖曳把手區域 - 只有這裡可以拖曳 */}
+                                                <div className="drag-handle w-14 bg-slate-100 flex items-center justify-center flex-shrink-0 border-r border-slate-200 cursor-grab active:cursor-grabbing touch-none">
+                                                     <Icon n="DragHandle" s={26} c="text-slate-400"/>
+                                                </div>
+                                                {/* 內容區域 - 這裡可以放心滑動頁面 */}
+                                                <div className="flex-1 p-4 pointer-events-none select-none flex flex-col justify-center min-w-0">
+                                                    <div className="text-sm font-bold text-blue-600 mb-0.5">{item.time}</div>
                                                     <div className="font-bold text-slate-800 text-lg line-clamp-1">{item.title}</div>
                                                 </div>
                                             </>
