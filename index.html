@@ -90,7 +90,8 @@ const Icons={
     DragHandle:<path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" strokeLinejoin="round"/>,
     Snowflake:<g><line x1="12" y1="3" x2="12" y2="21" strokeWidth="2"/><line x1="4.2" y1="7.5" x2="19.8" y2="16.5" strokeWidth="2"/><line x1="4.2" y1="16.5" x2="19.8" y2="7.5" strokeWidth="2"/><path d="M8 3.5 12 8 16 3.5" strokeWidth="1.5" fill="none"/><path d="M8 20.5 12 16 16 20.5" strokeWidth="1.5" fill="none"/><path d="M2.5 11 7 12 2.5 13" strokeWidth="1.5" fill="none"/><path d="M21.5 11 17 12 21.5 13" strokeWidth="1.5" fill="none"/></g>,
     Sakura:<g><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(0 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(72 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(144 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(216 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(288 12 12)" fill="currentColor"/><circle cx="12" cy="12" r="5.5" fill="currentColor"/></g>,
-    ExternalLink:<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6m4-3h6v6m-11 5L21 3" strokeLinecap="round" strokeLinejoin="round"/>
+    // 🌍 新增 Globe 圖示用於 Mapcode 查詢
+    Globe:<g><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></g>
 };
 
 const Icon=({n,s=24,c=""})=>Icons[n]?<svg xmlns="http://www.w3.org/2000/svg" width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={c} overflow="visible">{Icons[n]}</svg>:null;
@@ -119,10 +120,10 @@ const fmtMoney=(v)=>v.toString().replace(/\B(?=(\d{3})+(?!\d))/g,",");
 // 🌤️ 根據 Open-Meteo Code 判斷天氣類型
 const getWeatherTypeFromCode = (code) => {
     if (code === undefined || code === null) return 'sunny';
-    if (code <= 1) return 'sunny'; // 0,1: 晴朗
-    if (code <= 3 || code === 45 || code === 48) return 'cloudy'; // 2,3: 多雲, 45,48: 霧
-    if (code >= 71 && code <= 77 || code >= 85) return 'snow'; // 71-77, 85-86: 雪
-    return 'rain'; // 51-67, 80-82, 95-99: 雨/雷雨
+    if (code <= 1) return 'sunny'; 
+    if (code <= 3 || code === 45 || code === 48) return 'cloudy'; 
+    if (code >= 71 && code <= 77 || code >= 85) return 'snow'; 
+    return 'rain'; 
 };
 
 const INITIAL_ITINERARY = [
@@ -137,7 +138,7 @@ const INITIAL_ITINERARY = [
 
 function App(){
     const [data,setData]=useState(()=>{
-        const saved=localStorage.getItem('kanto_v2025_final_stable');
+        const saved=localStorage.getItem('kanto_v2025_final_stable_v2'); // 更新版本號，強制載入修正後的資料
         if(saved) { try { return JSON.parse(saved); } catch(e){} }
         return INITIAL_ITINERARY;
     });
@@ -170,7 +171,7 @@ function App(){
     const sortableInstance = useRef(null);
     const longPressTimer = useRef(null);
 
-    useEffect(()=>{localStorage.setItem('kanto_v2025_final_stable',JSON.stringify(data))},[data]);
+    useEffect(()=>{localStorage.setItem('kanto_v2025_final_stable_v2',JSON.stringify(data))},[data]);
     useEffect(()=>{localStorage.setItem('kanto_v2025_memos',JSON.stringify(memos))},[memos]);
     useEffect(()=>{
         if(stepModal) {
@@ -297,10 +298,10 @@ function App(){
     const displaySteps = day.steps > 0 ? day.steps : planSteps;
 
     // 🌤️ 計算即時天氣樣式
-    const liveWeatherType = liveWeather ? getWeatherTypeFromCode(liveWeather.code) : day.weather;
-    const weatherIconName = W_ICONS[liveWeatherType];
-    const weatherColorClass = WEATHER_COLORS[liveWeatherType];
-    const weatherAnimClass = liveWeatherType==='sunny'?'weather-spin':liveWeatherType==='cloudy'?'weather-float':'weather-pulse';
+    const liveWeatherType = liveWeather ? getWeatherTypeFromCode(liveWeather.code) : null; // 如果沒載入就先不顯示或用預設
+    const weatherIconName = liveWeatherType ? W_ICONS[liveWeatherType] : W_ICONS[day.weather];
+    const weatherColorClass = liveWeatherType ? WEATHER_COLORS[liveWeatherType] : WEATHER_COLORS[day.weather];
+    const weatherAnimClass = (liveWeatherType || day.weather)==='sunny'?'weather-spin':(liveWeatherType || day.weather)==='cloudy'?'weather-float':'weather-pulse';
 
     const saveStep=()=>{
         const newData=[...data];
@@ -467,16 +468,17 @@ function App(){
                         <div className="flex flex-col items-end gap-2">
                             <div className="flex flex-col items-end gap-0.5 bg-white/10 px-2 py-1 rounded-lg backdrop-blur-md border border-white/20 shadow-md cursor-pointer relative" onClick={toggleWeather}>
                                 <div className="flex items-center gap-1">
+                                    {/* 🌤️ 天氣圖示根據 API 自動變換 */}
                                     <div className={`${weatherColorClass} ${weatherAnimClass}`}>
                                         <Icon n={weatherIconName} s={20} />
                                     </div>
-                                    {/* 🌡️ 顯示真實 API 氣溫 */}
+                                    {/* 🌡️ 讀取中顯示 ... */}
                                     <span className="font-bold text-lg text-white drop-shadow-sm">
-                                        {liveWeather ? `${liveWeather.temp}°` : (day.weather==='snow'?'-2°':'8°')}
+                                        {liveWeather ? `${liveWeather.temp}°` : '...'}
                                     </span>
                                 </div>
                                 <span className="text-[9px] font-bold text-yellow-100 opacity-80">
-                                    {liveWeather ? '目前天氣' : '預測天氣'}
+                                    {liveWeather ? '目前天氣' : '讀取中'}
                                 </span>
                             </div>
                             <button onClick={()=>{setTStep(day.steps||'');setStepModal(true)}} className="flex items-center gap-1 text-xs text-rose-600 font-black bg-white px-3 py-1 rounded-full shadow-lg active:scale-95 transition-transform border border-rose-100">
@@ -496,18 +498,22 @@ function App(){
 
             <div className={`flex-1 overflow-y-auto relative scroll-smooth-mobile -mt-2 pt-4`}>
                 <div className="py-2 pb-32 space-y-6">
-                    {!sort && day.weather==='snow' && (
-                        <div className="mx-4 bg-gradient-to-r from-cyan-50 to-blue-50 border-2 border-cyan-200 rounded-3xl p-3 shadow-sm flex items-center gap-3 mb-4 animate-fade-in snow-alert">
-                            <div className="text-cyan-500"><Icon n="CloudSnow" s={24}/></div>
+                    {/* 🚨 智慧型警示卡片：雪/雨/隱藏 */}
+                    {!sort && liveWeather && (getWeatherTypeFromCode(liveWeather.code) === 'snow' || getWeatherTypeFromCode(liveWeather.code) === 'rain') && (
+                        <div className={`mx-4 border-2 rounded-3xl p-3 shadow-sm flex items-center gap-3 mb-4 animate-fade-in ${getWeatherTypeFromCode(liveWeather.code) === 'snow' ? 'bg-gradient-to-r from-cyan-50 to-blue-50 border-cyan-200' : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'}`}>
+                            <div className={getWeatherTypeFromCode(liveWeather.code) === 'snow' ? 'text-cyan-500' : 'text-blue-500'}>
+                                <Icon n={getWeatherTypeFromCode(liveWeather.code) === 'snow' ? 'CloudSnow' : 'CloudRain'} s={24}/>
+                            </div>
                             <div className="flex-1">
-                                <div className="text-cyan-800 font-bold text-sm">❄️ 預報有雪｜建議備妥雪鍊</div>
-                                <a href={getWeatherUrl()} target="_blank" className="text-cyan-500 text-[10px] font-bold underline mt-0.5 block">點此確認當地天氣預報 ></a>
+                                <div className={`font-bold text-sm ${getWeatherTypeFromCode(liveWeather.code) === 'snow' ? 'text-cyan-800' : 'text-blue-800'}`}>
+                                    {getWeatherTypeFromCode(liveWeather.code) === 'snow' ? '❄️ 目前有雪｜建議備妥雪鍊' : '🌧️ 目前有雨｜天雨路滑請小心'}
+                                </div>
+                                <a href={getWeatherUrl()} target="_blank" className={`text-[10px] font-bold underline mt-0.5 block ${getWeatherTypeFromCode(liveWeather.code) === 'snow' ? 'text-cyan-500' : 'text-blue-500'}`}>點此確認當地天氣預報 ></a>
                             </div>
                         </div>
                     )}
                     
                     <div ref={sortableRef} className="relative">
-                        {/* 🔍 時間軸加粗加深 */}
                         {!sort && <div className="absolute left-[24px] top-4 bottom-4 w-[3px] bg-slate-300 rounded-full z-0"/>}
                         
                         {day.items.map((item,i)=>{
@@ -520,7 +526,6 @@ function App(){
                                 <div key={item.id} className={`relative ${sort?'mb-3 px-4':'mb-8 pl-16 pr-6'}`}
                                      onTouchStart={startLongPress} onTouchEnd={endLongPress} onMouseDown={startLongPress} onMouseUp={endLongPress} onMouseLeave={endLongPress}>
                                     
-                                    {/* 👆 打卡按鈕巨大化 */}
                                     {!sort && (
                                         <>
                                             <div onClick={(e)=>{e.stopPropagation();toggle(item.id)}} className={`absolute left-0 top-0 w-12 h-12 rounded-full border-[4px] border-[#fff7ed] z-20 flex items-center justify-center transition-all shadow-md cursor-pointer ${item.completed?'bg-emerald-500 text-white scale-90':'bg-white text-slate-400 ' + cat.c.replace('bg-', 'text-').replace('text-', 'border-')} ring-1 ring-slate-100`}>
@@ -647,7 +652,7 @@ function App(){
                 <div className="bg-white w-full sm:w-[95%] max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[85vh] h-[85vh]">
                     <div className="px-6 py-5 border-b flex justify-between items-center bg-blue-50 rounded-t-3xl"><h2 className="font-bold text-xl text-blue-600 flex items-center gap-2"><Icon n="Wallet" s={24}/> 旅遊帳本</h2><button onClick={()=>setLedgerModal(false)} className="p-2 bg-white rounded-full shadow-sm text-slate-500"><Icon n="X" s={20}/></button></div>
                     <div className="p-6 overflow-y-auto flex-1 space-y-6">
-                        <div className="grid grid-cols-1 gap-4"> {/* Vertical Stack for clarity */}
+                        <div className="grid grid-cols-1 gap-4">
                             <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-white shadow-lg"><div className="text-xs font-bold opacity-80 mb-1">總支出 (NT)</div><div className="text-2xl font-black font-mono">NT${fmtMoney(totalNT)}</div></div>
                             <div className="bg-gradient-to-br from-orange-400 to-orange-500 rounded-2xl p-4 text-white shadow-lg"><div className="text-xs font-bold opacity-80 mb-1">總支出 (JPY)</div><div className="text-2xl font-black font-mono">¥{fmtMoney(totalJPY)}</div></div>
                         </div>
@@ -747,7 +752,8 @@ function App(){
                 
                 {/* 備註與定位 (乾淨版 - 移除自動定位) */}
                 <div className="space-y-2"><label className="text-sm font-bold text-slate-500">備註</label><textarea value={editItem.note} onChange={e=>setEditItem({...editItem,note:e.target.value})} placeholder="輸入備註..." className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-3 text-base h-24 outline-none focus:border-blue-400"/></div>
-                <div className="bg-slate-50 p-4 rounded-2xl mb-4 border border-slate-100"><div className="space-y-3"><div><label className="text-xs text-slate-400 block mb-1">車載導航 Mapcode</label><div className="flex gap-2"><input type="text" value={editItem.mapcode} onChange={e=>setEditItem({...editItem,mapcode:e.target.value})} placeholder="Mapcode" className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-400 font-mono"/><a href="https://japanmapcode.com/zh-TW" target="_blank" rel="noopener noreferrer" className="p-3 bg-white text-slate-500 border border-slate-200 rounded-2xl hover:bg-slate-50 active:scale-95 flex items-center justify-center"><Icon n="ExternalLink" s={20}/></a></div></div>
+                {/* 🗺️ Mapcode 查詢按鈕優化：與輸入框等高，使用地球儀圖示 */}
+                <div className="bg-slate-50 p-4 rounded-2xl mb-4 border border-slate-100"><div className="space-y-3"><div><label className="text-xs text-slate-400 block mb-1">車載導航 Mapcode</label><div className="flex gap-2"><input type="text" value={editItem.mapcode} onChange={e=>setEditItem({...editItem,mapcode:e.target.value})} placeholder="Mapcode" className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-400 font-mono"/><a href="https://japanmapcode.com/zh-TW" target="_blank" rel="noopener noreferrer" className="p-3 bg-white text-slate-500 border border-slate-200 rounded-2xl hover:bg-slate-50 active:scale-95 flex items-center justify-center"><Icon n="Globe" s={20}/></a></div></div>
                 {/* 僅保留關鍵字輸入，移除按鈕 */}
                 <div><label className="text-xs text-slate-400 block mb-1">Google Maps 搜尋關鍵字 (連結修正)</label><div className="flex gap-2"><input type="text" value={editItem.searchKeyword} onChange={e=>setEditItem({...editItem,searchKeyword:e.target.value})} placeholder="例如: 晴空塔 (若自動連結錯誤時使用)" className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-400"/><a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(editItem.searchKeyword||editItem.title)}`} target="_blank" className="p-3 bg-white text-slate-500 border border-slate-200 rounded-2xl hover:bg-slate-50 active:scale-95 flex items-center justify-center"><Icon n="Search" s={20}/></a></div></div></div></div>
             </div><div className="p-5 border-t flex gap-4 bg-white pb-safe"><button onClick={delItem} className="p-4 rounded-2xl bg-red-50 text-red-500 border-2 border-red-100 hover:bg-red-100 transition-colors"><Icon n="Trash2" s={24}/></button><button onClick={saveItem} className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-2xl font-bold text-lg shadow-lg shadow-blue-200 active:scale-95 transition-transform py-4 flex justify-center items-center gap-2"><Icon n="Save" s={20}/> 儲存</button></div></div></div>}
