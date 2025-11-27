@@ -93,7 +93,8 @@ const Icons={
     Sort:<g><path d="M3 6h18"/><path d="M7 12h10"/><path d="M10 18h4"/></g>,
     DragHandle:<g><line x1="4" y1="9" x2="20" y2="9" strokeWidth="2.5" strokeLinecap="round"/><line x1="4" y1="15" x2="20" y2="15" strokeWidth="2.5" strokeLinecap="round"/></g>,
     Snowflake:<g><line x1="12" y1="3" x2="12" y2="21" strokeWidth="2"/><line x1="4.2" y1="7.5" x2="19.8" y2="16.5" strokeWidth="2"/><line x1="4.2" y1="16.5" x2="19.8" y2="7.5" strokeWidth="2"/><path d="M8 3.5 12 8 16 3.5" strokeWidth="1.5" fill="none"/><path d="M8 20.5 12 16 16 20.5" strokeWidth="1.5" fill="none"/><path d="M2.5 11 7 12 2.5 13" strokeWidth="1.5" fill="none"/><path d="M21.5 11 17 12 21.5 13" strokeWidth="1.5" fill="none"/></g>,
-    Sakura:<g><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(0 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(72 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(144 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(216 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(288 12 12)" fill="currentColor"/><circle cx="12" cy="12" r="5.5" fill="currentColor"/></g>
+    Sakura:<g><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(0 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(72 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(144 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(216 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(288 12 12)" fill="currentColor"/><circle cx="12" cy="12" r="5.5" fill="currentColor"/></g>,
+    Map: <path d="M14.1 16.1l-2.4 2.4-2.4-2.4a5 5 0 0 1 4.8 0zM12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7z" strokeLinecap="round" strokeLinejoin="round"/>
 };
 
 const Icon=({n,s=24,c=""})=>Icons[n]?<svg xmlns="http://www.w3.org/2000/svg" width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={c} overflow="visible">{Icons[n]}</svg>:null;
@@ -148,7 +149,7 @@ const INITIAL_ITINERARY = [
         {id:'3-3',time:'14:00',title:'平家之里',category:'sightseeing',expenses:[{id:'1',label:'門票',amount:1020,currency:'JPY',category:'sightseeing'}],note:'復原平家落人村落的茅草屋建築，雪景非常夢幻。',mapcode:'716 161 037*14',searchKeyword:'平家の里',completed:false,steps:2000},
         {id:'3-4',time:'16:00',title:'Honke Bankyu (本家伴久)',category:'accommodation',expenses:[{id:'1',label:'住宿費',amount:24134,currency:'NT',category:'accommodation'}],note:'日式四人房，有晚餐、早餐。\n地址：321-2601 櫪木縣, 日光, Yunishikawa 749\n電話：288-98-0011',mapcode:'716 161 037*14',searchKeyword:'本家伴久',completed:false,steps:0}
     ]},
-    {id:'day4',date:'12/31',dayOfWeek:'(三)',weather:'sunny',location:'日光 -> 大洗',items:[
+    {id:'day4',date:'1/31',dayOfWeek:'(三)',weather:'sunny',location:'日光 -> 大洗',items:[
         {id:'4-1',time:'10:00',title:'前往大洗 (移動)',category:'transport',expenses:[],note:'奧日光往大洗，車程較長。',mapcode:'',searchKeyword:'',completed:false,steps:0},
         {id:'4-2',time:'13:00',title:'大洗磯前神社',category:'sightseeing',expenses:[],note:'海上鳥居。',mapcode:'239 535 445*58',searchKeyword:'大洗磯前神社',completed:false,steps:2000},
         {id:'4-3',time:'15:00',title:'大洗 Seaside Station',category:'shopping',expenses:[],note:'採買跨年晚餐食材。',mapcode:'239 506 461*34',searchKeyword:'大洗シーサイドステーション',completed:false,steps:1500},
@@ -175,7 +176,7 @@ const INITIAL_ITINERARY = [
 
 function App(){
     const [data,setData]=useState(()=>{
-        const saved=localStorage.getItem('kanto_v2025_final_stable_v11'); // 強制更新版本 V11
+        const saved=localStorage.getItem('kanto_v2025_final_stable_v12'); // 版本 V12
         if(saved) { try { return JSON.parse(saved); } catch(e){} }
         return INITIAL_ITINERARY;
     });
@@ -200,7 +201,7 @@ function App(){
     const [filterCategory, setFilterCategory] = useState(null);
     const [liveWeather, setLiveWeather] = useState(null); 
     const [menuOpen, setMenuOpen] = useState(false); 
-    const [viewImage, setViewImage] = useState(null); 
+    const [viewImgIdx, setViewImgIdx] = useState(null); // 修改：使用 Index 追蹤圖片
 
     const fileRef=useRef(null);
     const stepRef=useRef(null);
@@ -210,7 +211,7 @@ function App(){
     const sortableInstance = useRef(null);
     const longPressTimer = useRef(null);
 
-    useEffect(()=>{localStorage.setItem('kanto_v2025_final_stable_v11',JSON.stringify(data))},[data]);
+    useEffect(()=>{localStorage.setItem('kanto_v2025_final_stable_v12',JSON.stringify(data))},[data]);
     useEffect(()=>{localStorage.setItem('kanto_v2025_memos',JSON.stringify(memos))},[memos]);
     useEffect(()=>{
         if(stepModal) {
@@ -446,7 +447,8 @@ function App(){
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
                 const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-                setEditMemoItem(prev => ({...prev, images: [...(prev.images||[]), dataUrl]}));
+                // 修改：存成物件結構 {url, text}
+                setEditMemoItem(prev => ({...prev, images: [...(prev.images||[]), {url: dataUrl, text: ''}]}));
             }
             img.src = event.target.result;
         }
@@ -457,7 +459,8 @@ function App(){
         if(urlInputRef.current && urlInputRef.current.value){
             const val = urlInputRef.current.value.trim();
             if(val) {
-                setEditMemoItem(prev => ({...prev, images: [...(prev.images||[]), val]}));
+                 // 修改：存成物件結構 {url, text}
+                setEditMemoItem(prev => ({...prev, images: [...(prev.images||[]), {url: val, text: ''}]}));
                 urlInputRef.current.value = '';
             }
         }
@@ -598,8 +601,8 @@ function App(){
                                                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${cat.c.replace('text-','border-').replace('100','200')}`}>{cat.l}</span>
                                                     </div>
                                                 </div>
-                                                <h3 className={`font-black text-lg leading-snug font-rounded flex items-center gap-1 ${item.completed?'text-slate-400 line-through decoration-slate-300':'text-slate-800'}`}>
-                                                    <Icon n="MapPin" s={18} c="text-slate-300 shrink-0"/>
+                                                <h3 className={`font-black text-lg leading-snug font-rounded flex items-start gap-1 ${item.completed?'text-slate-400 line-through decoration-slate-300':'text-slate-800'}`}>
+                                                    {/* 修改：移除 MapPin Icon */}
                                                     {item.title}
                                                 </h3>
                                                 <div className={`note-expand ${isExpanded || (item.note && isExpanded) ? 'open' : ''} ${!isExpanded && item.note ? 'max-h-0 opacity-0' : ''}`}>{item.note && (<div onClick={(e)=>{e.stopPropagation(); toggleNote(item.id)}} className="cursor-pointer text-sm font-medium text-slate-600 bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-400 leading-relaxed whitespace-pre-line active:bg-yellow-100 transition-colors">{item.note}</div>)}</div>
@@ -746,20 +749,26 @@ function App(){
                                         <input type="file" ref={imgInputRef} className="hidden" accept="image/*" onChange={handleImageUpload}/>
                                     </div>
                                     <div className="grid grid-cols-3 gap-2">
-                                        {editMemoItem.images.map((img, i) => (
-                                            <div key={i} className="relative aspect-square rounded-xl overflow-hidden border-2 border-slate-200 bg-white group shadow-sm">
-                                                {/* 🔍 圖片預覽：點擊觸發 viewImage */}
-                                                <img src={img} onClick={()=>setViewImage(img)} className="w-full h-full object-cover cursor-zoom-in"/>
-                                                {i===0 && <div className="absolute top-0 left-0 bg-yellow-400 text-white text-[10px] font-bold px-2 py-0.5 rounded-br-lg shadow-sm z-10">👑 封面</div>}
-                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-1 z-20 pointer-events-none">
-                                                    <button onClick={(e)=>{e.stopPropagation(); setEditMemoItem({...editMemoItem, images: editMemoItem.images.filter((_, idx)=>idx!==i)})}} className="self-end text-white bg-red-500/80 rounded-full p-1 hover:bg-red-600 pointer-events-auto"><Icon n="X" s={14}/></button>
-                                                    <div className="flex justify-between w-full pointer-events-auto">
-                                                        {i > 0 && <button onClick={(e)=>moveImg(e, i, -1)} className="text-white bg-slate-500/80 rounded-full p-1 hover:bg-slate-600"><Icon n="ChevronLeft" s={14}/></button>}
-                                                        {i < editMemoItem.images.length - 1 && <button onClick={(e)=>moveImg(e, i, 1)} className="text-white bg-slate-500/80 rounded-full p-1 ml-auto hover:bg-slate-600"><Icon n="ChevronRight" s={14}/></button>}
+                                        {/* 修改：圖片列表渲染與兼容性處理 */}
+                                        {editMemoItem.images.map((imgItem, i) => {
+                                            const imgSrc = typeof imgItem === 'string' ? imgItem : imgItem.url;
+                                            const imgText = typeof imgItem === 'string' ? '' : imgItem.text;
+                                            
+                                            return (
+                                                <div key={i} className="relative aspect-square rounded-xl overflow-hidden border-2 border-slate-200 bg-white group shadow-sm">
+                                                    <img src={imgSrc} onClick={()=>setViewImgIdx(i)} className="w-full h-full object-cover cursor-zoom-in"/>
+                                                    {i===0 && <div className="absolute top-0 left-0 bg-yellow-400 text-white text-[10px] font-bold px-2 py-0.5 rounded-br-lg shadow-sm z-10">👑 封面</div>}
+                                                    {imgText && <div className="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[10px] p-1 truncate text-center z-10">{imgText}</div>}
+                                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-1 z-20 pointer-events-none">
+                                                        <button onClick={(e)=>{e.stopPropagation(); setEditMemoItem({...editMemoItem, images: editMemoItem.images.filter((_, idx)=>idx!==i)})}} className="self-end text-white bg-red-500/80 rounded-full p-1 hover:bg-red-600 pointer-events-auto"><Icon n="X" s={14}/></button>
+                                                        <div className="flex justify-between w-full pointer-events-auto">
+                                                            {i > 0 && <button onClick={(e)=>moveImg(e, i, -1)} className="text-white bg-slate-500/80 rounded-full p-1 hover:bg-slate-600"><Icon n="ChevronLeft" s={14}/></button>}
+                                                            {i < editMemoItem.images.length - 1 && <button onClick={(e)=>moveImg(e, i, 1)} className="text-white bg-slate-500/80 rounded-full p-1 ml-auto hover:bg-slate-600"><Icon n="ChevronRight" s={14}/></button>}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 </div>
                                 <div className="flex gap-3 pt-4">
@@ -775,7 +784,7 @@ function App(){
                                     <div key={memo.id} onClick={()=>setEditMemoItem(memo)} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 active:scale-98 transition-transform flex gap-4">
                                         {memo.images && memo.images.length > 0 && (
                                             <div className="w-20 h-20 shrink-0 rounded-xl overflow-hidden bg-slate-100 relative border border-slate-100">
-                                                <img src={memo.images[0]} className="w-full h-full object-cover"/>
+                                                <img src={typeof memo.images[0] === 'string' ? memo.images[0] : memo.images[0].url} className="w-full h-full object-cover"/>
                                             </div>
                                         )}
                                         <div className="flex-1 min-w-0">
@@ -793,11 +802,38 @@ function App(){
                 </div>
             </div>}
 
-            {/* 🔍 圖片燈箱 (Lightbox) */}
-            {viewImage && <div className="fixed inset-0 z-[120] bg-black/95 flex items-center justify-center p-4 animate-fade-in cursor-zoom-out" onClick={()=>setViewImage(null)}>
-                <button onClick={()=>setViewImage(null)} className="absolute top-6 right-6 text-white/80 hover:text-white bg-white/10 rounded-full p-2 backdrop-blur-sm"><Icon n="X" s={24}/></button>
-                <img src={viewImage} className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl cursor-default" onClick={e=>e.stopPropagation()}/>
-            </div>}
+            {/* 🔍 修改：進化版圖片燈箱 (Lightbox) - 可編輯備註 */}
+            {viewImgIdx !== null && editMemoItem && (
+                <div className="fixed inset-0 z-[120] bg-black/95 flex flex-col items-center justify-center p-4 animate-fade-in" onClick={()=>setViewImgIdx(null)}>
+                    <button onClick={()=>setViewImgIdx(null)} className="absolute top-6 right-6 text-white/80 hover:text-white bg-white/10 rounded-full p-2 backdrop-blur-sm z-50"><Icon n="X" s={24}/></button>
+                    
+                    {/* 圖片區域 */}
+                    <div className="flex-1 w-full flex items-center justify-center min-h-0 py-4" onClick={e=>e.stopPropagation()}>
+                        <img 
+                            src={typeof editMemoItem.images[viewImgIdx] === 'string' ? editMemoItem.images[viewImgIdx] : editMemoItem.images[viewImgIdx].url} 
+                            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl cursor-default" 
+                        />
+                    </div>
+
+                    {/* 文字備註編輯區 */}
+                    <div className="w-full max-w-lg bg-white rounded-2xl p-3 flex gap-3 items-center shrink-0 mb-safe" onClick={e=>e.stopPropagation()}>
+                        <div className="text-slate-400"><Icon n="Edit" s={20}/></div>
+                        <textarea 
+                            autoFocus
+                            placeholder="輸入圖片備註 (例如: 必買藥妝)..."
+                            value={typeof editMemoItem.images[viewImgIdx] === 'string' ? '' : (editMemoItem.images[viewImgIdx].text || '')}
+                            onChange={(e)=>{
+                                const newImgs = [...editMemoItem.images];
+                                const currentItem = newImgs[viewImgIdx];
+                                const url = typeof currentItem === 'string' ? currentItem : currentItem.url;
+                                newImgs[viewImgIdx] = { url: url, text: e.target.value };
+                                setEditMemoItem({...editMemoItem, images: newImgs});
+                            }}
+                            className="flex-1 bg-transparent text-slate-800 font-bold text-sm outline-none resize-none h-10 py-2 leading-relaxed"
+                        />
+                    </div>
+                </div>
+            )}
 
             {/* Edit Modal (Itinerary) - REFINED - ELDERLY FRIENDLY */}
             {modal && editItem && <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center animate-fade-in"><div className="bg-white w-full sm:w-[95%] max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[95vh]"><div className="px-6 py-5 border-b flex justify-between items-center bg-slate-50/50 rounded-t-3xl"><h2 className="font-bold text-2xl text-slate-800 font-rounded">{editItem.id&&day.items.some(i=>i.id===editItem.id)?'編輯行程':'新增行程'}</h2><button onClick={()=>setModal(false)} className="p-3 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200 transition-colors"><Icon n="X" s={28}/></button></div><div className="p-6 overflow-y-auto space-y-6">
