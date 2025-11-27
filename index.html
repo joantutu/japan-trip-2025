@@ -106,6 +106,16 @@ const W_ICONS={sunny:'Sun',cloudy:'Cloud',snow:'Snowflake',rain:'CloudRain'};
 const WEATHER_COLORS = { sunny: 'text-yellow-300', cloudy: 'text-white/80', rain: 'text-blue-300', snow: 'text-white' };
 const WEATHER_LOCATIONS = { 'day1': '327-0102', 'day2': '321-2611', 'day3': '321-2601', 'day4': '311-1301', 'day5': '300-4352', 'day6': '110-0005', 'day7': '282-0004' };
 const WEATHER_TYPES = ['sunny', 'cloudy', 'rain', 'snow'];
+// 定義每一天的經緯度座標 (用於 Open-Meteo API)
+const LOCATIONS_COORD = [
+    { id: 'day1', lat: 36.3146, lng: 139.5797 }, // 佐野
+    { id: 'day2', lat: 36.7490, lng: 139.5033 }, // 日光
+    { id: 'day3', lat: 36.7959, lng: 139.4337 }, // 奧日光
+    { id: 'day4', lat: 36.3144, lng: 140.5743 }, // 大洗
+    { id: 'day5', lat: 36.2048, lng: 140.1067 }, // 筑波
+    { id: 'day6', lat: 35.7140, lng: 139.7741 }, // 東京(上野)
+    { id: 'day7', lat: 35.7767, lng: 140.3188 }  // 成田
+];
 const fmtMoney=(v)=>v.toString().replace(/\B(?=(\d{3})+(?!\d))/g,",");
 
 const INITIAL_ITINERARY = [
@@ -140,9 +150,10 @@ function App(){
     const [stepModal,setStepModal]=useState(false);
     const [tStep,setTStep]=useState('');
     const [saveBtnText, setSaveBtnText] = useState('儲存紀錄');
-    const [footerExpanded, setFooterExpanded] = useState(true); // 預設展開，讓使用者知道有選單
+    const [footerExpanded, setFooterExpanded] = useState(true); 
     const [expandedNotes, setExpandedNotes] = useState(new Set()); 
     const [filterCategory, setFilterCategory] = useState(null);
+    const [liveWeather, setLiveWeather] = useState(null); // Store fetched weather
 
     const fileRef=useRef(null);
     const stepRef=useRef(null);
@@ -160,6 +171,28 @@ function App(){
             setSaveBtnText('儲存紀錄');
         }
     },[stepModal]);
+
+    // 📡 Fetch Real-time Weather from Open-Meteo
+    useEffect(() => {
+        const fetchWeather = async () => {
+            const coord = LOCATIONS_COORD.find(c => c.id === data[idx].id);
+            if (!coord) return;
+            setLiveWeather(null); // Reset while loading
+            try {
+                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${coord.lat}&longitude=${coord.lng}&current=temperature_2m,weather_code&timezone=Asia%2FTokyo`);
+                const json = await res.json();
+                if (json.current) {
+                    setLiveWeather({
+                        temp: Math.round(json.current.temperature_2m),
+                        code: json.current.weather_code
+                    });
+                }
+            } catch (e) {
+                console.error("Weather fetch failed", e);
+            }
+        };
+        fetchWeather();
+    }, [idx]);
 
     // SortableJS Init
     useEffect(() => {
@@ -198,7 +231,7 @@ function App(){
             if (navigator.vibrate) navigator.vibrate(50);
             setBackupData(JSON.parse(JSON.stringify(data)));
             setSort(true);
-            setFooterExpanded(true); // 強制展開選單以便操作
+            setFooterExpanded(true);
         }, 800);
     }, [sort, data]);
 
@@ -319,6 +352,21 @@ function App(){
     const updateExpense=(idx, field, val)=>{const newExps=[...editItem.expenses];newExps[idx][field]=val;setEditItem({...editItem, expenses:newExps})};
     const removeExpense=(idx)=>{const newExps=editItem.expenses.filter((_,i)=>i!==idx);setEditItem({...editItem, expenses:newExps})};
     
+    // Restore fetchCoords and clearCoords
+    const fetchCoords = async () => {
+        const query = editItem.searchKeyword || editItem.title;
+        if (!query) return alert("請先輸入標題或搜尋關鍵字");
+        const coordMatch = query.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) || query.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+        if (coordMatch) { setEditItem({ ...editItem, lat: parseFloat(coordMatch[1]), lng: parseFloat(coordMatch[2]) }); return alert(`📍 已從連結提取座標！`); }
+        setIsFetching(true);
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&accept-language=ja,zh-TW`);
+            const results = await res.json();
+            if (results && results.length > 0) { setEditItem({ ...editItem, lat: parseFloat(results[0].lat), lng: parseFloat(results[0].lon) }); alert(`📍 已定位`); } else { alert("❌ 找不到此地點"); }
+        } catch (e) { alert("❌ 定位失敗"); } finally { setIsFetching(false); }
+    };
+    const clearCoords = () => { if(confirm('清除定位？')) setEditItem({ ...editItem, lat: null, lng: null }); };
+
     // --- Memo Logic ---
     const saveMemo = () => {
         if (!editMemoItem.title) return;
@@ -404,12 +452,18 @@ function App(){
                             <div className="text-sm font-bold text-white flex items-center gap-1 mt-1 drop-shadow-sm"><Icon n="MapPin" s={14} c="shrink-0 text-yellow-200"/><span className="truncate max-w-[220px] leading-none">{day.location}</span></div>
                         </div>
                         <div className="flex flex-col items-end gap-2">
-                            <div className="flex items-center gap-1 bg-white/10 px-2 py-1 rounded-lg backdrop-blur-md border border-white/20 shadow-md cursor-pointer relative" onClick={toggleWeather}>
-                                <div className={`${WEATHER_COLORS[day.weather]} ${day.weather==='sunny'?'weather-spin':day.weather==='cloudy'?'weather-float':'weather-pulse'}`}>
-                                    <Icon n={W_ICONS[day.weather]} s={20} />
+                            <div className="flex flex-col items-end gap-0.5 bg-white/10 px-2 py-1 rounded-lg backdrop-blur-md border border-white/20 shadow-md cursor-pointer relative" onClick={toggleWeather}>
+                                <div className="flex items-center gap-1">
+                                    <div className={`${WEATHER_COLORS[day.weather]} ${day.weather==='sunny'?'weather-spin':day.weather==='cloudy'?'weather-float':'weather-pulse'}`}>
+                                        <Icon n={W_ICONS[day.weather]} s={20} />
+                                    </div>
+                                    {/* 🌡️ 顯示真實 API 氣溫 */}
+                                    <span className="font-bold text-lg text-white drop-shadow-sm">
+                                        {liveWeather ? `${liveWeather.temp}°` : (day.weather==='snow'?'-2°':'8°')}
+                                    </span>
                                 </div>
-                                <span className="font-bold text-sm text-white drop-shadow-sm">
-                                    {day.weather==='snow'?'-2°C':'8°C'}
+                                <span className="text-[9px] font-bold text-yellow-100 opacity-80">
+                                    {liveWeather ? '目前氣溫' : '預測氣溫'}
                                 </span>
                             </div>
                             <button onClick={()=>{setTStep(day.steps||'');setStepModal(true)}} className="flex items-center gap-1 text-xs text-rose-600 font-black bg-white px-3 py-1 rounded-full shadow-lg active:scale-95 transition-transform border border-rose-100">
@@ -418,7 +472,6 @@ function App(){
                         </div>
                     </div>
                     
-                    {/* 🌸 櫻花列表修正：靠左排列，增加邊距 */}
                     <div className={`flex gap-1 hide-scrollbar py-4 px-2 overflow-x-auto mt-1 scroll-smooth-mobile ${sort?'opacity-30 pointer-events-none':''}`}>
                         {data.map((d,i)=>(<button key={d.id} onClick={()=>{setIdx(i);setSort(false)}} className={`flex-shrink-0 rounded-full transition-all shadow-none tap-transparent sakura-btn-container ${idx===i?'sakura-active':''}`}>
                             {idx===i ? (<div className="sakura-icon-active text-rose-200"><Icon n="Sakura" s={54} c="w-full h-full"/></div>) : (<div className="sakura-icon-inactive text-white"><Icon n="Sakura" s={46} c="w-full h-full"/></div>)}
@@ -441,7 +494,7 @@ function App(){
                     )}
                     
                     <div ref={sortableRef} className="relative">
-                        {/* 🔍 時間軸加粗加深，位置微調 */}
+                        {/* 🔍 時間軸加粗加深 */}
                         {!sort && <div className="absolute left-[24px] top-4 bottom-4 w-[3px] bg-slate-300 rounded-full z-0"/>}
                         
                         {day.items.map((item,i)=>{
@@ -451,10 +504,10 @@ function App(){
                             const isExpanded = expandedNotes.has(item.id);
                             
                             return (
-                                <div key={item.id} className={`relative ${sort?'mb-3 px-4':'mb-8 pl-16 pr-6'}`} /* 左側留空間給大按鈕 */
+                                <div key={item.id} className={`relative ${sort?'mb-3 px-4':'mb-8 pl-16 pr-6'}`}
                                      onTouchStart={startLongPress} onTouchEnd={endLongPress} onMouseDown={startLongPress} onMouseUp={endLongPress} onMouseLeave={endLongPress}>
                                     
-                                    {/* 👆 打卡按鈕巨大化：48x48，加粗邊框 */}
+                                    {/* 👆 打卡按鈕巨大化 */}
                                     {!sort && (
                                         <>
                                             <div onClick={(e)=>{e.stopPropagation();toggle(item.id)}} className={`absolute left-0 top-0 w-12 h-12 rounded-full border-[4px] border-[#fff7ed] z-20 flex items-center justify-center transition-all shadow-md cursor-pointer ${item.completed?'bg-emerald-500 text-white scale-90':'bg-white text-slate-400 ' + cat.c.replace('bg-', 'text-').replace('text-', 'border-')} ring-1 ring-slate-100`}>
