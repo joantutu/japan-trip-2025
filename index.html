@@ -15,9 +15,8 @@
     .hide-scrollbar::-webkit-scrollbar{display:none}.hide-scrollbar{-ms-overflow-style:none;scrollbar-width:none}
     .scroll-smooth-mobile{-webkit-overflow-scrolling:touch;scroll-behavior:smooth}
     .pb-safe{padding-bottom:env(safe-area-inset-bottom,24px)}.pt-safe{padding-top:env(safe-area-inset-top,0px)}
-    .card-shadow{box-shadow:0 4px 20px -2px rgba(0,0,0,0.08)}
+    .card-shadow{box-shadow:0 2px 10px -1px rgba(0,0,0,0.05)}
     .font-rounded{font-weight:800;letter-spacing:0.03em;}
-    /* 確保拖曳把手不會觸發頁面捲動 */
     .drag-handle{cursor:grab;touch-action:none;padding:10px}.drag-handle:active{cursor:grabbing}
     
     /* 天氣動畫 */
@@ -28,18 +27,18 @@
     @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
     @keyframes pulse-soft { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
 
-    /* 🌸 櫻花按鈕修正: 加入 overflow: visible */
-    .sakura-btn-container { position: relative; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin: 0 2px; overflow: visible; }
+    /* 櫻花按鈕 */
+    .sakura-btn-container { position: relative; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin: 0 2px; overflow: visible; }
     .sakura-icon-active { transform-origin: center center; filter: drop-shadow(0 4px 6px rgba(244, 63, 94, 0.5)); animation: pop-bloom 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards, spin-sakura 12s linear infinite 0.6s; }
     @keyframes pop-bloom { 0% { transform: scale(0) rotate(-45deg); opacity: 0; } 60% { transform: scale(1.35) rotate(10deg); opacity: 1; } 100% { transform: scale(1.25) rotate(0deg); opacity: 1; } }
     @keyframes spin-sakura { from { transform: scale(1.25) rotate(0deg); } to { transform: scale(1.25) rotate(360deg); } }
     .sakura-icon-inactive { transform: scale(0.9); opacity: 0.5; transition: all 0.3s ease; }
-    .sakura-text-active { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #FEF08A !important; font-size: 18px; font-weight: 900; text-shadow: 0 2px 2px rgba(0,0,0,0.2); z-index: 50; pointer-events: none; }
-    .sakura-text-inactive { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 14px; font-weight: 700; z-index: 50; pointer-events: none; }
+    .sakura-text-active { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #FEF08A !important; font-size: 16px; font-weight: 900; text-shadow: 0 2px 2px rgba(0,0,0,0.2); z-index: 50; pointer-events: none; }
+    .sakura-text-inactive { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 12px; font-weight: 700; z-index: 50; pointer-events: none; }
 
     /* 其他動畫 */
     .note-expand { transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out, margin 0.3s ease; max-height: 0; opacity: 0; overflow: hidden; }
-    .note-expand.open { max-height: 500px; opacity: 1; margin-bottom: 16px; }
+    .note-expand.open { max-height: 500px; opacity: 1; margin-bottom: 12px; }
     .snow-alert { animation: slide-down 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
     @keyframes slide-down { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
     .sort-mode-bg { background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 20px 20px; }
@@ -88,13 +87,11 @@ const Icons={
     ChevronLeft:<path d="m15 18-6-6 6-6" strokeLinecap="round" strokeLinejoin="round"/>,
     ChevronRight:<path d="m9 18 6-6-6-6" strokeLinecap="round" strokeLinejoin="round"/>,
     Sort:<g><path d="M3 6h18"/><path d="M7 12h10"/><path d="M10 18h4"/></g>,
-    // 🌸 修正 DragHandle: 改為三條線 (Hamburger Style) 以符合手機操作習慣
     DragHandle:<path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" strokeLinejoin="round"/>,
     Snowflake:<g><line x1="12" y1="3" x2="12" y2="21" strokeWidth="2"/><line x1="4.2" y1="7.5" x2="19.8" y2="16.5" strokeWidth="2"/><line x1="4.2" y1="16.5" x2="19.8" y2="7.5" strokeWidth="2"/><path d="M8 3.5 12 8 16 3.5" strokeWidth="1.5" fill="none"/><path d="M8 20.5 12 16 16 20.5" strokeWidth="1.5" fill="none"/><path d="M2.5 11 7 12 2.5 13" strokeWidth="1.5" fill="none"/><path d="M21.5 11 17 12 21.5 13" strokeWidth="1.5" fill="none"/></g>,
     Sakura:<g><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(0 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(72 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(144 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(216 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(288 12 12)" fill="currentColor"/><circle cx="12" cy="12" r="5.5" fill="currentColor"/></g>
 };
 
-// 🌸 修正 Icon 元件: 加入 overflow="visible"
 const Icon=({n,s=24,c=""})=>Icons[n]?<svg xmlns="http://www.w3.org/2000/svg" width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={c} overflow="visible">{Icons[n]}</svg>:null;
 
 const CATS={
@@ -143,7 +140,7 @@ function App(){
     const [stepModal,setStepModal]=useState(false);
     const [tStep,setTStep]=useState('');
     const [saveBtnText, setSaveBtnText] = useState('儲存紀錄');
-    const [footerExpanded, setFooterExpanded] = useState(true); // 預設展開
+    const [footerExpanded, setFooterExpanded] = useState(true); // 預設展開，讓使用者知道有選單
     const [expandedNotes, setExpandedNotes] = useState(new Set()); 
     const [filterCategory, setFilterCategory] = useState(null);
 
@@ -411,53 +408,53 @@ function App(){
         <div className={`h-[100dvh] flex flex-col font-sans text-slate-800 bg-[#fff7ed] ${sort ? 'sort-mode-bg' : ''}`}>
             <div className="bg-gradient-to-r from-rose-500 to-orange-400 shadow-md pt-safe z-30 shrink-0 relative">
                 <div className="h-1.5 w-full bg-black/10 absolute top-0 left-0"><div className="h-full bg-yellow-300 transition-all duration-500" style={{width:`${((idx+1)/data.length)*100}%`}}/></div>
-                <div className="px-4 py-5 text-white">
-                    <div className="flex justify-between items-center">
+                <div className="px-4 py-3 text-white"> {/* Reduced Padding */}
+                    <div className="flex justify-between items-end">
                         <div className="flex flex-col justify-center">
-                            <div className="text-xs font-bold text-white/90 tracking-widest mb-0.5 ml-1">{day.date.startsWith('12') ? '2025' : '2026'}</div>
+                            <div className="text-[10px] font-bold text-white/90 tracking-widest mb-0.5 ml-1">{day.date.startsWith('12') ? '2025' : '2026'}</div>
                             <div className="flex items-baseline gap-2">
-                                <h1 className="font-black text-4xl tracking-wide leading-none drop-shadow-md">{day.date}</h1>
-                                <span className="text-2xl font-bold opacity-90">{day.dayOfWeek}</span>
+                                <h1 className="font-black text-3xl tracking-wide leading-none drop-shadow-md">{day.date}</h1>
+                                <span className="text-lg font-bold opacity-90">{day.dayOfWeek}</span>
                             </div>
-                            <div className="text-lg font-bold text-white flex items-center gap-1.5 mt-2 drop-shadow-sm"><Icon n="MapPin" s={18} c="shrink-0 text-yellow-200"/><span className="truncate max-w-[220px] leading-none">{day.location}</span></div>
+                            <div className="text-sm font-bold text-white flex items-center gap-1 mt-1 drop-shadow-sm"><Icon n="MapPin" s={14} c="shrink-0 text-yellow-200"/><span className="truncate max-w-[220px] leading-none">{day.location}</span></div>
                         </div>
-                        <div className="flex flex-col items-end gap-3">
-                            <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-2xl backdrop-blur-md border-2 border-white/20 shadow-md hover:bg-white/20 transition-colors cursor-pointer relative">
-                                <button onClick={toggleWeather} className={`${WEATHER_COLORS[day.weather]} active:scale-90 transition-transform ${day.weather==='sunny'?'weather-spin':day.weather==='cloudy'?'weather-float':'weather-pulse'}`}>
-                                    <Icon n={W_ICONS[day.weather]} s={26} />
-                                </button>
-                                <a href={getWeatherUrl()} target="_blank" className="font-black text-xl leading-none text-white drop-shadow-sm hover:text-yellow-100">
+                        <div className="flex flex-col items-end gap-2">
+                            <div className="flex items-center gap-1 bg-white/10 px-2 py-1 rounded-lg backdrop-blur-md border border-white/20 shadow-md cursor-pointer relative" onClick={toggleWeather}>
+                                <div className={`${WEATHER_COLORS[day.weather]} ${day.weather==='sunny'?'weather-spin':day.weather==='cloudy'?'weather-float':'weather-pulse'}`}>
+                                    <Icon n={W_ICONS[day.weather]} s={20} />
+                                </div>
+                                <span className="font-bold text-sm text-white drop-shadow-sm">
                                     {day.weather==='snow'?'-2°C':'8°C'}
-                                </a>
+                                </span>
                             </div>
-                            <button onClick={()=>{setTStep(day.steps||'');setStepModal(true)}} className="flex items-center gap-2 text-sm text-rose-600 font-black bg-white px-4 py-2 rounded-full shadow-lg active:scale-95 transition-transform border-2 border-rose-100">
-                                <Icon n="Footprints" s={18}/><span className={`leading-none pt-0.5 ${Number(day.steps) > 0 ? 'text-rose-600' : 'text-slate-400'}`}>{displaySteps.toLocaleString()}</span>
+                            <button onClick={()=>{setTStep(day.steps||'');setStepModal(true)}} className="flex items-center gap-1 text-xs text-rose-600 font-black bg-white px-3 py-1 rounded-full shadow-lg active:scale-95 transition-transform border border-rose-100">
+                                <Icon n="Footprints" s={14}/><span className={`leading-none pt-0.5 ${Number(day.steps) > 0 ? 'text-rose-600' : 'text-slate-400'}`}>{displaySteps.toLocaleString()}</span>
                             </button>
                         </div>
                     </div>
-                    <div className={`flex justify-center gap-3 hide-scrollbar py-6 px-2 overflow-x-auto mt-2 scroll-smooth-mobile ${sort?'opacity-30 pointer-events-none':''}`}>
+                    <div className={`flex justify-center gap-3 hide-scrollbar py-2 px-2 overflow-x-auto mt-1 scroll-smooth-mobile ${sort?'opacity-30 pointer-events-none':''}`}>
                         {data.map((d,i)=>(<button key={d.id} onClick={()=>{setIdx(i);setSort(false)}} className={`flex-shrink-0 rounded-full transition-all shadow-none tap-transparent sakura-btn-container ${idx===i?'sakura-active':''}`}>
-                            {idx===i ? (<div className="sakura-icon-active text-rose-200"><Icon n="Sakura" s={68} c="w-full h-full"/></div>) : (<div className="sakura-icon-inactive text-white"><Icon n="Sakura" s={56} c="w-full h-full"/></div>)}
+                            {idx===i ? (<div className="sakura-icon-active text-rose-200"><Icon n="Sakura" s={50} c="w-full h-full"/></div>) : (<div className="sakura-icon-inactive text-white"><Icon n="Sakura" s={42} c="w-full h-full"/></div>)}
                             <span className={idx===i ? 'sakura-text-active' : 'sakura-text-inactive'}>D{i+1}</span>
                         </button>))}
                     </div>
                 </div>
             </div>
 
-            <div className={`flex-1 overflow-y-auto relative scroll-smooth-mobile -mt-4 pt-6`}>
-                <div className="px-4 py-2 pb-32 space-y-8">
+            <div className={`flex-1 overflow-y-auto relative scroll-smooth-mobile -mt-2 pt-4`}>
+                <div className="py-2 pb-32 space-y-6">
                     {!sort && day.weather==='snow' && (
-                        <div className="bg-gradient-to-r from-cyan-50 to-blue-50 border-2 border-cyan-200 rounded-3xl p-4 shadow-sm flex items-center gap-3 mb-4 animate-fade-in snow-alert">
-                            <div className="text-cyan-500"><Icon n="CloudSnow" s={28}/></div>
+                        <div className="mx-4 bg-gradient-to-r from-cyan-50 to-blue-50 border-2 border-cyan-200 rounded-3xl p-3 shadow-sm flex items-center gap-3 mb-4 animate-fade-in snow-alert">
+                            <div className="text-cyan-500"><Icon n="CloudSnow" s={24}/></div>
                             <div className="flex-1">
-                                <div className="text-cyan-800 font-bold text-base">❄️ 預報有雪｜建議備妥雪鍊</div>
-                                <a href={getWeatherUrl()} target="_blank" className="text-cyan-500 text-xs font-bold underline mt-1 block">點此確認當地天氣預報 ></a>
+                                <div className="text-cyan-800 font-bold text-sm">❄️ 預報有雪｜建議備妥雪鍊</div>
+                                <a href={getWeatherUrl()} target="_blank" className="text-cyan-500 text-[10px] font-bold underline mt-0.5 block">點此確認當地天氣預報 ></a>
                             </div>
                         </div>
                     )}
                     
                     <div ref={sortableRef} className="relative">
-                        {!sort && <div className="absolute left-[19px] top-2 bottom-2 w-0.5 bg-slate-300/50 z-0"/>}
+                        {!sort && <div className="absolute left-[7px] top-2 bottom-2 w-0.5 bg-slate-300/50 z-0"/>}
                         {day.items.map((item,i)=>{
                             const cat=CATS[item.category];const next=day.items[i+1];const dur=next?calcDur(item.time,next.time):null;
                             const totalItemJPY = (item.expenses || []).filter(e=>e.currency!=='NT').reduce((s,x)=>s+Number(x.amount||0),0);
@@ -465,36 +462,61 @@ function App(){
                             const isExpanded = expandedNotes.has(item.id);
                             
                             return (
-                                <div key={item.id} className={`relative ${sort?'mb-4':'mb-12 pl-14'}`}
+                                <div key={item.id} className={`relative ${sort?'mb-3 px-4':'mb-6 pl-3 pr-6'}`} /* Adjusted padding */
                                      onTouchStart={startLongPress} onTouchEnd={endLongPress} onMouseDown={startLongPress} onMouseUp={endLongPress} onMouseLeave={endLongPress}>
-                                    {!sort && (<><div onClick={(e)=>{e.stopPropagation();toggle(item.id)}} className={`absolute left-0 top-1 w-10 h-10 rounded-full border-4 border-[#fff7ed] z-20 flex items-center justify-center transition-colors shadow-sm active:scale-90 cursor-pointer ${item.completed?'bg-emerald-500 text-white':cat.c}`}>{item.completed?<Icon n="Check" s={20}/>:<Icon n={cat.i} s={18}/>}</div>{dur && <div className="absolute left-[1px] -bottom-8 z-10 flex flex-col items-center w-10 pointer-events-none"><div className="bg-white border border-slate-200 rounded-full px-2 py-0.5 text-[10px] text-slate-500 font-bold shadow-sm scale-90 whitespace-nowrap">▼ {dur.t}</div></div>}</>)}
+                                    {!sort && (<><div onClick={(e)=>{e.stopPropagation();toggle(item.id)}} className={`absolute left-0 top-1 w-4 h-4 rounded-full border-2 border-[#fff7ed] z-20 flex items-center justify-center transition-colors shadow-sm cursor-pointer ${item.completed?'bg-emerald-500 text-white':cat.c} ring-2 ring-white`}>{item.completed && <Icon n="Check" s={10}/>}</div>{dur && <div className="absolute left-[1px] -bottom-4 z-10 flex flex-col items-center w-4 pointer-events-none"><div className="bg-white border border-slate-200 rounded-full px-1 py-0.5 text-[8px] text-slate-400 font-bold shadow-sm scale-75 whitespace-nowrap">{dur.t}</div></div>}</>)}
                                     <div 
                                         onClick={()=>!sort && toggleNote(item.id)} 
-                                        className={`bg-white rounded-3xl border border-slate-100 relative z-10 transition-all tap-transparent ${sort?'p-0 border-blue-400 border-2 shadow-lg flex items-stretch bg-blue-50/20 overflow-hidden':'p-5 hover:shadow-lg active:scale-[0.98] card-shadow '+(item.completed?'bg-slate-50/80 grayscale-[0.5]':'')}`}
+                                        className={`bg-white rounded-2xl border border-slate-100 relative z-10 transition-all tap-transparent ${sort?'p-0 border-blue-400 border-2 shadow-lg flex items-stretch bg-blue-50/20 overflow-hidden':'p-4 hover:shadow-lg active:scale-[0.98] card-shadow '+(item.completed?'bg-slate-50/80 grayscale-[0.5]':'')}`}
                                     >
                                         {sort?(
                                             <>
-                                                {/* 獨立的拖曳把手區域 - 只有這裡可以拖曳 */}
-                                                <div className="drag-handle w-14 bg-slate-100 flex items-center justify-center flex-shrink-0 border-r border-slate-200 cursor-grab active:cursor-grabbing touch-none">
-                                                     <Icon n="DragHandle" s={26} c="text-slate-400"/>
+                                                <div className="drag-handle w-12 bg-slate-100 flex items-center justify-center flex-shrink-0 border-r border-slate-200 cursor-grab active:cursor-grabbing touch-none">
+                                                     <Icon n="DragHandle" s={24} c="text-slate-400"/>
                                                 </div>
-                                                {/* 內容區域 - 這裡可以放心滑動頁面 */}
-                                                <div className="flex-1 p-4 pointer-events-none select-none flex flex-col justify-center min-w-0">
-                                                    <div className="text-sm font-bold text-blue-600 mb-0.5">{item.time}</div>
-                                                    <div className="font-bold text-slate-800 text-lg line-clamp-1">{item.title}</div>
+                                                <div className="flex-1 p-3 pointer-events-none select-none flex flex-col justify-center min-w-0">
+                                                    <div className="text-xs font-bold text-blue-600 mb-0.5">{item.time}</div>
+                                                    <div className="font-bold text-slate-800 text-base line-clamp-1">{item.title}</div>
                                                 </div>
                                             </>
                                         ):(
-                                            <div className="relative">
-                                                <div className="flex justify-between items-start mb-3">
-                                                    <div className="flex items-baseline gap-2"><span className="text-3xl font-black text-slate-800 font-mono tracking-tight">{item.time}</span><span className={`text-xs px-2.5 py-1 rounded-full font-bold border ${cat.c.replace('text-','border-').replace('100','200')}`}>{cat.l}</span></div>
-                                                    <button onClick={(e)=>{e.stopPropagation();setEditItem({...item, dayId: day.id});setModal(true)}} className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 shadow-sm border border-blue-200 active:scale-90 transition-transform"><Icon n="Edit" s={20}/></button>
+                                            <div className="relative flex flex-col gap-2">
+                                                <div className="flex justify-between items-start">
+                                                    <div className="flex items-baseline gap-2">
+                                                        <span className="text-xl font-black text-slate-800 font-mono tracking-tight">{item.time}</span>
+                                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${cat.c.replace('text-','border-').replace('100','200')}`}>{cat.l}</span>
+                                                    </div>
+                                                    <button onClick={(e)=>{e.stopPropagation();setEditItem({...item, dayId: day.id});setModal(true)}} className="text-slate-300 hover:text-blue-500 active:scale-90 transition-transform"><Icon n="Edit" s={16}/></button>
                                                 </div>
-                                                <h3 className={`font-black text-2xl mb-3 leading-snug font-rounded ${item.completed?'text-slate-400 line-through decoration-slate-300':'text-slate-800'}`}>{item.title}</h3>
-                                                <div className={`note-expand ${isExpanded || (item.note && isExpanded) ? 'open' : ''} ${!isExpanded && item.note ? 'max-h-0 opacity-0' : ''}`}>{item.note && (<div onClick={(e)=>{e.stopPropagation(); toggleNote(item.id)}} className="cursor-pointer text-base font-medium text-slate-700 mb-4 bg-yellow-50 p-4 rounded-xl border-l-4 border-yellow-400 shadow-sm leading-relaxed whitespace-pre-line active:bg-yellow-100 transition-colors">{item.note}</div>)}</div>
-                                                {!isExpanded && item.note && <div onClick={()=>toggleNote(item.id)} className="text-xs text-slate-400 text-center mb-2 cursor-pointer hover:text-blue-500 font-bold py-2">📝 點擊查看備註...</div>}
-                                                {(item.steps > 0) && <div className="flex items-center gap-1.5 mb-4 text-pink-600 font-bold text-sm bg-pink-50 px-3 py-1.5 rounded-xl w-fit border border-pink-200"><Icon n="Footprints" s={16}/><span>{Number(item.steps).toLocaleString()} 步</span></div>}
-                                                <div className="flex justify-between items-end pt-4 border-t border-slate-100"><div className="flex flex-col gap-1">{totalItemJPY > 0 && <span className="text-lg font-bold text-slate-700 flex items-center gap-1"><Icon n="DollarSign" s={18}/>JPY {fmtMoney(totalItemJPY)}</span>}{totalItemNT > 0 && <span className="text-base font-bold text-slate-500 flex items-center gap-1"><Icon n="DollarSign" s={16}/>NT {fmtMoney(totalItemNT)}</span>}{item.mapcode && (<div className="flex items-center gap-2 mt-1"><span className="text-xs font-mono text-slate-500 bg-slate-100 px-2 py-1 rounded-lg inline-block tracking-wide">MC: {item.mapcode}</span></div>)}</div><a href={gMap(item)} target="_blank" onClick={e=>e.stopPropagation()} className="flex items-center gap-1.5 text-slate-600 bg-white px-4 py-2.5 rounded-xl font-bold text-sm border border-slate-200 shadow-sm active:scale-95 hover:bg-slate-50"><Icon n="MapPin" s={18}/> 地圖定位</a></div>
+                                                <h3 className={`font-black text-lg leading-snug font-rounded ${item.completed?'text-slate-400 line-through decoration-slate-300':'text-slate-800'}`}>{item.title}</h3>
+                                                <div className={`note-expand ${isExpanded || (item.note && isExpanded) ? 'open' : ''} ${!isExpanded && item.note ? 'max-h-0 opacity-0' : ''}`}>{item.note && (<div onClick={(e)=>{e.stopPropagation(); toggleNote(item.id)}} className="cursor-pointer text-sm font-medium text-slate-600 bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-400 leading-relaxed whitespace-pre-line active:bg-yellow-100 transition-colors">{item.note}</div>)}</div>
+                                                {!isExpanded && item.note && <div onClick={()=>toggleNote(item.id)} className="text-[10px] text-slate-400 text-center cursor-pointer hover:text-blue-500 font-bold">📝 點擊查看備註...</div>}
+                                                
+                                                {/* Compact Footer */}
+                                                <div className="mt-2 pt-2 border-t border-slate-50 flex justify-between items-center">
+                                                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-bold text-slate-500 items-center">
+                                                        {(totalItemJPY > 0 || totalItemNT > 0) && (
+                                                            <div className="flex items-center gap-1 text-slate-600">
+                                                                <Icon n="DollarSign" s={12}/>
+                                                                <span>{totalItemJPY > 0 ? `¥${fmtMoney(totalItemJPY)}` : ''} {totalItemNT > 0 ? `NT${fmtMoney(totalItemNT)}` : ''}</span>
+                                                            </div>
+                                                        )}
+                                                        {item.steps > 0 && (
+                                                            <div className="flex items-center gap-1 text-pink-500">
+                                                                <Icon n="Footprints" s={12}/>
+                                                                <span>{Number(item.steps).toLocaleString()}</span>
+                                                            </div>
+                                                        )}
+                                                        {item.mapcode && (
+                                                            <div className="flex items-center gap-1 bg-slate-100 px-1.5 py-0.5 rounded text-slate-400 font-mono">
+                                                                MC: {item.mapcode}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <a href={gMap(item)} target="_blank" onClick={e=>e.stopPropagation()} className="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-500 rounded-full active:scale-90 transition-transform shadow-sm border border-blue-100">
+                                                        <Icon n="MapPin" s={16}/>
+                                                    </a>
+                                                </div>
                                             </div>
                                         )}
                                     </div>
@@ -502,13 +524,12 @@ function App(){
                             );
                         })}
                     </div>
-                    {!sort && <div className="mt-8 mb-4 flex justify-center"><a href={getDailyRouteUrl(day.items)} target="_blank" className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-8 py-4 rounded-full shadow-xl font-bold text-base flex items-center gap-2 active:scale-95 transition-transform hover:shadow-2xl border-4 border-white/50 ring-4 ring-emerald-100"><Icon n="Map" s={24}/> 🗺️ 查看今日完整路線 (Google Maps)</a></div>}
+                    {!sort && <div className="mt-6 mb-4 flex justify-center"><a href={getDailyRouteUrl(day.items)} target="_blank" className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-6 py-3 rounded-full shadow-lg font-bold text-sm flex items-center gap-2 active:scale-95 transition-transform hover:shadow-xl border-2 border-white/50"><Icon n="Map" s={20}/> 🗺️ Google Maps 路線</a></div>}
                 </div>
             </div>
 
             {/* 精簡抽屜 & 排序浮動按鈕 */}
             <div className={`fixed bottom-0 w-full z-50 transition-transform duration-300 ${(footerExpanded || sort) ? 'translate-y-0' : 'translate-y-full'}`}>
-                {/* 只有在非排序模式且收納時，顯示展開把手 */}
                 {!sort && (
                     <div 
                         onClick={() => setFooterExpanded(!footerExpanded)} 
