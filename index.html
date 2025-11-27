@@ -15,7 +15,7 @@
     .hide-scrollbar::-webkit-scrollbar{display:none}.hide-scrollbar{-ms-overflow-style:none;scrollbar-width:none}
     .scroll-smooth-mobile{-webkit-overflow-scrolling:touch;scroll-behavior:smooth}
     .pb-safe{padding-bottom:env(safe-area-inset-bottom,24px)}.pt-safe{padding-top:env(safe-area-inset-top,0px)}
-    .card-shadow{box-shadow:0 4px 20px -2px rgba(0,0,0,0.08)}
+    .card-shadow{box-shadow:0 2px 10px -1px rgba(0,0,0,0.05)}
     .font-rounded{font-weight:800;letter-spacing:0.03em;}
     .drag-handle{cursor:grab;touch-action:none;padding:10px}.drag-handle:active{cursor:grabbing}
     
@@ -27,18 +27,18 @@
     @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
     @keyframes pulse-soft { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
 
-    /* 🌸 櫻花按鈕修正: 加入 overflow: visible */
-    .sakura-btn-container { position: relative; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin: 0 2px; overflow: visible; }
+    /* 🌸 櫻花按鈕 */
+    .sakura-btn-container { position: relative; width: 54px; height: 54px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin: 0 4px; overflow: visible; }
     .sakura-icon-active { transform-origin: center center; filter: drop-shadow(0 4px 6px rgba(244, 63, 94, 0.5)); animation: pop-bloom 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards, spin-sakura 12s linear infinite 0.6s; }
     @keyframes pop-bloom { 0% { transform: scale(0) rotate(-45deg); opacity: 0; } 60% { transform: scale(1.35) rotate(10deg); opacity: 1; } 100% { transform: scale(1.25) rotate(0deg); opacity: 1; } }
     @keyframes spin-sakura { from { transform: scale(1.25) rotate(0deg); } to { transform: scale(1.25) rotate(360deg); } }
-    .sakura-icon-inactive { transform: scale(0.9); opacity: 0.5; transition: all 0.3s ease; }
-    .sakura-text-active { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #FEF08A !important; font-size: 18px; font-weight: 900; text-shadow: 0 2px 2px rgba(0,0,0,0.2); z-index: 50; pointer-events: none; }
-    .sakura-text-inactive { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 14px; font-weight: 700; z-index: 50; pointer-events: none; }
+    .sakura-icon-inactive { transform: scale(0.9); opacity: 0.6; transition: all 0.3s ease; }
+    .sakura-text-active { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #FEF08A !important; font-size: 16px; font-weight: 900; text-shadow: 0 2px 2px rgba(0,0,0,0.2); z-index: 50; pointer-events: none; }
+    .sakura-text-inactive { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 12px; font-weight: 700; z-index: 50; pointer-events: none; }
 
     /* 其他動畫 */
     .note-expand { transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out, margin 0.3s ease; max-height: 0; opacity: 0; overflow: hidden; }
-    .note-expand.open { max-height: 500px; opacity: 1; margin-bottom: 16px; }
+    .note-expand.open { max-height: 500px; opacity: 1; margin-bottom: 12px; }
     .snow-alert { animation: slide-down 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
     @keyframes slide-down { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
     .sort-mode-bg { background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 20px 20px; }
@@ -49,8 +49,16 @@
 <script type="text/babel">
 const {useState,useEffect,useRef,useCallback}=React;
 
+// 🎨 定義所有圖示，包含之前漏掉的 Globe
 const Icons={
     MapPin:<g><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="10" r="3"/></g>,
+    // 🚀 導航箭頭 (用於卡片底部按鈕)
+    Navigation:<path d="M3 11l19-9-9 19-2-8-8-2z" strokeLinecap="round" strokeLinejoin="round"/>,
+    // 🛣️ 路線圖 (用於總路線)
+    Route:<g><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></g>,
+    // 🌍 地球儀 (用於 Mapcode 查詢) - 補上這個！
+    Globe:<g><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></g>,
+    
     Plus:<path d="M12 5v14M5 12h14" strokeLinecap="round" strokeLinejoin="round"/>,
     X:<path d="M18 6 6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round"/>,
     Save:<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" strokeLinecap="round" strokeLinejoin="round"/>,
@@ -75,7 +83,6 @@ const Icons={
     Search:<g><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3" strokeLinecap="round" strokeLinejoin="round"/></g>,
     Check:<polyline points="20 6 9 17 4 12" strokeLinecap="round" strokeLinejoin="round"/>,
     Clock:<g><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14" strokeLinecap="round" strokeLinejoin="round"/></g>,
-    Map:<polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" strokeLinecap="round" strokeLinejoin="round"/>,
     Download:<g><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></g>,
     Upload:<g><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></g>,
     Link:<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" strokeLinecap="round" strokeLinejoin="round"/>,
@@ -87,12 +94,11 @@ const Icons={
     ChevronLeft:<path d="m15 18-6-6 6-6" strokeLinecap="round" strokeLinejoin="round"/>,
     ChevronRight:<path d="m9 18 6-6-6-6" strokeLinecap="round" strokeLinejoin="round"/>,
     Sort:<g><path d="M3 6h18"/><path d="M7 12h10"/><path d="M10 18h4"/></g>,
-    DragHandle:<g><line x1="4" y1="9" x2="20" y2="9" strokeWidth="2.5" strokeLinecap="round"/><line x1="4" y1="15" x2="20" y2="15" strokeWidth="2.5" strokeLinecap="round"/></g>,
+    DragHandle:<path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" strokeLinejoin="round"/>,
     Snowflake:<g><line x1="12" y1="3" x2="12" y2="21" strokeWidth="2"/><line x1="4.2" y1="7.5" x2="19.8" y2="16.5" strokeWidth="2"/><line x1="4.2" y1="16.5" x2="19.8" y2="7.5" strokeWidth="2"/><path d="M8 3.5 12 8 16 3.5" strokeWidth="1.5" fill="none"/><path d="M8 20.5 12 16 16 20.5" strokeWidth="1.5" fill="none"/><path d="M2.5 11 7 12 2.5 13" strokeWidth="1.5" fill="none"/><path d="M21.5 11 17 12 21.5 13" strokeWidth="1.5" fill="none"/></g>,
     Sakura:<g><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(0 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(72 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(144 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(216 12 12)" fill="currentColor"/><ellipse cx="12" cy="5" rx="4" ry="6" transform="rotate(288 12 12)" fill="currentColor"/><circle cx="12" cy="12" r="5.5" fill="currentColor"/></g>
 };
 
-// 🌸 修正 Icon 元件: 加入 overflow="visible"
 const Icon=({n,s=24,c=""})=>Icons[n]?<svg xmlns="http://www.w3.org/2000/svg" width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={c} overflow="visible">{Icons[n]}</svg>:null;
 
 const CATS={
@@ -105,9 +111,24 @@ const CATS={
 };
 const W_ICONS={sunny:'Sun',cloudy:'Cloud',snow:'Snowflake',rain:'CloudRain'};
 const WEATHER_COLORS = { sunny: 'text-yellow-300', cloudy: 'text-white/80', rain: 'text-blue-300', snow: 'text-white' };
-const WEATHER_LOCATIONS = { 'day1': '327-0102', 'day2': '321-2611', 'day3': '321-2601', 'day4': '311-1301', 'day5': '300-4352', 'day6': '110-0005', 'day7': '282-0004' };
-const WEATHER_TYPES = ['sunny', 'cloudy', 'rain', 'snow'];
+const LOCATIONS_COORD = [
+    { id: 'day1', lat: 36.3146, lng: 139.5797 }, 
+    { id: 'day2', lat: 36.7490, lng: 139.5033 }, 
+    { id: 'day3', lat: 36.7959, lng: 139.4337 }, 
+    { id: 'day4', lat: 36.3144, lng: 140.5743 }, 
+    { id: 'day5', lat: 36.2048, lng: 140.1067 }, 
+    { id: 'day6', lat: 35.7140, lng: 139.7741 }, 
+    { id: 'day7', lat: 35.7767, lng: 140.3188 }  
+];
 const fmtMoney=(v)=>v.toString().replace(/\B(?=(\d{3})+(?!\d))/g,",");
+
+const getWeatherTypeFromCode = (code) => {
+    if (code === undefined || code === null) return 'sunny';
+    if (code <= 1) return 'sunny'; 
+    if (code <= 3 || code === 45 || code === 48) return 'cloudy'; 
+    if (code >= 71 && code <= 77 || code >= 85) return 'snow'; 
+    return 'rain'; 
+};
 
 const INITIAL_ITINERARY = [
     {id:'day1',date:'12/28',dayOfWeek:'(日)',weather:'sunny',location:'成田 -> 佐野',items:[{id:'1-1',time:'11:25',title:'抵達成田國際機場',category:'transport',expenses:[{id:'1',label:'機票/交通',amount:0,currency:'NT',category:'transport'}],note:'11:25 吉 BR108 NRT T1\n12:00 王方 BR184 NRT T1',mapcode:'',searchKeyword:'',completed:false,steps:500, lat:35.7719, lng:140.3929},{id:'1-2',time:'13:00',title:'取車 Sakura Rent A Car',category:'transport',expenses:[{id:'1',label:'租車費',amount:25446,currency:'NT',category:'transport'}],note:'Toyota Estima 4WD\n取車點: 成田空港 P1駐車場',mapcode:'',searchKeyword:'成田空港 P1駐車場',completed:false,steps:200},{id:'1-3',time:'15:00',title:'午餐：佐野拉麵',category:'food',expenses:[{id:'1',label:'預估餐費',amount:3000,currency:'JPY',category:'food'}],note:'推薦：青竹手打拉麵 大和 或 小倉屋。佐野拉麵以清湯和Q彈麵條聞名。',mapcode:'64 695 540*84',searchKeyword:'佐野ラーメン',completed:false,steps:0},{id:'1-4',time:'16:30',title:'磯山弁財天',category:'sightseeing',expenses:[{id:'1',label:'門票/香油',amount:0,currency:'JPY',category:'sightseeing'}],note:'日本名水百選之一，風景優美。',mapcode:'64 695 571*64',searchKeyword:'磯山弁財天',completed:false,steps:1500},{id:'1-5',time:'18:00',title:'足利花卉公園 (光之花庭)',category:'sightseeing',expenses:[{id:'1',label:'夜間門票',amount:0,currency:'JPY',category:'sightseeing'}],note:'日本三大燈飾之一，夜景非常壯觀。夜間票 15:30~21:30',mapcode:'64 512 293*12',searchKeyword:'あしかがフラワーパーク',completed:false,steps:6000},{id:'1-6',time:'20:00',title:'晚餐：大衆割烹 三岩',category:'food',expenses:[{id:'1',label:'預估餐費',amount:5000,currency:'JPY',category:'food'}],note:'Google 評分高，在地老字號居酒屋。燒鳥、刺身、炸物美味。\n位於佐野站前，非常順路。',mapcode:'64 727 523*55',searchKeyword:'大衆割烹 三岩',completed:false,steps:0},{id:'1-7',time:'21:30',title:'ホテル一乃館',category:'accommodation',expenses:[{id:'1',label:'住宿費',amount:13332,currency:'NT',category:'accommodation'}],note:'含早餐',mapcode:'64 695 540*84',searchKeyword:'ホテル一乃館',completed:false,steps:100}]},
@@ -121,7 +142,7 @@ const INITIAL_ITINERARY = [
 
 function App(){
     const [data,setData]=useState(()=>{
-        const saved=localStorage.getItem('kanto_v2025_final_stable');
+        const saved=localStorage.getItem('kanto_v2025_final_stable_v2');
         if(saved) { try { return JSON.parse(saved); } catch(e){} }
         return INITIAL_ITINERARY;
     });
@@ -141,9 +162,10 @@ function App(){
     const [stepModal,setStepModal]=useState(false);
     const [tStep,setTStep]=useState('');
     const [saveBtnText, setSaveBtnText] = useState('儲存紀錄');
-    const [footerExpanded, setFooterExpanded] = useState(true); // 預設展開，讓使用者知道有選單
+    const [footerExpanded, setFooterExpanded] = useState(true); 
     const [expandedNotes, setExpandedNotes] = useState(new Set()); 
     const [filterCategory, setFilterCategory] = useState(null);
+    const [liveWeather, setLiveWeather] = useState(null); 
 
     const fileRef=useRef(null);
     const stepRef=useRef(null);
@@ -153,7 +175,7 @@ function App(){
     const sortableInstance = useRef(null);
     const longPressTimer = useRef(null);
 
-    useEffect(()=>{localStorage.setItem('kanto_v2025_final_stable',JSON.stringify(data))},[data]);
+    useEffect(()=>{localStorage.setItem('kanto_v2025_final_stable_v2',JSON.stringify(data))},[data]);
     useEffect(()=>{localStorage.setItem('kanto_v2025_memos',JSON.stringify(memos))},[memos]);
     useEffect(()=>{
         if(stepModal) {
@@ -161,6 +183,28 @@ function App(){
             setSaveBtnText('儲存紀錄');
         }
     },[stepModal]);
+
+    // 📡 Fetch Real-time Weather from Open-Meteo
+    useEffect(() => {
+        const fetchWeather = async () => {
+            const coord = LOCATIONS_COORD.find(c => c.id === data[idx].id);
+            if (!coord) return;
+            setLiveWeather(null); 
+            try {
+                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${coord.lat}&longitude=${coord.lng}&current=temperature_2m,weather_code&timezone=Asia%2FTokyo`);
+                const json = await res.json();
+                if (json.current) {
+                    setLiveWeather({
+                        temp: Math.round(json.current.temperature_2m),
+                        code: json.current.weather_code
+                    });
+                }
+            } catch (e) {
+                console.error("Weather fetch failed", e);
+            }
+        };
+        fetchWeather();
+    }, [idx]);
 
     // SortableJS Init
     useEffect(() => {
@@ -199,7 +243,7 @@ function App(){
             if (navigator.vibrate) navigator.vibrate(50);
             setBackupData(JSON.parse(JSON.stringify(data)));
             setSort(true);
-            setFooterExpanded(true); // 強制展開選單以便操作
+            setFooterExpanded(true);
         }, 800);
     }, [sort, data]);
 
@@ -256,6 +300,12 @@ function App(){
     const planSteps = day.items.reduce((sum, i) => sum + Number(i.steps || 0), 0);
     const currentSteps = Number(day.steps) > 0 ? Number(day.steps) : planSteps; 
     const displaySteps = day.steps > 0 ? day.steps : planSteps;
+
+    // 🌤️ 計算即時天氣樣式
+    const liveWeatherType = liveWeather ? getWeatherTypeFromCode(liveWeather.code) : null;
+    const weatherIconName = liveWeatherType ? W_ICONS[liveWeatherType] : W_ICONS[day.weather];
+    const weatherColorClass = liveWeatherType ? WEATHER_COLORS[liveWeatherType] : WEATHER_COLORS[day.weather];
+    const weatherAnimClass = (liveWeatherType || day.weather)==='sunny'?'weather-spin':(liveWeatherType || day.weather)==='cloudy'?'weather-float':'weather-pulse';
 
     const saveStep=()=>{
         const newData=[...data];
@@ -320,7 +370,20 @@ function App(){
     const updateExpense=(idx, field, val)=>{const newExps=[...editItem.expenses];newExps[idx][field]=val;setEditItem({...editItem, expenses:newExps})};
     const removeExpense=(idx)=>{const newExps=editItem.expenses.filter((_,i)=>i!==idx);setEditItem({...editItem, expenses:newExps})};
     
-    // --- Memo Logic ---
+    const fetchCoords = async () => {
+        const query = editItem.searchKeyword || editItem.title;
+        if (!query) return alert("請先輸入標題或搜尋關鍵字");
+        const coordMatch = query.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) || query.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+        if (coordMatch) { setEditItem({ ...editItem, lat: parseFloat(coordMatch[1]), lng: parseFloat(coordMatch[2]) }); return alert(`📍 已從連結提取座標！`); }
+        setIsFetching(true);
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&accept-language=ja,zh-TW`);
+            const results = await res.json();
+            if (results && results.length > 0) { setEditItem({ ...editItem, lat: parseFloat(results[0].lat), lng: parseFloat(results[0].lon) }); alert(`📍 已定位`); } else { alert("❌ 找不到此地點"); }
+        } catch (e) { alert("❌ 定位失敗"); } finally { setIsFetching(false); }
+    };
+    const clearCoords = () => { if(confirm('清除定位？')) setEditItem({ ...editItem, lat: null, lng: null }); };
+
     const saveMemo = () => {
         if (!editMemoItem.title) return;
         const newMemos = { ...memos, [editMemoItem.id]: editMemoItem };
@@ -394,53 +457,66 @@ function App(){
         <div className={`h-[100dvh] flex flex-col font-sans text-slate-800 bg-[#fff7ed] ${sort ? 'sort-mode-bg' : ''}`}>
             <div className="bg-gradient-to-r from-rose-500 to-orange-400 shadow-md pt-safe z-30 shrink-0 relative">
                 <div className="h-1.5 w-full bg-black/10 absolute top-0 left-0"><div className="h-full bg-yellow-300 transition-all duration-500" style={{width:`${((idx+1)/data.length)*100}%`}}/></div>
-                <div className="px-4 py-5 text-white">
-                    <div className="flex justify-between items-center">
+                <div className="px-4 py-3 text-white">
+                    <div className="flex justify-between items-end">
                         <div className="flex flex-col justify-center">
-                            <div className="text-xs font-bold text-white/90 tracking-widest mb-0.5 ml-1">{day.date.startsWith('12') ? '2025' : '2026'}</div>
+                            <div className="text-[10px] font-bold text-white/90 tracking-widest mb-0.5 ml-1">{day.date.startsWith('12') ? '2025' : '2026'}</div>
                             <div className="flex items-baseline gap-2">
-                                <h1 className="font-black text-4xl tracking-wide leading-none drop-shadow-md">{day.date}</h1>
-                                <span className="text-2xl font-bold opacity-90">{day.dayOfWeek}</span>
+                                <h1 className="font-black text-3xl tracking-wide leading-none drop-shadow-md">{day.date}</h1>
+                                <span className="text-lg font-bold opacity-90">{day.dayOfWeek}</span>
                             </div>
-                            <div className="text-lg font-bold text-white flex items-center gap-1.5 mt-2 drop-shadow-sm"><Icon n="MapPin" s={18} c="shrink-0 text-yellow-200"/><span className="truncate max-w-[220px] leading-none">{day.location}</span></div>
+                            <div className="text-sm font-bold text-white flex items-center gap-1 mt-1 drop-shadow-sm"><Icon n="MapPin" s={14} c="shrink-0 text-yellow-200"/><span className="truncate max-w-[220px] leading-none">{day.location}</span></div>
                         </div>
-                        <div className="flex flex-col items-end gap-3">
-                            <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-2xl backdrop-blur-md border-2 border-white/20 shadow-md hover:bg-white/20 transition-colors cursor-pointer relative">
-                                <button onClick={toggleWeather} className={`${WEATHER_COLORS[day.weather]} active:scale-90 transition-transform ${day.weather==='sunny'?'weather-spin':day.weather==='cloudy'?'weather-float':'weather-pulse'}`}>
-                                    <Icon n={W_ICONS[day.weather]} s={26} />
-                                </button>
-                                <a href={getWeatherUrl()} target="_blank" className="font-black text-xl leading-none text-white drop-shadow-sm hover:text-yellow-100">
-                                    {day.weather==='snow'?'-2°C':'8°C'}
-                                </a>
+                        <div className="flex flex-col items-end gap-2">
+                            <div className="flex flex-col items-end gap-0.5 bg-white/10 px-2 py-1 rounded-lg backdrop-blur-md border border-white/20 shadow-md cursor-pointer relative" onClick={toggleWeather}>
+                                <div className="flex items-center gap-1">
+                                    <div className={`${weatherColorClass} ${weatherAnimClass}`}>
+                                        <Icon n={weatherIconName} s={20} />
+                                    </div>
+                                    <span className="font-bold text-lg text-white drop-shadow-sm">
+                                        {liveWeather ? `${liveWeather.temp}°` : '...'}
+                                    </span>
+                                </div>
+                                <span className="text-[9px] font-bold text-yellow-100 opacity-80">
+                                    {liveWeather ? '目前天氣' : '讀取中'}
+                                </span>
                             </div>
-                            <button onClick={()=>{setTStep(day.steps||'');setStepModal(true)}} className="flex items-center gap-2 text-sm text-rose-600 font-black bg-white px-4 py-2 rounded-full shadow-lg active:scale-95 transition-transform border-2 border-rose-100">
-                                <Icon n="Footprints" s={18}/><span className={`leading-none pt-0.5 ${Number(day.steps) > 0 ? 'text-rose-600' : 'text-slate-400'}`}>{displaySteps.toLocaleString()}</span>
+                            <button onClick={()=>{setTStep(day.steps||'');setStepModal(true)}} className="flex items-center gap-1 text-xs text-rose-600 font-black bg-white px-3 py-1 rounded-full shadow-lg active:scale-95 transition-transform border border-rose-100">
+                                <Icon n="Footprints" s={14}/><span className={`leading-none pt-0.5 ${Number(day.steps) > 0 ? 'text-rose-600' : 'text-slate-400'}`}>{displaySteps.toLocaleString()}</span>
                             </button>
                         </div>
                     </div>
-                    <div className={`flex justify-center gap-3 hide-scrollbar py-6 px-2 overflow-x-auto mt-2 scroll-smooth-mobile ${sort?'opacity-30 pointer-events-none':''}`}>
+                    
+                    <div className={`flex gap-1 hide-scrollbar py-4 px-2 overflow-x-auto mt-1 scroll-smooth-mobile ${sort?'opacity-30 pointer-events-none':''}`}>
                         {data.map((d,i)=>(<button key={d.id} onClick={()=>{setIdx(i);setSort(false)}} className={`flex-shrink-0 rounded-full transition-all shadow-none tap-transparent sakura-btn-container ${idx===i?'sakura-active':''}`}>
-                            {idx===i ? (<div className="sakura-icon-active text-rose-200"><Icon n="Sakura" s={68} c="w-full h-full"/></div>) : (<div className="sakura-icon-inactive text-white"><Icon n="Sakura" s={56} c="w-full h-full"/></div>)}
+                            {idx===i ? (<div className="sakura-icon-active text-rose-200"><Icon n="Sakura" s={54} c="w-full h-full"/></div>) : (<div className="sakura-icon-inactive text-white"><Icon n="Sakura" s={46} c="w-full h-full"/></div>)}
                             <span className={idx===i ? 'sakura-text-active' : 'sakura-text-inactive'}>D{i+1}</span>
                         </button>))}
                     </div>
                 </div>
             </div>
 
-            <div className={`flex-1 overflow-y-auto relative scroll-smooth-mobile -mt-4 pt-6`}>
-                <div className="px-4 py-2 pb-32 space-y-8">
-                    {!sort && day.weather==='snow' && (
-                        <div className="bg-gradient-to-r from-cyan-50 to-blue-50 border-2 border-cyan-200 rounded-3xl p-4 shadow-sm flex items-center gap-3 mb-4 animate-fade-in snow-alert">
-                            <div className="text-cyan-500"><Icon n="CloudSnow" s={28}/></div>
+            <div className={`flex-1 overflow-y-auto relative scroll-smooth-mobile -mt-2 pt-4`}>
+                <div className="py-2 pb-32 space-y-6">
+                    {/* 🚨 智慧型警示卡片：雪/雨/隱藏 */}
+                    {!sort && liveWeather && (getWeatherTypeFromCode(liveWeather.code) === 'snow' || getWeatherTypeFromCode(liveWeather.code) === 'rain') && (
+                        <div className={`mx-4 border-2 rounded-3xl p-3 shadow-sm flex items-center gap-3 mb-4 animate-fade-in ${getWeatherTypeFromCode(liveWeather.code) === 'snow' ? 'bg-gradient-to-r from-cyan-50 to-blue-50 border-cyan-200' : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'}`}>
+                            <div className={getWeatherTypeFromCode(liveWeather.code) === 'snow' ? 'text-cyan-500' : 'text-blue-500'}>
+                                <Icon n={getWeatherTypeFromCode(liveWeather.code) === 'snow' ? 'CloudSnow' : 'CloudRain'} s={24}/>
+                            </div>
                             <div className="flex-1">
-                                <div className="text-cyan-800 font-bold text-base">❄️ 預報有雪｜建議備妥雪鍊</div>
-                                <a href={getWeatherUrl()} target="_blank" className="text-cyan-500 text-xs font-bold underline mt-1 block">點此確認當地天氣預報 ></a>
+                                <div className={`font-bold text-sm ${getWeatherTypeFromCode(liveWeather.code) === 'snow' ? 'text-cyan-800' : 'text-blue-800'}`}>
+                                    {getWeatherTypeFromCode(liveWeather.code) === 'snow' ? '❄️ 目前有雪｜建議備妥雪鍊' : '🌧️ 目前有雨｜天雨路滑請小心'}
+                                </div>
+                                <a href={getWeatherUrl()} target="_blank" className={`text-[10px] font-bold underline mt-0.5 block ${getWeatherTypeFromCode(liveWeather.code) === 'snow' ? 'text-cyan-500' : 'text-blue-500'}`}>點此確認當地天氣預報 ></a>
                             </div>
                         </div>
                     )}
                     
                     <div ref={sortableRef} className="relative">
-                        {!sort && <div className="absolute left-[19px] top-2 bottom-2 w-0.5 bg-slate-300/50 z-0"/>}
+                        {/* 🔍 時間軸加粗加深 */}
+                        {!sort && <div className="absolute left-[24px] top-4 bottom-4 w-[3px] bg-slate-300 rounded-full z-0"/>}
+                        
                         {day.items.map((item,i)=>{
                             const cat=CATS[item.category];const next=day.items[i+1];const dur=next?calcDur(item.time,next.time):null;
                             const totalItemJPY = (item.expenses || []).filter(e=>e.currency!=='NT').reduce((s,x)=>s+Number(x.amount||0),0);
@@ -448,32 +524,76 @@ function App(){
                             const isExpanded = expandedNotes.has(item.id);
                             
                             return (
-                                <div key={item.id} className={`relative ${sort?'mb-4':'mb-12 pl-14'}`}
+                                <div key={item.id} className={`relative ${sort?'mb-3 px-4':'mb-8 pl-16 pr-6'}`}
                                      onTouchStart={startLongPress} onTouchEnd={endLongPress} onMouseDown={startLongPress} onMouseUp={endLongPress} onMouseLeave={endLongPress}>
-                                    {!sort && (<><div onClick={(e)=>{e.stopPropagation();toggle(item.id)}} className={`absolute left-0 top-1 w-10 h-10 rounded-full border-4 border-[#fff7ed] z-20 flex items-center justify-center transition-colors shadow-sm active:scale-90 cursor-pointer ${item.completed?'bg-emerald-500 text-white':cat.c}`}>{item.completed?<Icon n="Check" s={20}/>:<Icon n={cat.i} s={18}/>}</div>{dur && <div className="absolute left-[1px] -bottom-8 z-10 flex flex-col items-center w-10 pointer-events-none"><div className="bg-white border border-slate-200 rounded-full px-2 py-0.5 text-[10px] text-slate-500 font-bold shadow-sm scale-90 whitespace-nowrap">▼ {dur.t}</div></div>}</>)}
+                                    
+                                    {/* 👆 打卡按鈕巨大化 */}
+                                    {!sort && (
+                                        <>
+                                            <div onClick={(e)=>{e.stopPropagation();toggle(item.id)}} className={`absolute left-0 top-0 w-12 h-12 rounded-full border-[4px] border-[#fff7ed] z-20 flex items-center justify-center transition-all shadow-md cursor-pointer ${item.completed?'bg-emerald-500 text-white scale-90':'bg-white text-slate-400 ' + cat.c.replace('bg-', 'text-').replace('text-', 'border-')} ring-1 ring-slate-100`}>
+                                                <div className={`w-full h-full rounded-full flex items-center justify-center ${!item.completed && cat.c}`}>
+                                                    {item.completed ? <Icon n="Check" s={24}/> : <Icon n={cat.i} s={20}/>}
+                                                </div>
+                                            </div>
+                                            {dur && <div className="absolute left-[6px] -bottom-6 z-10 flex flex-col items-center w-10 pointer-events-none"><div className="bg-white border border-slate-200 rounded-full px-1.5 py-0.5 text-[9px] text-slate-400 font-bold shadow-sm whitespace-nowrap">{dur.t}</div></div>}
+                                        </>
+                                    )}
+
                                     <div 
                                         onClick={()=>!sort && toggleNote(item.id)} 
-                                        className={`bg-white rounded-3xl border border-slate-100 relative z-10 transition-all tap-transparent ${sort?'p-4 border-blue-400 border-2 shadow-lg flex items-center gap-4 bg-blue-50/50':'p-5 hover:shadow-lg active:scale-[0.98] card-shadow '+(item.completed?'bg-slate-50/80 grayscale-[0.5]':'')}`}
+                                        className={`bg-white rounded-2xl border border-slate-100 relative z-10 transition-all tap-transparent ${sort?'p-0 border-blue-400 border-2 shadow-lg flex items-stretch bg-blue-50/20 overflow-hidden':'p-4 hover:shadow-lg active:scale-[0.98] card-shadow '+(item.completed?'bg-slate-50/80 grayscale-[0.5]':'')}`}
                                     >
                                         {sort?(
                                             <>
-                                                <div className="text-blue-500 drag-handle p-2"><Icon n="DragHandle" s={28}/></div>
-                                                <div className="flex-1 pointer-events-none select-none">
-                                                    <div className="text-sm font-bold text-blue-600">{item.time}</div>
-                                                    <div className="font-bold text-slate-800 text-lg line-clamp-1">{item.title}</div>
+                                                <div className="drag-handle w-14 bg-slate-100 flex items-center justify-center flex-shrink-0 border-r border-slate-200 cursor-grab active:cursor-grabbing touch-none">
+                                                     <Icon n="DragHandle" s={24} c="text-slate-400"/>
+                                                </div>
+                                                <div className="flex-1 p-3 pointer-events-none select-none flex flex-col justify-center min-w-0">
+                                                    <div className="text-xs font-bold text-blue-600 mb-0.5">{item.time}</div>
+                                                    <div className="font-bold text-slate-800 text-base line-clamp-1">{item.title}</div>
                                                 </div>
                                             </>
                                         ):(
-                                            <div className="relative">
-                                                <div className="flex justify-between items-start mb-3">
-                                                    <div className="flex items-baseline gap-2"><span className="text-3xl font-black text-slate-800 font-mono tracking-tight">{item.time}</span><span className={`text-xs px-2.5 py-1 rounded-full font-bold border ${cat.c.replace('text-','border-').replace('100','200')}`}>{cat.l}</span></div>
-                                                    <button onClick={(e)=>{e.stopPropagation();setEditItem({...item, dayId: day.id});setModal(true)}} className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 shadow-sm border border-blue-200 active:scale-90 transition-transform"><Icon n="Edit" s={20}/></button>
+                                            <div className="relative flex flex-col gap-2">
+                                                <div className="flex justify-between items-start">
+                                                    <div className="flex items-baseline gap-2">
+                                                        <span className="text-xl font-black text-slate-800 font-mono tracking-tight">{item.time}</span>
+                                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${cat.c.replace('text-','border-').replace('100','200')}`}>{cat.l}</span>
+                                                    </div>
+                                                    <button onClick={(e)=>{e.stopPropagation();setEditItem({...item, dayId: day.id});setModal(true)}} className="text-slate-300 hover:text-blue-500 active:scale-90 transition-transform"><Icon n="Edit" s={16}/></button>
                                                 </div>
-                                                <h3 className={`font-black text-2xl mb-3 leading-snug font-rounded ${item.completed?'text-slate-400 line-through decoration-slate-300':'text-slate-800'}`}>{item.title}</h3>
-                                                <div className={`note-expand ${isExpanded || (item.note && isExpanded) ? 'open' : ''} ${!isExpanded && item.note ? 'max-h-0 opacity-0' : ''}`}>{item.note && (<div onClick={(e)=>{e.stopPropagation(); toggleNote(item.id)}} className="cursor-pointer text-base font-medium text-slate-700 mb-4 bg-yellow-50 p-4 rounded-xl border-l-4 border-yellow-400 shadow-sm leading-relaxed whitespace-pre-line active:bg-yellow-100 transition-colors">{item.note}</div>)}</div>
-                                                {!isExpanded && item.note && <div onClick={()=>toggleNote(item.id)} className="text-xs text-slate-400 text-center mb-2 cursor-pointer hover:text-blue-500 font-bold py-2">📝 點擊查看備註...</div>}
-                                                {(item.steps > 0) && <div className="flex items-center gap-1.5 mb-4 text-pink-600 font-bold text-sm bg-pink-50 px-3 py-1.5 rounded-xl w-fit border border-pink-200"><Icon n="Footprints" s={16}/><span>{Number(item.steps).toLocaleString()} 步</span></div>}
-                                                <div className="flex justify-between items-end pt-4 border-t border-slate-100"><div className="flex flex-col gap-1">{totalItemJPY > 0 && <span className="text-lg font-bold text-slate-700 flex items-center gap-1"><Icon n="DollarSign" s={18}/>JPY {fmtMoney(totalItemJPY)}</span>}{totalItemNT > 0 && <span className="text-base font-bold text-slate-500 flex items-center gap-1"><Icon n="DollarSign" s={16}/>NT {fmtMoney(totalItemNT)}</span>}{item.mapcode && (<div className="flex items-center gap-2 mt-1"><span className="text-xs font-mono text-slate-500 bg-slate-100 px-2 py-1 rounded-lg inline-block tracking-wide">MC: {item.mapcode}</span></div>)}</div><a href={gMap(item)} target="_blank" onClick={e=>e.stopPropagation()} className="flex items-center gap-1.5 text-slate-600 bg-white px-4 py-2.5 rounded-xl font-bold text-sm border border-slate-200 shadow-sm active:scale-95 hover:bg-slate-50"><Icon n="MapPin" s={18}/> 地圖定位</a></div>
+                                                <h3 className={`font-black text-lg leading-snug font-rounded flex items-center gap-1 ${item.completed?'text-slate-400 line-through decoration-slate-300':'text-slate-800'}`}>
+                                                    {/* 📍 標題旁的 MapPin 圖示 (修復回歸) */}
+                                                    <Icon n="MapPin" s={18} c="text-slate-300 shrink-0"/>
+                                                    {item.title}
+                                                </h3>
+                                                <div className={`note-expand ${isExpanded || (item.note && isExpanded) ? 'open' : ''} ${!isExpanded && item.note ? 'max-h-0 opacity-0' : ''}`}>{item.note && (<div onClick={(e)=>{e.stopPropagation(); toggleNote(item.id)}} className="cursor-pointer text-sm font-medium text-slate-600 bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-400 leading-relaxed whitespace-pre-line active:bg-yellow-100 transition-colors">{item.note}</div>)}</div>
+                                                {!isExpanded && item.note && <div onClick={()=>toggleNote(item.id)} className="text-[10px] text-slate-400 text-center cursor-pointer hover:text-blue-500 font-bold">📝 點擊查看備註...</div>}
+                                                
+                                                <div className="mt-2 pt-2 border-t border-slate-50 flex justify-between items-center">
+                                                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-bold text-slate-500 items-center">
+                                                        {(totalItemJPY > 0 || totalItemNT > 0) && (
+                                                            <div className="flex items-center gap-1 text-slate-600">
+                                                                <Icon n="DollarSign" s={12}/>
+                                                                <span>{totalItemJPY > 0 ? `¥${fmtMoney(totalItemJPY)}` : ''} {totalItemNT > 0 ? `NT${fmtMoney(totalItemNT)}` : ''}</span>
+                                                            </div>
+                                                        )}
+                                                        {item.steps > 0 && (
+                                                            <div className="flex items-center gap-1 text-pink-500">
+                                                                <Icon n="Footprints" s={12}/>
+                                                                <span>{Number(item.steps).toLocaleString()}</span>
+                                                            </div>
+                                                        )}
+                                                        {item.mapcode && (
+                                                            <div className="flex items-center gap-1 bg-slate-100 px-1.5 py-0.5 rounded text-slate-400 font-mono">
+                                                                MC: {item.mapcode}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <a href={gMap(item)} target="_blank" onClick={e=>e.stopPropagation()} className="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-500 rounded-full active:scale-90 transition-transform shadow-sm border border-blue-100">
+                                                        <Icon n="Navigation" s={16}/>
+                                                    </a>
+                                                </div>
                                             </div>
                                         )}
                                     </div>
@@ -481,13 +601,12 @@ function App(){
                             );
                         })}
                     </div>
-                    {!sort && <div className="mt-8 mb-4 flex justify-center"><a href={getDailyRouteUrl(day.items)} target="_blank" className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-8 py-4 rounded-full shadow-xl font-bold text-base flex items-center gap-2 active:scale-95 transition-transform hover:shadow-2xl border-4 border-white/50 ring-4 ring-emerald-100"><Icon n="Map" s={24}/> 🗺️ 查看今日完整路線 (Google Maps)</a></div>}
+                    {!sort && <div className="mt-6 mb-4 flex justify-center"><a href={getDailyRouteUrl(day.items)} target="_blank" className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-6 py-3 rounded-full shadow-lg font-bold text-sm flex items-center gap-2 active:scale-95 transition-transform hover:shadow-xl border-2 border-white/50"><Icon n="Route" s={20}/> 🚗 查看今日總路線</a></div>}
                 </div>
             </div>
 
             {/* 精簡抽屜 & 排序浮動按鈕 */}
             <div className={`fixed bottom-0 w-full z-50 transition-transform duration-300 ${(footerExpanded || sort) ? 'translate-y-0' : 'translate-y-full'}`}>
-                {/* 只有在非排序模式且收納時，顯示展開把手 */}
                 {!sort && (
                     <div 
                         onClick={() => setFooterExpanded(!footerExpanded)} 
@@ -508,10 +627,10 @@ function App(){
                     <div className="bg-white border-t border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] pb-safe">
                         <div className="px-4 py-3 flex items-center justify-between gap-4">
                             <div className="flex flex-col min-w-0">
-                                <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total</div>
-                                <div className="flex items-baseline gap-1">
-                                    <span className="font-bold text-slate-800 text-lg">NT${fmtMoney(totalNT)}</span>
-                                    <span className="text-xs text-slate-400 font-bold">/ ¥{fmtMoney(totalJPY)}</span>
+                                <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">行程總支出</div>
+                                <div className="flex flex-wrap items-baseline gap-x-2">
+                                    <span className="font-black text-slate-800 text-xl">NT${fmtMoney(totalNT)}</span>
+                                    <span className="font-bold text-slate-500 text-sm">¥{fmtMoney(totalJPY)}</span>
                                 </div>
                             </div>
                             <div className="flex gap-2 shrink-0">
@@ -539,7 +658,7 @@ function App(){
                 <div className="bg-white w-full sm:w-[95%] max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[85vh] h-[85vh]">
                     <div className="px-6 py-5 border-b flex justify-between items-center bg-blue-50 rounded-t-3xl"><h2 className="font-bold text-xl text-blue-600 flex items-center gap-2"><Icon n="Wallet" s={24}/> 旅遊帳本</h2><button onClick={()=>setLedgerModal(false)} className="p-2 bg-white rounded-full shadow-sm text-slate-500"><Icon n="X" s={20}/></button></div>
                     <div className="p-6 overflow-y-auto flex-1 space-y-6">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4"> {/* Vertical Stack for clarity */}
                             <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-white shadow-lg"><div className="text-xs font-bold opacity-80 mb-1">總支出 (NT)</div><div className="text-2xl font-black font-mono">NT${fmtMoney(totalNT)}</div></div>
                             <div className="bg-gradient-to-br from-orange-400 to-orange-500 rounded-2xl p-4 text-white shadow-lg"><div className="text-xs font-bold opacity-80 mb-1">總支出 (JPY)</div><div className="text-2xl font-black font-mono">¥{fmtMoney(totalJPY)}</div></div>
                         </div>
@@ -639,9 +758,10 @@ function App(){
                 
                 {/* 備註與定位 (乾淨版 - 移除自動定位) */}
                 <div className="space-y-2"><label className="text-sm font-bold text-slate-500">備註</label><textarea value={editItem.note} onChange={e=>setEditItem({...editItem,note:e.target.value})} placeholder="輸入備註..." className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-3 text-base h-24 outline-none focus:border-blue-400"/></div>
-                <div className="bg-slate-50 p-4 rounded-2xl mb-4 border border-slate-100"><div className="space-y-3"><div><label className="text-xs text-slate-400 block mb-1">車載導航 Mapcode</label><div className="flex gap-2"><input type="text" value={editItem.mapcode} onChange={e=>setEditItem({...editItem,mapcode:e.target.value})} placeholder="Mapcode" className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-400 font-mono"/><a href="https://japanmapcode.com/zh-TW" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center bg-white text-slate-500 border border-slate-200 rounded-xl px-3 text-xs font-bold hover:bg-slate-50">🔗 查詢代碼</a></div></div>
+                {/* 🗺️ Mapcode 查詢按鈕優化：與輸入框等高，使用地球儀圖示 */}
+                <div className="bg-slate-50 p-4 rounded-2xl mb-4 border border-slate-100"><div className="space-y-3"><div><label className="text-xs text-slate-400 block mb-1">車載導航 Mapcode</label><div className="flex gap-2"><input type="text" value={editItem.mapcode} onChange={e=>setEditItem({...editItem,mapcode:e.target.value})} placeholder="Mapcode" className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-400 font-mono"/><a href="https://japanmapcode.com/zh-TW" target="_blank" rel="noopener noreferrer" className="p-3 bg-white text-slate-500 border border-slate-200 rounded-2xl hover:bg-slate-50 active:scale-95 flex items-center justify-center"><Icon n="Globe" s={20}/></a></div></div>
                 {/* 僅保留關鍵字輸入，移除按鈕 */}
-                <div><label className="text-xs text-slate-400 block mb-1">Google Maps 搜尋關鍵字 (連結修正)</label><input type="text" value={editItem.searchKeyword} onChange={e=>setEditItem({...editItem,searchKeyword:e.target.value})} placeholder="例如: 晴空塔 (若自動連結錯誤時使用)" className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-400"/></div></div></div>
+                <div><label className="text-xs text-slate-400 block mb-1">Google Maps 搜尋關鍵字 (連結修正)</label><div className="flex gap-2"><input type="text" value={editItem.searchKeyword} onChange={e=>setEditItem({...editItem,searchKeyword:e.target.value})} placeholder="例如: 晴空塔 (若自動連結錯誤時使用)" className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-400"/><a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(editItem.searchKeyword||editItem.title)}`} target="_blank" className="p-3 bg-white text-slate-500 border border-slate-200 rounded-2xl hover:bg-slate-50 active:scale-95 flex items-center justify-center"><Icon n="Search" s={20}/></a></div></div></div></div>
             </div><div className="p-5 border-t flex gap-4 bg-white pb-safe"><button onClick={delItem} className="p-4 rounded-2xl bg-red-50 text-red-500 border-2 border-red-100 hover:bg-red-100 transition-colors"><Icon n="Trash2" s={24}/></button><button onClick={saveItem} className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-2xl font-bold text-lg shadow-lg shadow-blue-200 active:scale-95 transition-transform py-4 flex justify-center items-center gap-2"><Icon n="Save" s={20}/> 儲存</button></div></div></div>}
             
             {stepModal && <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center px-4 animate-fade-in" onClick={(e) => e.target === e.currentTarget && setStepModal(false)}>
