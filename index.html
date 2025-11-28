@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>關東新春自駕遊 2026 (完美版) 🎌</title>
+<title>關東新春自駕遊 2026 (完美修復版) 🎌</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
@@ -173,10 +173,15 @@ function App(){
         if(saved) { try { return JSON.parse(saved); } catch(e){} }
         return INITIAL_ITINERARY;
     });
-    // Independent Memos State
+    // Independent Memos State (相容性修復)
     const [memos, setMemos] = useState(()=>{
         const saved = localStorage.getItem('kanto_v2026_memos_v2');
-        return saved ? JSON.parse(saved) : []; 
+        if (!saved) return [];
+        try {
+            const parsed = JSON.parse(saved);
+            // 如果讀到的是舊版物件格式，轉換為陣列
+            return Array.isArray(parsed) ? parsed : Object.values(parsed);
+        } catch (e) { return []; }
     });
 
     const [idx,setIdx]=useState(0);
@@ -395,6 +400,8 @@ function App(){
         a.href=URL.createObjectURL(new Blob([JSON.stringify(backup)],{type:'application/json'}));
         a.download='行程與筆記備份.json';a.click()
     };
+    
+    // Import Data Fix: Compatibility for old object-based memos
     const importData=(e)=>{
         const r=new FileReader();
         r.onload=(ev)=>{
@@ -402,7 +409,12 @@ function App(){
                 const d=JSON.parse(ev.target.result);
                 if(d.itinerary){
                     setData(d.itinerary);
-                    setMemos(d.memos || []);
+                    if (d.memos) {
+                        // Check if memos is array, if not convert object to array
+                        setMemos(Array.isArray(d.memos) ? d.memos : Object.values(d.memos));
+                    } else {
+                        setMemos([]);
+                    }
                 } else if(Array.isArray(d)) {
                      setData(d);
                 }
@@ -879,12 +891,7 @@ function App(){
                                             <input ref={urlInputRef} type="text" placeholder="貼上圖片網址..." className="flex-1 bg-white px-3 py-2 rounded-xl text-sm border border-slate-200 outline-none focus:border-yellow-400"/>
                                             <button onClick={()=>handleAddUrl(true)} className="bg-yellow-100 text-yellow-600 p-2.5 rounded-xl border border-yellow-200 active:scale-95 flex items-center justify-center"><Icon n="Plus" s={20}/></button>
                                             
-                                            {/* 📸 新增拍照按鈕 */}
-                                            <label className="bg-slate-200 text-slate-600 px-3 py-2 rounded-xl text-sm font-bold active:scale-95 flex items-center gap-1 cursor-pointer">
-                                                <Icon n="Camera" s={18}/> 拍照
-                                                <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e)=>handleImageUpload(e, true)}/>
-                                            </label>
-                                            
+                                            {/* 📸 手機圖片上傳 (已包含拍照功能) */}
                                             <button onClick={()=>imgInputRef.current.click()} className="bg-slate-200 text-slate-600 px-3 py-2 rounded-xl text-sm font-bold active:scale-95 flex items-center gap-1"><Icon n="Image" s={18}/></button>
                                             <input type="file" ref={imgInputRef} className="hidden" accept="image/*" onChange={(e)=>handleImageUpload(e, true)}/>
                                         </div>
@@ -1029,12 +1036,6 @@ function App(){
                                         <input ref={urlInputRef} type="text" placeholder="貼上圖片網址..." className="flex-1 bg-white px-3 py-2 rounded-xl text-sm border border-slate-200 outline-none focus:border-yellow-400"/>
                                         <button onClick={()=>handleAddUrl(false)} className="bg-yellow-100 text-yellow-600 p-2.5 rounded-xl border border-yellow-200 active:scale-95 flex items-center justify-center"><Icon n="Plus" s={20}/></button>
                                         
-                                        {/* 📸 行程便條拍照按鈕 */}
-                                        <label className="bg-slate-200 text-slate-600 px-3 py-2 rounded-xl text-sm font-bold active:scale-95 flex items-center gap-1 cursor-pointer">
-                                            <Icon n="Camera" s={18}/>
-                                            <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e)=>handleImageUpload(e, false)}/>
-                                        </label>
-
                                         <button onClick={()=>imgInputRef.current.click()} className="bg-slate-200 text-slate-600 px-3 py-2 rounded-xl text-sm font-bold active:scale-95 flex items-center gap-1"><Icon n="Image" s={18}/></button>
                                         <input type="file" ref={imgInputRef} className="hidden" accept="image/*" onChange={(e)=>handleImageUpload(e, false)}/>
                                     </div>
