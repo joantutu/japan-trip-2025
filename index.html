@@ -181,7 +181,7 @@ const INITIAL_ITINERARY = [
 
 function App(){
     const [data,setData]=useState(()=>{
-        const saved=localStorage.getItem('kanto_v2025_final_stable_v18'); // 版本 V18
+        const saved=localStorage.getItem('kanto_v2025_final_stable_v19'); // 版本 V19
         if(saved) { try { return JSON.parse(saved); } catch(e){} }
         return INITIAL_ITINERARY;
     });
@@ -215,11 +215,14 @@ function App(){
     const imgInputRef=useRef(null);
     const urlInputRef=useRef(null);
     const itemImgRef=useRef(null); 
+    const cameraRef=useRef(null); // 新增：相機專用Ref
+    const fileUploadRef=useRef(null); // 新增：檔案上傳專用Ref
+    const noteUrlRef=useRef(null); // 新增：便條網址Ref
     const sortableRef = useRef(null);
     const sortableInstance = useRef(null);
     const longPressTimer = useRef(null);
 
-    useEffect(()=>{localStorage.setItem('kanto_v2025_final_stable_v18',JSON.stringify(data))},[data]);
+    useEffect(()=>{localStorage.setItem('kanto_v2025_final_stable_v19',JSON.stringify(data))},[data]);
     useEffect(()=>{localStorage.setItem('kanto_v2025_memos',JSON.stringify(memos))},[memos]);
     useEffect(()=>{
         if(stepModal) {
@@ -414,7 +417,7 @@ function App(){
     const updateExpense=(idx, field, val)=>{const newExps=[...editItem.expenses];newExps[idx][field]=val;setEditItem({...editItem, expenses:newExps})};
     const removeExpense=(idx)=>{const newExps=editItem.expenses.filter((_,i)=>i!==idx);setEditItem({...editItem, expenses:newExps})};
     
-    // 新增：行程圖片上傳
+    // 新增：行程圖片上傳 (通用處理)
     const handleItemImageUpload = (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -425,7 +428,7 @@ function App(){
                 const canvas = document.createElement('canvas');
                 let width = img.width;
                 let height = img.height;
-                const MAX_SIZE = 1000; // 稍微大一點
+                const MAX_SIZE = 1000; 
                 if (width > height && width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; }
                 else if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; }
                 canvas.width = width; canvas.height = height;
@@ -437,6 +440,16 @@ function App(){
             img.src = event.target.result;
         }
         reader.readAsDataURL(file);
+    };
+
+    const handleNoteUrlAdd = () => {
+        if(noteUrlRef.current && noteUrlRef.current.value){
+            const val = noteUrlRef.current.value.trim();
+            if(val) {
+                setEditItem(prev => ({...prev, image: val}));
+                noteUrlRef.current.value = '';
+            }
+        }
     };
 
     const saveMemo = () => {
@@ -496,12 +509,12 @@ function App(){
     const TimeScroll = ({val, setVal}) => {
         const [h, m] = val.split(':');
         return (
-            <div className="flex gap-1 items-center bg-slate-50 border-2 border-slate-100 rounded-2xl p-1 h-[60px]">
-                <select value={h} onChange={e=>setVal(`${e.target.value}:${m}`)} className="appearance-none bg-transparent text-2xl font-black text-center w-full outline-none text-slate-700">
+            <div className="flex gap-1 items-center bg-slate-50 border-2 border-slate-100 rounded-2xl p-1 h-[60px] w-full justify-center">
+                <select value={h} onChange={e=>setVal(`${e.target.value}:${m}`)} className="appearance-none bg-transparent text-2xl font-black text-center w-20 outline-none text-slate-700">
                     {Array.from({length:24},(_,i)=>i.toString().padStart(2,'0')).map(v=><option key={v} value={v}>{v}</option>)}
                 </select>
                 <span className="text-slate-300 font-black">:</span>
-                <select value={m} onChange={e=>setVal(`${h}:${e.target.value}`)} className="appearance-none bg-transparent text-2xl font-black text-center w-full outline-none text-slate-700">
+                <select value={m} onChange={e=>setVal(`${h}:${e.target.value}`)} className="appearance-none bg-transparent text-2xl font-black text-center w-20 outline-none text-slate-700">
                     {Array.from({length:12},(_,i)=>(i*5).toString().padStart(2,'0')).map(v=><option key={v} value={v}>{v}</option>)}
                 </select>
             </div>
@@ -623,7 +636,6 @@ function App(){
                                                     {item.title}
                                                 </h3>
                                                 
-                                                {/* 便條專屬圖片顯示區 */}
                                                 {item.category === 'memo' && item.image && (
                                                     <div className="mt-2 rounded-xl overflow-hidden border border-yellow-200 shadow-sm" onClick={(e) => { e.stopPropagation(); setViewItineraryImage(item.image); }}>
                                                         <img src={item.image} className="w-full h-32 object-cover" />
@@ -878,59 +890,82 @@ function App(){
             {/* Edit Modal (Itinerary) - REFINED - ELDERLY FRIENDLY */}
             {modal && editItem && <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center animate-fade-in"><div className="bg-white w-full sm:w-[95%] max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[95vh]"><div className="px-6 py-5 border-b flex justify-between items-center bg-slate-50/50 rounded-t-3xl"><h2 className="font-bold text-2xl text-slate-800 font-rounded">{editItem.id&&day.items.some(i=>i.id===editItem.id)?'編輯行程':'新增行程'}</h2><button onClick={()=>setModal(false)} className="p-3 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200 transition-colors"><Icon n="X" s={28}/></button></div><div className="p-6 overflow-y-auto space-y-6">
                 
-                {/* ✏️ 時間與標題 (並排 & 巨大化 & 30/70分配) */}
-                <div className="flex gap-2 items-end">
-                    <div className="w-[30%] space-y-1">
-                        <label className="text-base font-bold text-slate-500 block">時間</label>
-                        <TimeScroll val={editItem.time} setVal={(v)=>setEditItem({...editItem,time:v})}/>
-                    </div>
-                    <div className="w-[70%] space-y-1">
-                        <label className="text-base font-bold text-slate-500 block">標題</label>
-                        <input type="text" value={editItem.title} onChange={e=>setEditItem({...editItem,title:e.target.value})} className="w-full h-[60px] bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 font-bold text-3xl outline-none focus:border-blue-400 transition-colors" placeholder="名稱"/>
-                    </div>
+                {/* 🌟 1. 頂部模式切換 (一般/便條) */}
+                <div className="flex gap-2 p-1 bg-slate-100 rounded-xl">
+                    <button onClick={()=>setEditItem({...editItem, category:'sightseeing'})} className={`flex-1 py-3 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${editItem.category!=='memo' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400'}`}>
+                        <Icon n="MapPin" s={16}/> 一般行程
+                    </button>
+                    <button onClick={()=>setEditItem({...editItem, category:'memo'})} className={`flex-1 py-3 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${editItem.category==='memo' ? 'bg-yellow-400 text-white shadow-sm' : 'text-slate-400'}`}>
+                        <Icon n="StickyNote" s={16}/> 便條
+                    </button>
                 </div>
 
-                {/* ✏️ 分類 (六宮格 - 上下排列省空間) - 現在有「便條」了 */}
+                {/* 🌟 2. 時間與標題分離 (獨立行) */}
                 <div>
-                    <label className="text-base font-bold text-slate-500 mb-2 block">分類</label>
-                    <div className="grid grid-cols-7 gap-1"> 
-                        {Object.entries(CATS).map(([k, v]) => (
-                            <button key={k} onClick={()=>setEditItem({...editItem, category:k})} className={`h-14 rounded-lg font-bold border-2 transition-all flex flex-col items-center justify-center gap-0 ${editItem.category===k ? 'bg-blue-500 text-white border-blue-500 shadow-md scale-105' : 'bg-white text-slate-500 border-slate-200'}`}>
-                                <Icon n={v.i} s={20}/> <span className="text-[9px]">{v.l}</span>
-                            </button>
-                        ))}
-                    </div>
+                    <label className="text-sm font-bold text-slate-400 block mb-1">時間</label>
+                    <TimeScroll val={editItem.time} setVal={(v)=>setEditItem({...editItem,time:v})}/>
                 </div>
+                <div>
+                    <label className="text-sm font-bold text-slate-400 block mb-1">標題名稱</label>
+                    <input type="text" value={editItem.title} onChange={e=>setEditItem({...editItem,title:e.target.value})} className="w-full h-[60px] bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 font-bold text-3xl outline-none focus:border-blue-400 transition-colors placeholder:text-slate-300" placeholder={editItem.category==='memo'?"例如: 停車位置":"例如: 東京鐵塔"}/>
+                </div>
+
+                {/* 🌟 3. 分類選擇 (僅一般模式顯示) */}
+                {editItem.category !== 'memo' && (
+                    <div>
+                        <label className="text-sm font-bold text-slate-400 mb-2 block">分類圖示</label>
+                        <div className="grid grid-cols-6 gap-1">
+                            {Object.entries(CATS).filter(([k])=>k!=='memo').map(([k, v]) => (
+                                <button key={k} onClick={()=>setEditItem({...editItem, category:k})} className={`h-14 rounded-lg font-bold border-2 transition-all flex flex-col items-center justify-center gap-0 ${editItem.category===k ? 'bg-blue-500 text-white border-blue-500 shadow-md scale-105' : 'bg-white text-slate-500 border-slate-200'}`}>
+                                    <Icon n={v.i} s={20}/> <span className="text-[10px]">{v.l}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
                 
-                {/* 只有非便條模式顯示金額與步數 */}
+                {/* 🌟 4. 便條模式專屬：圖片上傳三劍客 */}
+                {editItem.category === 'memo' && (
+                    <div className="bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-4 space-y-4">
+                        <label className="text-sm font-bold text-yellow-700 block flex items-center gap-1"><Icon n="Camera" s={18}/> 圖片附件</label>
+                        
+                        {editItem.image ? (
+                            <div className="relative rounded-xl overflow-hidden shadow-md border-2 border-white">
+                                <img src={editItem.image} className="w-full object-cover max-h-64" />
+                                <button onClick={()=>setEditItem({...editItem, image: null})} className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 shadow-lg active:scale-90 transition-transform"><Icon n="Trash2" s={20}/></button>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 gap-3">
+                                {/* 按鈕 A: 拍照 */}
+                                <button onClick={()=>cameraRef.current.click()} className="bg-white py-6 rounded-xl border-2 border-yellow-300 text-yellow-600 font-bold flex flex-col items-center gap-2 active:scale-95 transition-transform shadow-sm">
+                                    <Icon n="Camera" s={32}/> 現場拍照
+                                </button>
+                                {/* 按鈕 B: 上傳 */}
+                                <button onClick={()=>fileUploadRef.current.click()} className="bg-white py-6 rounded-xl border-2 border-yellow-300 text-yellow-600 font-bold flex flex-col items-center gap-2 active:scale-95 transition-transform shadow-sm">
+                                    <Icon n="Image" s={32}/> 從相簿選
+                                </button>
+                                {/* 輸入 C: 網址 */}
+                                <div className="col-span-2 flex gap-2">
+                                    <input ref={noteUrlRef} type="text" placeholder="或貼上圖片網址..." className="flex-1 px-4 py-3 rounded-xl border-2 border-yellow-200 text-sm outline-none focus:border-yellow-400"/>
+                                    <button onClick={handleNoteUrlAdd} className="px-4 bg-yellow-400 text-white rounded-xl font-bold active:scale-95">加入</button>
+                                </div>
+                            </div>
+                        )}
+                        {/* 隱藏的 inputs */}
+                        <input type="file" ref={cameraRef} accept="image/*" capture="environment" className="hidden" onChange={handleItemImageUpload}/>
+                        <input type="file" ref={fileUploadRef} accept="image/*" className="hidden" onChange={handleItemImageUpload}/>
+                    </div>
+                )}
+
+                {/* 🌟 5. 一般模式專屬：消費與步數 */}
                 {editItem.category !== 'memo' && (
                     <>
-                        {/* 消費明細 - 包含分類選單 */}
-                        <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100"><div className="flex justify-between items-center mb-3"><label className="text-sm font-bold text-slate-500">消費明細</label><button onClick={addExpense} className="text-xs bg-blue-100 text-blue-600 px-3 py-1.5 rounded-full font-bold hover:bg-blue-200 transition-colors">+ 新增</button></div>{(!editItem.expenses || editItem.expenses.length === 0) && <div className="text-center text-slate-400 text-sm py-2">尚無消費紀錄</div>}<div className="space-y-2">{(editItem.expenses || []).map((ex, idx) => (<div key={ex.id} className="flex gap-2 items-center flex-wrap sm:flex-nowrap bg-white p-2 rounded-xl border border-slate-100 shadow-sm"><div className="w-full sm:w-auto flex-1 min-w-0"><input type="text" placeholder="項目" value={ex.label} onChange={e => updateExpense(idx, 'label', e.target.value)} className="w-full text-sm font-bold outline-none bg-transparent placeholder:text-slate-300" /></div><div className="flex items-center gap-2 w-full sm:w-auto justify-end mt-2 sm:mt-0"><select value={ex.category || 'other'} onChange={e => updateExpense(idx, 'category', e.target.value)} className="text-xs bg-slate-100 rounded-lg px-2 py-1 outline-none border-0 text-slate-600 max-w-[80px]">{Object.entries(CATS).map(([k,v])=><option key={k} value={k}>{v.l}</option>)}</select><div className="flex items-center bg-slate-50 rounded-lg px-2 py-1"><select value={ex.currency} onChange={e => updateExpense(idx, 'currency', e.target.value)} className="bg-transparent text-xs font-bold outline-none text-slate-500 mr-1"><option value="JPY">¥</option><option value="NT">NT</option></select><input type="number" placeholder="0" value={ex.amount} onChange={e => updateExpense(idx, 'amount', e.target.value)} className="w-24 text-sm font-mono font-bold outline-none bg-transparent text-right" /></div><button onClick={() => removeExpense(idx)} className="text-slate-300 hover:text-red-500 transition-colors"><Icon n="X" s={16}/></button></div></div>))}</div><div className="mt-3 flex justify-end gap-4 text-sm font-bold text-slate-600 border-t border-slate-200 pt-2"><span>¥ {fmtMoney((editItem.expenses||[]).filter(e=>e.currency!=='NT').reduce((s,x)=>s+Number(x.amount||0),0))}</span><span>NT {fmtMoney((editItem.expenses||[]).filter(e=>e.currency==='NT').reduce((s,x)=>s+Number(x.amount||0),0))}</span></div></div>
+                        <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100"><div className="flex justify-between items-center mb-3"><label className="text-sm font-bold text-slate-500">消費明細</label><button onClick={addExpense} className="text-xs bg-blue-100 text-blue-600 px-3 py-1.5 rounded-full font-bold hover:bg-blue-200 transition-colors">+ 新增</button></div>{(!editItem.expenses || editItem.expenses.length === 0) && <div className="text-center text-slate-400 text-sm py-2">尚無消費紀錄</div>}<div className="space-y-2">{(editItem.expenses || []).map((ex, idx) => (<div key={ex.id} className="flex gap-2 items-center flex-wrap sm:flex-nowrap bg-white p-2 rounded-xl border border-slate-100 shadow-sm"><div className="w-full sm:w-auto flex-1 min-w-0"><input type="text" placeholder="項目" value={ex.label} onChange={e => updateExpense(idx, 'label', e.target.value)} className="w-full text-sm font-bold outline-none bg-transparent placeholder:text-slate-300" /></div><div className="flex items-center gap-2 w-full sm:w-auto justify-end mt-2 sm:mt-0"><select value={ex.category || 'other'} onChange={e => updateExpense(idx, 'category', e.target.value)} className="text-xs bg-slate-100 rounded-lg px-2 py-1 outline-none border-0 text-slate-600 max-w-[80px]">{Object.entries(CATS).filter(([k])=>k!=='memo').map(([k,v])=><option key={k} value={k}>{v.l}</option>)}</select><div className="flex items-center bg-slate-50 rounded-lg px-2 py-1"><select value={ex.currency} onChange={e => updateExpense(idx, 'currency', e.target.value)} className="bg-transparent text-xs font-bold outline-none text-slate-500 mr-1"><option value="JPY">¥</option><option value="NT">NT</option></select><input type="number" placeholder="0" value={ex.amount} onChange={e => updateExpense(idx, 'amount', e.target.value)} className="w-24 text-sm font-mono font-bold outline-none bg-transparent text-right" /></div><button onClick={() => removeExpense(idx)} className="text-slate-300 hover:text-red-500 transition-colors"><Icon n="X" s={16}/></button></div></div>))}</div><div className="mt-3 flex justify-end gap-4 text-sm font-bold text-slate-600 border-t border-slate-200 pt-2"><span>¥ {fmtMoney((editItem.expenses||[]).filter(e=>e.currency!=='NT').reduce((s,x)=>s+Number(x.amount||0),0))}</span><span>NT {fmtMoney((editItem.expenses||[]).filter(e=>e.currency==='NT').reduce((s,x)=>s+Number(x.amount||0),0))}</span></div></div>
                         <div className="space-y-2"><label className="text-sm font-bold text-slate-500 flex items-center gap-1"><Icon n="Footprints" s={16} c="text-blue-500"/> 步數 (選填)</label><input type="number" value={editItem.steps||''} onChange={e=>setEditItem({...editItem,steps:e.target.value})} placeholder="例如: 5000" className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-3 font-mono text-base outline-none focus:border-blue-400"/></div>
                     </>
                 )}
-
-                {/* 只有便條模式顯示圖片上傳 */}
-                {editItem.category === 'memo' && (
-                    <div className="bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-4">
-                        <label className="text-sm font-bold text-yellow-700 mb-2 block flex items-center gap-1"><Icon n="Camera" s={18}/> 圖片 / 照片 (選填)</label>
-                        {editItem.image ? (
-                            <div className="relative rounded-xl overflow-hidden shadow-md">
-                                <img src={editItem.image} className="w-full object-cover max-h-60" />
-                                <button onClick={()=>setEditItem({...editItem, image: null})} className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 shadow-md"><Icon n="X" s={16}/></button>
-                            </div>
-                        ) : (
-                            <div onClick={()=>itemImgRef.current.click()} className="border-2 border-dashed border-yellow-300 rounded-xl p-6 flex flex-col items-center justify-center text-yellow-500 gap-2 cursor-pointer active:bg-yellow-100 transition-colors">
-                                <Icon n="Camera" s={32}/>
-                                <span className="text-xs font-bold">點擊拍照或上傳圖片</span>
-                            </div>
-                        )}
-                        <input type="file" ref={itemImgRef} accept="image/*" capture="environment" className="hidden" onChange={handleItemImageUpload}/>
-                    </div>
-                )}
                 
-                {/* 備註與定位 (乾淨版) */}
+                {/* 🌟 6. 備註與定位 */}
                 <div className="space-y-2"><label className="text-sm font-bold text-slate-500">備註內容</label><textarea value={editItem.note} onChange={e=>setEditItem({...editItem,note:e.target.value})} placeholder="輸入內容..." className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-3 text-base h-24 outline-none focus:border-blue-400"/></div>
                 
                 {editItem.category !== 'memo' && (
