@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>關東新春自駕遊 2026 (進化版) 🎌</title>
+<title>關東新春自駕遊 2026 (完美版) 🎌</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
@@ -169,14 +169,14 @@ const INITIAL_ITINERARY = [
 ];
 function App(){
     const [data,setData]=useState(()=>{
-        const saved=localStorage.getItem('kanto_v2026_final_plus_v2');
+        const saved=localStorage.getItem('kanto_v2026_final_plus_v3');
         if(saved) { try { return JSON.parse(saved); } catch(e){} }
         return INITIAL_ITINERARY;
     });
     // Independent Memos State
     const [memos, setMemos] = useState(()=>{
         const saved = localStorage.getItem('kanto_v2026_memos_v2');
-        return saved ? JSON.parse(saved) : []; // Changed to Array for sorting
+        return saved ? JSON.parse(saved) : []; 
     });
 
     const [idx,setIdx]=useState(0);
@@ -184,9 +184,9 @@ function App(){
     const [ledgerModal, setLedgerModal] = useState(false);
     const [notebookModal, setNotebookModal] = useState(false);
     const [editItem,setEditItem]=useState(null);
-    const [editMemoItem, setEditMemoItem] = useState(null); // For independent memo editing
+    const [editMemoItem, setEditMemoItem] = useState(null); 
     const [sort,setSort]=useState(false);
-    const [memoSort, setMemoSort] = useState(false); // Sort state for memos
+    const [memoSort, setMemoSort] = useState(false);
     const [backupData, setBackupData] = useState(null); 
     const [stepModal,setStepModal]=useState(false);
     const [tStep,setTStep]=useState('');
@@ -205,12 +205,12 @@ function App(){
     const imgInputRef=useRef(null);
     const urlInputRef=useRef(null);
     const sortableRef = useRef(null);
-    const memoSortableRef = useRef(null); // Ref for memo sorting
+    const memoSortableRef = useRef(null); 
     const sortableInstance = useRef(null);
-    const memoSortableInstance = useRef(null); // Instance for memo sorting
+    const memoSortableInstance = useRef(null); 
     const longPressTimer = useRef(null);
 
-    useEffect(()=>{localStorage.setItem('kanto_v2026_final_plus_v2',JSON.stringify(data))},[data]);
+    useEffect(()=>{localStorage.setItem('kanto_v2026_final_plus_v3',JSON.stringify(data))},[data]);
     useEffect(()=>{localStorage.setItem('kanto_v2026_memos_v2',JSON.stringify(memos))}, [memos]);
 
     useEffect(()=>{
@@ -430,26 +430,28 @@ function App(){
         }
 
         const newData=[...data];
-        // 1. Remove from source day if it exists there
-        if (editItem.originalDayId) {
-            const sourceDay = newData.find(d => d.id === editItem.originalDayId);
-            if (sourceDay) {
-                sourceDay.items = sourceDay.items.filter(x => x.id !== editItem.id);
-            }
-        }
         
-        // 2. Add to target day
-        const targetDay = newData.find(d => d.id === editItem.dayId);
-        if (targetDay) {
-            // Check if item already exists in target (in case we didn't remove it because originalDayId was missing or same)
-            const existingIdx = targetDay.items.findIndex(x => x.id === editItem.id);
-            if (existingIdx > -1) {
-                targetDay.items[existingIdx] = editItem;
-            } else {
-                targetDay.items.push(editItem);
+        // 1. Check if moving to a different day
+        const isMovingDay = editItem.originalDayId && editItem.originalDayId !== editItem.dayId;
+
+        if (isMovingDay) {
+            // Remove from source
+            const sourceDay = newData.find(d => d.id === editItem.originalDayId);
+            if (sourceDay) sourceDay.items = sourceDay.items.filter(x => x.id !== editItem.id);
+            // Add to target (append to end)
+            const targetDay = newData.find(d => d.id === editItem.dayId);
+            if (targetDay) targetDay.items.push(editItem);
+        } else {
+            // Same Day: Update strictly in place
+            const targetDay = newData.find(d => d.id === editItem.dayId);
+            if (targetDay) {
+                const existingIdx = targetDay.items.findIndex(x => x.id === editItem.id);
+                if (existingIdx > -1) {
+                    targetDay.items[existingIdx] = editItem; // Update in place
+                } else {
+                    targetDay.items.push(editItem); // New item, append
+                }
             }
-            
-            // 移除了自動排序邏輯，現在儲存後會保留當前位置
         }
 
         setData(newData);
@@ -876,7 +878,14 @@ function App(){
                                         <div className="flex gap-2 mb-2">
                                             <input ref={urlInputRef} type="text" placeholder="貼上圖片網址..." className="flex-1 bg-white px-3 py-2 rounded-xl text-sm border border-slate-200 outline-none focus:border-yellow-400"/>
                                             <button onClick={()=>handleAddUrl(true)} className="bg-yellow-100 text-yellow-600 p-2.5 rounded-xl border border-yellow-200 active:scale-95 flex items-center justify-center"><Icon n="Plus" s={20}/></button>
-                                            <button onClick={()=>imgInputRef.current.click()} className="bg-slate-200 text-slate-600 px-3 py-2 rounded-xl text-sm font-bold active:scale-95 flex items-center gap-1"><Icon n="Camera" s={18}/></button>
+                                            
+                                            {/* 📸 新增拍照按鈕 */}
+                                            <label className="bg-slate-200 text-slate-600 px-3 py-2 rounded-xl text-sm font-bold active:scale-95 flex items-center gap-1 cursor-pointer">
+                                                <Icon n="Camera" s={18}/> 拍照
+                                                <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e)=>handleImageUpload(e, true)}/>
+                                            </label>
+                                            
+                                            <button onClick={()=>imgInputRef.current.click()} className="bg-slate-200 text-slate-600 px-3 py-2 rounded-xl text-sm font-bold active:scale-95 flex items-center gap-1"><Icon n="Image" s={18}/></button>
                                             <input type="file" ref={imgInputRef} className="hidden" accept="image/*" onChange={(e)=>handleImageUpload(e, true)}/>
                                         </div>
                                         <div className="grid grid-cols-3 gap-2">
@@ -1019,7 +1028,14 @@ function App(){
                                     <div className="flex gap-2 mb-2">
                                         <input ref={urlInputRef} type="text" placeholder="貼上圖片網址..." className="flex-1 bg-white px-3 py-2 rounded-xl text-sm border border-slate-200 outline-none focus:border-yellow-400"/>
                                         <button onClick={()=>handleAddUrl(false)} className="bg-yellow-100 text-yellow-600 p-2.5 rounded-xl border border-yellow-200 active:scale-95 flex items-center justify-center"><Icon n="Plus" s={20}/></button>
-                                        <button onClick={()=>imgInputRef.current.click()} className="bg-slate-200 text-slate-600 px-3 py-2 rounded-xl text-sm font-bold active:scale-95 flex items-center gap-1"><Icon n="Camera" s={18}/></button>
+                                        
+                                        {/* 📸 行程便條拍照按鈕 */}
+                                        <label className="bg-slate-200 text-slate-600 px-3 py-2 rounded-xl text-sm font-bold active:scale-95 flex items-center gap-1 cursor-pointer">
+                                            <Icon n="Camera" s={18}/>
+                                            <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e)=>handleImageUpload(e, false)}/>
+                                        </label>
+
+                                        <button onClick={()=>imgInputRef.current.click()} className="bg-slate-200 text-slate-600 px-3 py-2 rounded-xl text-sm font-bold active:scale-95 flex items-center gap-1"><Icon n="Image" s={18}/></button>
                                         <input type="file" ref={imgInputRef} className="hidden" accept="image/*" onChange={(e)=>handleImageUpload(e, false)}/>
                                     </div>
                                     <div className="grid grid-cols-3 gap-2">
