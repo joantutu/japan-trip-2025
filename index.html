@@ -46,8 +46,8 @@
     @keyframes slide-down { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
     .sort-mode-bg { background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 20px 20px; }
     
-    /* Popover Animation - 靠右對齊 */
-    .popover-menu { position: absolute; bottom: 120%; right: 0; width: 160px; transform-origin: bottom right; animation: pop-up 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+    /* Popover Animation - 修正定位邏輯，不再飄移 */
+    .popover-menu { animation: pop-up 0.2s cubic-bezier(0.16, 1, 0.3, 1); transform-origin: bottom right; }
     @keyframes pop-up { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 </style>
 </head>
@@ -56,7 +56,7 @@
 <script type="text/babel">
 const {useState,useEffect,useRef,useCallback}=React;
 
-// 🎨 圖示集 - 修復語法確保不白屏
+// 🎨 圖示集
 const Icons={
     MapPin:<g><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="10" r="3"/></g>,
     Plus:<path d="M12 5v14M5 12h14" strokeLinecap="round" strokeLinejoin="round"/>,
@@ -487,13 +487,19 @@ function App(){
         if(editItem.category === 'memo') {
             if(!editItem.title && !editItem.image && !editItem.note) return alert('便條不能全空');
             if(!editItem.title) editItem.title = ""; 
+            // 修正：便條不需要時間，設為空字串或特定標記
+            editItem.time = "";
         } else {
             if(!editItem.title) return alert('請輸入標題');
         }
 
         editItem.imgPos = imgPosY;
 
-        if(editItem._h !== undefined && editItem._m !== undefined) { editItem.time = `${editItem._h}:${editItem._m}`; delete editItem._h; delete editItem._m; }
+        // 只有一般行程才處理時間滾輪的輸入
+        if(editItem.category !== 'memo' && editItem._h !== undefined && editItem._m !== undefined) { 
+            editItem.time = `${editItem._h}:${editItem._m}`; 
+            delete editItem._h; delete editItem._m; 
+        }
         
         const newData=[...data];
         
@@ -505,7 +511,12 @@ function App(){
         const newDay = newData.find(d => d.id === editItem.dayId);
         if (newDay) {
             newDay.items.push(editItem);
-            newDay.items.sort((a,b)=>a.time.localeCompare(b.time));
+            newDay.items.sort((a,b)=> {
+                // 修正排序：如果時間是空的(便條)，通常排在最前面或最後面，這裡假設排在最前面
+                if(!a.time) return -1;
+                if(!b.time) return 1;
+                return a.time.localeCompare(b.time)
+            });
         }
 
         setData(newData);
@@ -750,7 +761,6 @@ function App(){
                                             <div className="relative flex flex-col gap-2">
                                                 <div className="flex justify-between items-start pr-10"> 
                                                     <div className="flex items-baseline gap-2">
-                                                        {/* 修正：非便條模式才顯示時間 */}
                                                         {item.category !== 'memo' && (
                                                             <span className="text-xl font-black text-slate-800 font-mono tracking-tight">{item.time}</span>
                                                         )}
@@ -845,7 +855,7 @@ function App(){
                                     {addMenuOpen && (
                                         <>
                                             <div className="fixed inset-0 z-40" onClick={() => setAddMenuOpen(false)}></div>
-                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-40 bg-white rounded-2xl shadow-2xl border border-slate-100 p-1.5 z-50 popover-menu">
+                                            <div className="absolute bottom-full right-0 mb-3 w-40 bg-white rounded-2xl shadow-2xl border border-slate-100 p-1.5 z-50 popover-menu">
                                                 <button onClick={() => startAddItem('sightseeing')} className="w-full text-left px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-xl flex items-center gap-3 transition-colors active:scale-95"><Icon n="MapPin" s={18} c="text-blue-500"/> 一般行程</button>
                                                 <div className="h-[1px] bg-slate-100 my-1 mx-2"/>
                                                 <button onClick={() => startAddItem('memo')} className="w-full text-left px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-xl flex items-center gap-3 transition-colors active:scale-95"><Icon n="StickyNote" s={18} c="text-yellow-500"/> 便條</button>
@@ -917,8 +927,6 @@ function App(){
                             <div className="space-y-4 animate-fade-in">
                                 <input type="text" value={editMemoItem.title} onChange={e=>setEditMemoItem({...editMemoItem, title:e.target.value})} placeholder="筆記標題 (例如: 必買清單)" className="w-full bg-white p-4 rounded-2xl font-bold text-lg border-2 border-rose-100 outline-none focus:border-rose-400"/>
                                 
-                                {/* 修正：筆記模式移除了分類選擇，筆記就是筆記 */}
-                                
                                 <textarea value={editMemoItem.content} onChange={e=>setEditMemoItem({...editMemoItem, content:e.target.value})} placeholder="輸入詳細內容..." className="w-full bg-white p-4 rounded-2xl text-base border-2 border-slate-100 outline-none focus:border-rose-400 h-40"/>
                                 <div>
                                     <div className="text-sm font-bold text-slate-500 mb-2">圖片 (上傳/貼連結)</div>
@@ -929,7 +937,6 @@ function App(){
                                         <input type="file" ref={imgInputRef} className="hidden" accept="image/*" onChange={handleImageUpload}/>
                                     </div>
                                     <div className="grid grid-cols-3 gap-2">
-                                        {/* 修改：圖片列表渲染與兼容性處理 */}
                                         {editMemoItem.images.map((imgItem, i) => {
                                             const imgSrc = typeof imgItem === 'string' ? imgItem : imgItem.url;
                                             const imgText = typeof imgItem === 'string' ? '' : imgItem.text;
@@ -978,46 +985,6 @@ function App(){
                     </div>
                 </div>
             </div>}
-
-            {/* 🔍 修改：進化版圖片燈箱 (Lightbox) - 可展開式輸入框 */}
-            {viewImgIdx !== null && editMemoItem && (
-                <div className="fixed inset-0 z-[120] bg-black/95 flex flex-col items-center justify-center p-4 animate-fade-in" onClick={()=>setViewImgIdx(null)}>
-                    <button onClick={()=>setViewImgIdx(null)} className="absolute top-6 right-6 text-white/80 hover:text-white bg-white/10 rounded-full p-2 backdrop-blur-sm z-50"><Icon n="X" s={24}/></button>
-                    
-                    {/* 圖片區域 */}
-                    <div className="flex-1 w-full flex items-center justify-center min-h-0 py-4" onClick={e=>e.stopPropagation()}>
-                        <img 
-                            src={typeof editMemoItem.images[viewImgIdx] === 'string' ? editMemoItem.images[viewImgIdx] : editMemoItem.images[viewImgIdx].url} 
-                            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl cursor-default" 
-                        />
-                    </div>
-
-                    {/* 文字備註編輯區 - 支援展開 */}
-                    <div className={`w-full max-w-lg bg-white transition-all duration-300 ease-out ${showLargeInput ? 'h-[50vh] rounded-t-3xl rounded-b-none' : 'rounded-2xl h-auto'} p-3 flex flex-col gap-2 shrink-0 mb-safe shadow-xl z-50`} onClick={e=>e.stopPropagation()}>
-                        <div className="flex gap-3 items-start h-full">
-                             <div className="text-slate-400 mt-2 shrink-0"><Icon n="Edit" s={20}/></div>
-                             <textarea 
-                                placeholder="輸入圖片備註 (例如: 必買藥妝)..."
-                                value={typeof editMemoItem.images[viewImgIdx] === 'string' ? '' : (editMemoItem.images[viewImgIdx].text || '')}
-                                onChange={(e)=>{
-                                    const newImgs = [...editMemoItem.images];
-                                    const currentItem = newImgs[viewImgIdx];
-                                    const url = typeof currentItem === 'string' ? currentItem : currentItem.url;
-                                    newImgs[viewImgIdx] = { url: url, text: e.target.value };
-                                    setEditMemoItem({...editMemoItem, images: newImgs});
-                                }}
-                                className={`flex-1 bg-transparent text-slate-800 font-bold text-sm outline-none resize-none leading-relaxed transition-all ${showLargeInput ? 'h-full p-2' : 'h-10 py-2'}`}
-                            />
-                            <button 
-                                onClick={()=>setShowLargeInput(!showLargeInput)}
-                                className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-xl transition-colors shrink-0"
-                            >
-                                <Icon n={showLargeInput ? "Minimize" : "Maximize"} s={20}/>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {/* Edit Modal (Itinerary) - REFINED - ELDERLY FRIENDLY */}
             {modal && editItem && <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center animate-fade-in"><div className="bg-white w-full sm:w-[95%] max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[95vh]"><div className="px-6 py-5 border-b flex justify-between items-center bg-slate-50/50 rounded-t-3xl"><h2 className="font-bold text-2xl text-slate-800 font-rounded">{editItem.id&&day.items.some(i=>i.id===editItem.id)?'編輯內容':(editItem.category==='memo'?'新增便條':'新增行程')}</h2>
@@ -1124,40 +1091,50 @@ function App(){
                 )}
             </div><div className="p-5 border-t flex gap-4 bg-white pb-safe"><button onClick={delItem} className="p-4 rounded-2xl bg-red-50 text-red-500 border-2 border-red-100 hover:bg-red-100 transition-colors"><Icon n="Trash2" s={24}/></button><button onClick={saveItem} className={`flex-1 text-white rounded-2xl font-bold text-lg shadow-lg active:scale-95 transition-transform py-4 flex justify-center items-center gap-2 ${editItem.category==='memo'?'bg-yellow-400 shadow-yellow-200':'bg-gradient-to-r from-blue-500 to-blue-600 shadow-blue-200'}`}><Icon n="Save" s={20}/> 儲存</button></div></div></div>}
             
-            {stepModal && <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center px-4 animate-fade-in" onClick={(e) => e.target === e.currentTarget && setStepModal(false)}>
-                <div className="bg-white w-full max-w-xs rounded-3xl shadow-2xl p-6 card-shadow relative overflow-hidden">
-                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-pink-100 rounded-full opacity-50 pointer-events-none"></div>
-                    <div className="flex justify-between items-center mb-6 relative z-10">
-                        <h3 className="font-black text-2xl text-slate-800 flex items-center gap-2"><span className="text-pink-500"><Icon n="Footprints" s={32}/></span>今日運動</h3>
-                        <button onClick={()=>setStepModal(false)} className="w-10 h-10 flex items-center justify-center bg-slate-100 rounded-full text-slate-400 hover:bg-rose-100 hover:text-rose-500 transition-colors"><Icon n="X" s={24}/></button>
-                    </div>
-                    
-                    <div className="bg-gradient-to-br from-pink-50 to-rose-50 rounded-2xl p-5 mb-5 text-center border border-pink-100 relative z-10">
-                        <div className="text-sm text-slate-500 font-bold mb-1 tracking-wide uppercase">行程預估步數</div>
-                        <div className="text-3xl font-black text-slate-400 font-mono tracking-tight opacity-80">{planSteps.toLocaleString()}</div>
-                    </div>
-
-                    <div className="space-y-3 mb-6 relative z-10">
-                        <div className="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-100">
-                            <div className="flex items-center gap-2 text-slate-500 font-bold text-sm"><Icon n="Map" s={18}/> 距離</div>
-                            <div className="font-mono font-bold text-slate-700 text-lg">≈ {((tStep || currentSteps) * 0.0007).toFixed(1)} <span className="text-xs font-normal text-slate-400">km</span></div>
-                        </div>
-                        <div className="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-100">
-                            <div className="flex items-center gap-2 text-orange-500 font-bold text-sm"><Icon n="Fire" s={18}/> 熱量</div>
-                            <div className="font-mono font-bold text-slate-700 text-lg">≈ {Math.round((tStep || currentSteps) * 0.04)} <span className="text-xs font-normal text-slate-400">kcal</span></div>
-                        </div>
-                        <div className="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-100">
-                             <div className="flex items-center gap-2 text-slate-500 font-bold text-sm">🍙 飯糰</div>
-                             <div className="font-mono font-bold text-slate-700 text-lg">≈ {(Math.round((tStep || currentSteps) * 0.04) / 200).toFixed(1)} <span className="text-xs font-normal text-slate-400">個</span></div>
-                        </div>
-                    </div>
-
-                    <div className="mb-2 text-sm font-bold text-rose-500 ml-1 relative z-10">紀錄實際步數</div>
-                    <input ref={stepRef} type="number" value={tStep} onChange={e=>setTStep(e.target.value)} className="w-full bg-white border-2 border-pink-200 rounded-2xl p-4 text-center font-bold font-mono text-3xl outline-none focus:border-pink-400 text-rose-500 placeholder:text-slate-200 mb-4 shadow-sm relative z-10 transition-all focus:shadow-md focus:-translate-y-0.5" placeholder="0"/>
-                    
-                    <button onClick={saveStep} className="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-2xl py-4 font-bold text-lg shadow-lg shadow-pink-200 active:scale-95 transition-transform relative z-10">{saveBtnText}</button>
-                </div>
+            {/* 🔍 圖片燈箱 (Lightbox) */}
+            {viewItineraryImage && <div className="fixed inset-0 z-[120] bg-black/95 flex items-center justify-center p-4 animate-fade-in cursor-zoom-out" onClick={()=>setViewItineraryImage(null)}>
+                <button onClick={()=>setViewItineraryImage(null)} className="absolute top-6 right-6 text-white/80 hover:text-white bg-white/10 rounded-full p-2 backdrop-blur-sm"><Icon n="X" s={24}/></button>
+                <img src={viewItineraryImage} className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl cursor-default" onClick={e=>e.stopPropagation()}/>
             </div>}
+
+            {/* 🔍 圖片燈箱 (Lightbox) - 可展開式輸入框 (Memo用) */}
+            {viewImgIdx !== null && editMemoItem && (
+                <div className="fixed inset-0 z-[120] bg-black/95 flex flex-col items-center justify-center p-4 animate-fade-in" onClick={()=>setViewImgIdx(null)}>
+                    <button onClick={()=>setViewImgIdx(null)} className="absolute top-6 right-6 text-white/80 hover:text-white bg-white/10 rounded-full p-2 backdrop-blur-sm z-50"><Icon n="X" s={24}/></button>
+                    
+                    <div className="flex-1 w-full flex items-center justify-center min-h-0 py-4" onClick={e=>e.stopPropagation()}>
+                        <img 
+                            src={typeof editMemoItem.images[viewImgIdx] === 'string' ? editMemoItem.images[viewImgIdx] : editMemoItem.images[viewImgIdx].url} 
+                            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl cursor-default" 
+                        />
+                    </div>
+
+                    <div className={`w-full max-w-lg bg-white transition-all duration-300 ease-out ${showLargeInput ? 'h-[50vh] rounded-t-3xl rounded-b-none' : 'rounded-2xl h-auto'} p-3 flex flex-col gap-2 shrink-0 mb-safe shadow-xl z-50`} onClick={e=>e.stopPropagation()}>
+                        <div className="flex gap-3 items-start h-full">
+                             <div className="text-slate-400 mt-2 shrink-0"><Icon n="Edit" s={20}/></div>
+                             <textarea 
+                                placeholder="輸入圖片備註 (例如: 必買藥妝)..."
+                                value={typeof editMemoItem.images[viewImgIdx] === 'string' ? '' : (editMemoItem.images[viewImgIdx].text || '')}
+                                onChange={(e)=>{
+                                    const newImgs = [...editMemoItem.images];
+                                    const currentItem = newImgs[viewImgIdx];
+                                    const url = typeof currentItem === 'string' ? currentItem : currentItem.url;
+                                    newImgs[viewImgIdx] = { url: url, text: e.target.value };
+                                    setEditMemoItem({...editMemoItem, images: newImgs});
+                                }}
+                                className={`flex-1 bg-transparent text-slate-800 font-bold text-sm outline-none resize-none leading-relaxed transition-all ${showLargeInput ? 'h-full p-2' : 'h-10 py-2'}`}
+                            />
+                            <button 
+                                onClick={()=>setShowLargeInput(!showLargeInput)}
+                                className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-xl transition-colors shrink-0"
+                            >
+                                <Icon n={showLargeInput ? "Minimize" : "Maximize"} s={20}/>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 }
