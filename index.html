@@ -46,8 +46,8 @@
     @keyframes slide-down { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
     .sort-mode-bg { background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 20px 20px; }
     
-    /* Popover Animation */
-    .popover-enter { animation: pop-up 0.2s cubic-bezier(0.16, 1, 0.3, 1); transform-origin: bottom center; }
+    /* Popover Animation - 修正為靠右對齊，解決飄移問題 */
+    .popover-menu { position: absolute; bottom: 120%; right: 0; width: 160px; transform-origin: bottom right; animation: pop-up 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
     @keyframes pop-up { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 </style>
 </head>
@@ -191,7 +191,7 @@ const INITIAL_ITINERARY = [
 
 function App(){
     const [data,setData]=useState(()=>{
-        const saved=localStorage.getItem('kanto_v2025_final_stable_v22'); // 版本 V22
+        const saved=localStorage.getItem('kanto_v2025_final_stable_v23'); // 版本 V23
         if(saved) { try { return JSON.parse(saved); } catch(e){} }
         return INITIAL_ITINERARY;
     });
@@ -233,7 +233,7 @@ function App(){
     const sortableInstance = useRef(null);
     const longPressTimer = useRef(null);
 
-    useEffect(()=>{localStorage.setItem('kanto_v2025_final_stable_v22',JSON.stringify(data))},[data]);
+    useEffect(()=>{localStorage.setItem('kanto_v2025_final_stable_v23',JSON.stringify(data))},[data]);
     useEffect(()=>{localStorage.setItem('kanto_v2025_memos',JSON.stringify(memos))},[memos]);
     useEffect(()=>{
         if(stepModal) {
@@ -759,7 +759,7 @@ function App(){
                                     {addMenuOpen && (
                                         <>
                                             <div className="fixed inset-0 z-40" onClick={() => setAddMenuOpen(false)}></div>
-                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-40 bg-white rounded-2xl shadow-2xl border border-slate-100 p-1.5 z-50 popover-enter">
+                                            <div className="absolute bottom-full right-0 mb-2 w-40 bg-white rounded-2xl shadow-2xl border border-slate-100 p-1.5 z-50 popover-menu">
                                                 <button onClick={() => startAddItem('sightseeing')} className="w-full text-left px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-xl flex items-center gap-3 transition-colors active:scale-95"><Icon n="MapPin" s={18} c="text-blue-500"/> 一般行程</button>
                                                 <div className="h-[1px] bg-slate-100 my-1 mx-2"/>
                                                 <button onClick={() => startAddItem('memo')} className="w-full text-left px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-xl flex items-center gap-3 transition-colors active:scale-95"><Icon n="StickyNote" s={18} c="text-yellow-500"/> 便條</button>
@@ -942,18 +942,8 @@ function App(){
             )}
 
             {/* Edit Modal (Itinerary) - REFINED - ELDERLY FRIENDLY */}
-            {modal && editItem && <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center animate-fade-in"><div className="bg-white w-full sm:w-[95%] max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[95vh]"><div className="px-6 py-5 border-b flex justify-between items-center bg-slate-50/50 rounded-t-3xl"><h2 className="font-bold text-2xl text-slate-800 font-rounded">{editItem.id&&day.items.some(i=>i.id===editItem.id)?'編輯行程':'新增行程'}</h2><button onClick={()=>setModal(false)} className="p-3 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200 transition-colors"><Icon n="X" s={28}/></button></div><div className="p-6 overflow-y-auto space-y-6">
+            {modal && editItem && <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center animate-fade-in"><div className="bg-white w-full sm:w-[95%] max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[95vh]"><div className="px-6 py-5 border-b flex justify-between items-center bg-slate-50/50 rounded-t-3xl"><h2 className="font-bold text-2xl text-slate-800 font-rounded">{editItem.id&&day.items.some(i=>i.id===editItem.id)?'編輯內容':(editItem.category==='memo'?'新增便條':'新增行程')}</h2><button onClick={()=>setModal(false)} className="p-3 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200 transition-colors"><Icon n="X" s={28}/></button></div><div className="p-6 overflow-y-auto space-y-6">
                 
-                {/* 🌟 1. 頂部模式切換 (一般/便條) */}
-                <div className="flex gap-2 p-1 bg-slate-100 rounded-xl">
-                    <button onClick={()=>setEditItem({...editItem, category:'sightseeing'})} className={`flex-1 py-3 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${editItem.category!=='memo' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400'}`}>
-                        <Icon n="MapPin" s={16}/> 一般行程
-                    </button>
-                    <button onClick={()=>setEditItem({...editItem, category:'memo'})} className={`flex-1 py-3 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${editItem.category==='memo' ? 'bg-yellow-400 text-white shadow-sm' : 'text-slate-400'}`}>
-                        <Icon n="StickyNote" s={16}/> 便條
-                    </button>
-                </div>
-
                 {/* 🌟 2. 標題與時間 (依模式切換佈局) */}
                 {editItem.category !== 'memo' ? (
                     // 一般模式：時間與標題並排 (回歸 V18)
