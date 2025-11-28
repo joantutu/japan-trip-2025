@@ -46,7 +46,7 @@
     @keyframes slide-down { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
     .sort-mode-bg { background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 20px 20px; }
     
-    /* Popover Animation - 修正為靠右對齊，解決飄移問題 */
+    /* Popover Animation - 靠右對齊 */
     .popover-menu { position: absolute; bottom: 120%; right: 0; width: 160px; transform-origin: bottom right; animation: pop-up 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
     @keyframes pop-up { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 </style>
@@ -56,7 +56,7 @@
 <script type="text/babel">
 const {useState,useEffect,useRef,useCallback}=React;
 
-// 🎨 圖示集
+// 🎨 圖示集 - 修復語法確保不白屏
 const Icons={
     MapPin:<g><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="10" r="3"/></g>,
     Plus:<path d="M12 5v14M5 12h14" strokeLinecap="round" strokeLinejoin="round"/>,
@@ -107,7 +107,8 @@ const Icons={
     StickyNote: <g><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></g>,
     AlignTop: <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />,
     AlignCenter: <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />,
-    AlignBottom: <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+    AlignBottom: <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />,
+    Move: <g><polyline points="5 9 2 12 5 15" strokeLinecap="round" strokeLinejoin="round"/><polyline points="9 5 12 2 15 5" strokeLinecap="round" strokeLinejoin="round"/><polyline points="19 9 22 12 19 15" strokeLinecap="round" strokeLinejoin="round"/><polyline points="9 19 12 22 15 19" strokeLinecap="round" strokeLinejoin="round"/><line x1="2" x2="22" y1="12" y2="12" strokeLinecap="round" strokeLinejoin="round"/><line x1="12" x2="12" y1="2" y2="22" strokeLinecap="round" strokeLinejoin="round"/></g>
 };
 
 const Icon=({n,s=24,c=""})=>Icons[n]?<svg xmlns="http://www.w3.org/2000/svg" width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={c} overflow="visible">{Icons[n]}</svg>:null;
@@ -119,7 +120,7 @@ const CATS={
     transport:{l:'交通',i:'Car',c:'bg-slate-100 text-slate-600'},
     accommodation:{l:'住宿',i:'Bed',c:'bg-indigo-100 text-indigo-600'},
     memo:{l:'便條',i:'StickyNote',c:'bg-yellow-100 text-yellow-600'},
-    other:{l:'彈性',i:'MoreVertical',c:'bg-emerald-100 text-emerald-600'}
+    other:{l:'其他',i:'MoreVertical',c:'bg-emerald-100 text-emerald-600'}
 };
 const W_ICONS={sunny:'Sun',cloudy:'Cloud',snow:'Snowflake',rain:'CloudRain'};
 const WEATHER_COLORS = { sunny: 'text-yellow-300', cloudy: 'text-white/80', rain: 'text-blue-300', snow: 'text-white' };
@@ -191,7 +192,7 @@ const INITIAL_ITINERARY = [
 
 function App(){
     const [data,setData]=useState(()=>{
-        const saved=localStorage.getItem('kanto_v2025_final_stable_v23'); // 版本 V23
+        const saved=localStorage.getItem('kanto_v2025_final_stable_v25'); // 版本 V25
         if(saved) { try { return JSON.parse(saved); } catch(e){} }
         return INITIAL_ITINERARY;
     });
@@ -232,9 +233,56 @@ function App(){
     const sortableRef = useRef(null);
     const sortableInstance = useRef(null);
     const longPressTimer = useRef(null);
+    
+    const [imgPosY, setImgPosY] = useState(50);
+    const draggingRef = useRef(false);
+    const startYRef = useRef(0);
+    const startPosRef = useRef(50);
 
-    useEffect(()=>{localStorage.setItem('kanto_v2025_final_stable_v23',JSON.stringify(data))},[data]);
+    useEffect(()=>{localStorage.setItem('kanto_v2025_final_stable_v25',JSON.stringify(data))},[data]);
     useEffect(()=>{localStorage.setItem('kanto_v2025_memos',JSON.stringify(memos))},[memos]);
+    
+    // 監聽 Modal 開啟時的 Paste 事件
+    useEffect(() => {
+        const handlePaste = (e) => {
+            if (!modal || !editItem || editItem.category !== 'memo') return;
+            const items = e.clipboardData.items;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf("image") !== -1) {
+                    const blob = items[i].getAsFile();
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            let width = img.width;
+                            let height = img.height;
+                            const MAX_SIZE = 1200; 
+                            if (width > height && width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; }
+                            else if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; }
+                            canvas.width = width; canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+                            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                            setEditItem(prev => ({...prev, image: dataUrl, imgPos: 50}));
+                            setImgPosY(50);
+                        }
+                        img.src = event.target.result;
+                    };
+                    reader.readAsDataURL(blob);
+                }
+            }
+        };
+        window.addEventListener('paste', handlePaste);
+        return () => window.removeEventListener('paste', handlePaste);
+    }, [modal, editItem]);
+
+    useEffect(() => {
+        if (editItem && editItem.image) {
+            setImgPosY(editItem.imgPos !== undefined ? editItem.imgPos : 50);
+        }
+    }, [editItem?.image]); 
+
     useEffect(()=>{
         if(stepModal) {
             setTimeout(()=>stepRef.current?.focus(),100);
@@ -428,35 +476,68 @@ function App(){
             dayId: day.id,
             steps: 0,
             image: null,
-            imgPos: 'center' // 預設圖片位置
+            imgPos: 50 
         });
+        setImgPosY(50);
         setAddMenuOpen(false);
         setModal(true);
     };
 
     const saveItem=()=>{
-        // 便條模式：只要有圖片，標題可以是空的
         if(editItem.category === 'memo') {
-            if(!editItem.title && !editItem.image && !editItem.note) return alert('便條不能全空 (需有標題、圖片或內容)');
-            if(!editItem.title) editItem.title = ""; // 允許空標題
+            if(!editItem.title && !editItem.image && !editItem.note) return alert('便條不能全空');
+            if(!editItem.title) editItem.title = ""; 
         } else {
-            // 一般模式：必須有標題
             if(!editItem.title) return alert('請輸入標題');
         }
 
+        editItem.imgPos = imgPosY;
+
         if(editItem._h !== undefined && editItem._m !== undefined) { editItem.time = `${editItem._h}:${editItem._m}`; delete editItem._h; delete editItem._m; }
+        
         const newData=[...data];
-        const d=newData.find(d=>d.id===editItem.dayId);
-        const i=d.items.findIndex(x=>x.id===editItem.id);
-        if(i>-1)d.items[i]=editItem;else{d.items.push(editItem);d.items.sort((a,b)=>a.time.localeCompare(b.time))}
-        setData(newData);setModal(false);
+        
+        const oldDay = newData.find(d => d.items.some(i => i.id === editItem.id));
+        if (oldDay) {
+             oldDay.items = oldDay.items.filter(x => x.id !== editItem.id);
+        }
+
+        const newDay = newData.find(d => d.id === editItem.dayId);
+        if (newDay) {
+            newDay.items.push(editItem);
+            newDay.items.sort((a,b)=>a.time.localeCompare(b.time));
+        }
+
+        setData(newData);
+        setModal(false);
     };
+    
     const delItem=()=>{const newData=[...data];const d=newData.find(d=>d.id===editItem.dayId);d.items=d.items.filter(x=>x.id!==editItem.id);setData(newData);setModal(false)};
     const addExpense=()=>{setEditItem({...editItem, expenses: [...(editItem.expenses||[]), {id:Date.now(), label:'', amount:'', currency:'JPY', category: editItem.category || 'other'}]})};
     const updateExpense=(idx, field, val)=>{const newExps=[...editItem.expenses];newExps[idx][field]=val;setEditItem({...editItem, expenses:newExps})};
     const removeExpense=(idx)=>{const newExps=editItem.expenses.filter((_,i)=>i!==idx);setEditItem({...editItem, expenses:newExps})};
     
-    // 行程圖片上傳 (通用處理)
+    const handleDragStart = (clientY) => {
+        draggingRef.current = true;
+        startYRef.current = clientY;
+        startPosRef.current = imgPosY;
+    };
+
+    const handleDragMove = (clientY, containerHeight) => {
+        if (!draggingRef.current) return;
+        const deltaY = clientY - startYRef.current;
+        const percentChange = (deltaY / containerHeight) * 100; 
+        let newPos = startPosRef.current - percentChange; 
+        if (newPos < 0) newPos = 0;
+        if (newPos > 100) newPos = 100;
+        setImgPosY(newPos);
+    };
+
+    const handleDragEnd = () => {
+        draggingRef.current = false;
+        setEditItem(prev => ({...prev, imgPos: imgPosY}));
+    };
+
     const handleItemImageUpload = (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -474,7 +555,8 @@ function App(){
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
                 const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-                setEditItem(prev => ({...prev, image: dataUrl, imgPos: 'center'}));
+                setEditItem(prev => ({...prev, image: dataUrl, imgPos: 50}));
+                setImgPosY(50);
             }
             img.src = event.target.result;
         }
@@ -485,7 +567,8 @@ function App(){
         if(noteUrlRef.current && noteUrlRef.current.value){
             const val = noteUrlRef.current.value.trim();
             if(val) {
-                setEditItem(prev => ({...prev, image: val, imgPos: 'center'}));
+                setEditItem(prev => ({...prev, image: val, imgPos: 50}));
+                setImgPosY(50);
                 noteUrlRef.current.value = '';
             }
         }
@@ -635,7 +718,7 @@ function App(){
                                     {!sort && (
                                         <>
                                             <div className="absolute right-0 top-0 z-20">
-                                                <button onClick={(e)=>{e.stopPropagation();setEditItem({...item, dayId: day.id});setModal(true)}} className="w-9 h-9 bg-blue-50 rounded-full flex items-center justify-center shadow-sm border border-blue-100 text-blue-500 active:scale-90 transition-transform">
+                                                <button onClick={(e)=>{e.stopPropagation();setEditItem({...item, dayId: day.id});setImgPosY(item.imgPos||50);setModal(true)}} className="w-9 h-9 bg-blue-50 rounded-full flex items-center justify-center shadow-sm border border-blue-100 text-blue-500 active:scale-90 transition-transform">
                                                     <Icon n="Edit" s={18}/>
                                                 </button>
                                             </div>
@@ -667,7 +750,10 @@ function App(){
                                             <div className="relative flex flex-col gap-2">
                                                 <div className="flex justify-between items-start pr-10"> 
                                                     <div className="flex items-baseline gap-2">
-                                                        <span className="text-xl font-black text-slate-800 font-mono tracking-tight">{item.time}</span>
+                                                        {/* 修正：非便條模式才顯示時間 */}
+                                                        {item.category !== 'memo' && (
+                                                            <span className="text-xl font-black text-slate-800 font-mono tracking-tight">{item.time}</span>
+                                                        )}
                                                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${cat.c.replace('text-','border-').replace('100','200')}`}>{cat.l}</span>
                                                     </div>
                                                 </div>
@@ -678,7 +764,7 @@ function App(){
                                                 {/* 便條專屬圖片顯示區 */}
                                                 {item.category === 'memo' && item.image && (
                                                     <div className="mt-2 rounded-xl overflow-hidden border border-yellow-200 shadow-sm" onClick={(e) => { e.stopPropagation(); setViewItineraryImage(item.image); }}>
-                                                        <img src={item.image} className="w-full h-32 object-cover" style={{objectPosition: item.imgPos || 'center'}} />
+                                                        <img src={item.image} className="w-full h-32 object-cover" style={{objectPosition: `50% ${item.imgPos !== undefined ? item.imgPos : 50}%`}} />
                                                     </div>
                                                 )}
 
@@ -755,11 +841,11 @@ function App(){
                                 <div className="relative group">
                                     <button onClick={()=>setAddMenuOpen(!addMenuOpen)} className="p-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl shadow-md active:scale-90 transition-transform"><Icon n="Plus" s={20}/></button>
                                     
-                                    {/* ➕ 新增行程的 Popover Menu */}
+                                    {/* ➕ 新增行程的 Popover Menu - 靠右對齊修復 */}
                                     {addMenuOpen && (
                                         <>
                                             <div className="fixed inset-0 z-40" onClick={() => setAddMenuOpen(false)}></div>
-                                            <div className="absolute bottom-full right-0 mb-2 w-40 bg-white rounded-2xl shadow-2xl border border-slate-100 p-1.5 z-50 popover-menu">
+                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-40 bg-white rounded-2xl shadow-2xl border border-slate-100 p-1.5 z-50 popover-menu">
                                                 <button onClick={() => startAddItem('sightseeing')} className="w-full text-left px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-xl flex items-center gap-3 transition-colors active:scale-95"><Icon n="MapPin" s={18} c="text-blue-500"/> 一般行程</button>
                                                 <div className="h-[1px] bg-slate-100 my-1 mx-2"/>
                                                 <button onClick={() => startAddItem('memo')} className="w-full text-left px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-xl flex items-center gap-3 transition-colors active:scale-95"><Icon n="StickyNote" s={18} c="text-yellow-500"/> 便條</button>
@@ -822,7 +908,7 @@ function App(){
                     <div className="px-6 py-5 border-b flex justify-between items-center bg-rose-50 rounded-t-3xl">
                         <h2 className="font-bold text-xl text-rose-600 flex items-center gap-2"><Icon n="Book" s={24}/> 旅遊筆記</h2>
                         <div className="flex gap-2">
-                             {!editMemoItem && <button onClick={()=>setEditMemoItem({id:Date.now().toString(), title:'', category:'sightseeing', content:'', images:[]})} className="bg-rose-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-sm active:scale-95">+ 新增</button>}
+                             {!editMemoItem && <button onClick={()=>setEditMemoItem({id:Date.now().toString(), title:'', category:'other', content:'', images:[]})} className="bg-rose-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-sm active:scale-95">+ 新增</button>}
                              <button onClick={()=>{setMemoModal(false);setEditMemoItem(null)}} className="p-2 bg-white rounded-full shadow-sm text-slate-500"><Icon n="X" s={20}/></button>
                         </div>
                     </div>
@@ -830,14 +916,9 @@ function App(){
                         {editMemoItem ? (
                             <div className="space-y-4 animate-fade-in">
                                 <input type="text" value={editMemoItem.title} onChange={e=>setEditMemoItem({...editMemoItem, title:e.target.value})} placeholder="筆記標題 (例如: 必買清單)" className="w-full bg-white p-4 rounded-2xl font-bold text-lg border-2 border-rose-100 outline-none focus:border-rose-400"/>
-                                {/* ✏️ 分類按鈕 - 六宮格 */}
-                                <div className="grid grid-cols-6 gap-1 pb-2">
-                                    {Object.entries(CATS).map(([k, v]) => (
-                                        <button key={k} onClick={()=>setEditMemoItem({...editMemoItem, category:k})} className={`h-12 rounded-lg font-bold border transition-all flex flex-col items-center justify-center gap-0 ${editMemoItem.category===k ? 'bg-rose-500 text-white border-rose-500 shadow-md scale-105' : 'bg-white text-slate-500 border-slate-200'}`}>
-                                            <Icon n={v.i} s={16}/> <span className="text-[9px]">{v.l}</span>
-                                        </button>
-                                    ))}
-                                </div>
+                                
+                                {/* 修正：筆記模式移除了分類選擇，筆記就是筆記 */}
+                                
                                 <textarea value={editMemoItem.content} onChange={e=>setEditMemoItem({...editMemoItem, content:e.target.value})} placeholder="輸入詳細內容..." className="w-full bg-white p-4 rounded-2xl text-base border-2 border-slate-100 outline-none focus:border-rose-400 h-40"/>
                                 <div>
                                     <div className="text-sm font-bold text-slate-500 mb-2">圖片 (上傳/貼連結)</div>
@@ -887,9 +968,6 @@ function App(){
                                             </div>
                                         )}
                                         <div className="flex-1 min-w-0">
-                                            <div className="flex justify-between items-start mb-1">
-                                                <span className={`text-xs px-2 py-0.5 rounded-md font-bold ${CATS[memo.category]?.c.replace('text-', 'bg-').split(' ')[0].replace('100', '50')} ${CATS[memo.category]?.c.split(' ')[1]}`}>{CATS[memo.category]?.l}</span>
-                                            </div>
                                             <h3 className="font-bold text-slate-800 mb-1 line-clamp-1">{memo.title}</h3>
                                             <p className="text-xs text-slate-500 line-clamp-2">{memo.content}</p>
                                         </div>
@@ -942,7 +1020,17 @@ function App(){
             )}
 
             {/* Edit Modal (Itinerary) - REFINED - ELDERLY FRIENDLY */}
-            {modal && editItem && <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center animate-fade-in"><div className="bg-white w-full sm:w-[95%] max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[95vh]"><div className="px-6 py-5 border-b flex justify-between items-center bg-slate-50/50 rounded-t-3xl"><h2 className="font-bold text-2xl text-slate-800 font-rounded">{editItem.id&&day.items.some(i=>i.id===editItem.id)?'編輯內容':(editItem.category==='memo'?'新增便條':'新增行程')}</h2><button onClick={()=>setModal(false)} className="p-3 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200 transition-colors"><Icon n="X" s={28}/></button></div><div className="p-6 overflow-y-auto space-y-6">
+            {modal && editItem && <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center animate-fade-in"><div className="bg-white w-full sm:w-[95%] max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[95vh]"><div className="px-6 py-5 border-b flex justify-between items-center bg-slate-50/50 rounded-t-3xl"><h2 className="font-bold text-2xl text-slate-800 font-rounded">{editItem.id&&day.items.some(i=>i.id===editItem.id)?'編輯內容':(editItem.category==='memo'?'新增便條':'新增行程')}</h2>
+            
+            {/* 📅 跨天移動選單 */}
+            <div className="flex items-center gap-2">
+                <select value={editItem.dayId} onChange={(e)=>setEditItem({...editItem, dayId: e.target.value})} className="bg-white border border-slate-200 text-sm rounded-lg px-2 py-1 outline-none text-slate-600 font-bold">
+                    {data.map((d, i) => <option key={d.id} value={d.id}>{d.date} (D{i+1})</option>)}
+                </select>
+                <button onClick={()=>setModal(false)} className="p-3 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200 transition-colors"><Icon n="X" s={28}/></button>
+            </div>
+            
+            </div><div className="p-6 overflow-y-auto space-y-6">
                 
                 {/* 🌟 2. 標題與時間 (依模式切換佈局) */}
                 {editItem.category !== 'memo' ? (
@@ -983,24 +1071,33 @@ function App(){
                     <div className="bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-4">
                         {editItem.image ? (
                             <div className="space-y-3">
-                                <div className="relative rounded-xl overflow-hidden shadow-md border-2 border-white bg-slate-100 aspect-video">
-                                    <img src={editItem.image} className="w-full h-full object-cover transition-all duration-300" style={{objectPosition: editItem.imgPos || 'center'}} />
-                                    <div className="absolute bottom-2 right-2 flex gap-1">
+                                <div 
+                                    className="relative rounded-xl overflow-hidden shadow-md border-2 border-white bg-slate-100 aspect-video cursor-move touch-none"
+                                    onMouseDown={(e)=>handleDragStart(e.clientY)}
+                                    onMouseMove={(e)=>handleDragMove(e.clientY, e.currentTarget.offsetHeight)}
+                                    onMouseUp={handleDragEnd}
+                                    onMouseLeave={handleDragEnd}
+                                    onTouchStart={(e)=>handleDragStart(e.touches[0].clientY)}
+                                    onTouchMove={(e)=>handleDragMove(e.touches[0].clientY, e.currentTarget.offsetHeight)}
+                                    onTouchEnd={handleDragEnd}
+                                >
+                                    <img 
+                                        src={editItem.image} 
+                                        className="w-full h-full object-cover transition-none pointer-events-none select-none" 
+                                        style={{objectPosition: `50% ${imgPosY}%`}} 
+                                    />
+                                    <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-black/30 text-white px-2 py-1 rounded-full text-[10px] pointer-events-none backdrop-blur-sm flex items-center gap-1">
+                                        <Icon n="Move" s={12}/> 上下拖曳調整縮圖
+                                    </div>
+                                    <div className="absolute bottom-2 right-2 flex gap-1 pointer-events-auto">
                                         <button onClick={()=>setEditItem({...editItem, image: null})} className="bg-red-500 text-white rounded-full p-2 shadow-lg active:scale-90 transition-transform"><Icon n="Trash2" s={20}/></button>
                                     </div>
                                 </div>
-                                {/* 圖片焦點控制 */}
-                                <div className="flex justify-center gap-4 bg-white/50 p-2 rounded-xl">
-                                    <button onClick={()=>setEditItem({...editItem, imgPos: 'top'})} className={`p-2 rounded-lg ${editItem.imgPos==='top'?'bg-yellow-400 text-white':'text-yellow-300'}`}><Icon n="AlignTop" s={20}/></button>
-                                    <button onClick={()=>setEditItem({...editItem, imgPos: 'center'})} className={`p-2 rounded-lg ${!editItem.imgPos||editItem.imgPos==='center'?'bg-yellow-400 text-white':'text-yellow-300'}`}><Icon n="AlignCenter" s={20}/></button>
-                                    <button onClick={()=>setEditItem({...editItem, imgPos: 'bottom'})} className={`p-2 rounded-lg ${editItem.imgPos==='bottom'?'bg-yellow-400 text-white':'text-yellow-300'}`}><Icon n="AlignBottom" s={20}/></button>
-                                </div>
-                                <div className="text-center text-[10px] text-yellow-600 font-bold">調整縮圖顯示位置</div>
                             </div>
                         ) : (
-                            <div onClick={()=>itemImgRef.current.click()} className="border-2 border-dashed border-yellow-300 rounded-xl h-40 flex flex-col items-center justify-center text-yellow-500 gap-3 cursor-pointer active:bg-yellow-100 transition-colors bg-white/50">
-                                <div className="p-4 bg-yellow-100 rounded-full text-yellow-500"><Icon n="Camera" s={32}/></div>
-                                <span className="font-bold">點擊拍照或選擇照片</span>
+                            <div onClick={()=>itemImgRef.current.click()} className="border-2 border-dashed border-yellow-300 rounded-xl h-40 flex flex-col items-center justify-center text-yellow-500 gap-3 cursor-pointer active:bg-yellow-100 transition-colors bg-white/50 relative overflow-hidden group">
+                                <div className="p-4 bg-yellow-100 rounded-full text-yellow-500 group-hover:scale-110 transition-transform"><Icon n="Camera" s={32}/></div>
+                                <span className="font-bold">點擊上傳 或 貼上截圖 (Ctrl+V)</span>
                             </div>
                         )}
                         <input type="file" ref={itemImgRef} accept="image/*" className="hidden" onChange={handleItemImageUpload}/>
