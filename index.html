@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>關東新春自駕遊 2026 (完美修復版) 🎌</title>
+<title>關東新春自駕遊 2026 (V17 筆記流暢版) 🎌</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
@@ -35,6 +35,8 @@
     .note-expand.open { max-height: 500px; opacity: 1; margin-bottom: 12px; }
     .sort-mode-bg { background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 20px 20px; }
     .memo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; }
+    /* 🚫 禁止在排序模式下的縮放動畫，解決飄移問題 */
+    .no-scale-anim { transform: none !important; transition: none !important; }
 </style>
 </head>
 <body>
@@ -116,6 +118,18 @@ const LOCATIONS_COORD = [
 ];
 const fmtMoney=(v)=>v.toString().replace(/\B(?=(\d{3})+(?!\d))/g,",");
 
+// Helper to auto-linkify text
+const Linkify = ({ text }) => {
+    if (!text) return null;
+    const parts = text.split(/(https?:\/\/[^\s]+)/g);
+    return parts.map((part, i) => {
+        if (part.match(/^https?:\/\//)) {
+            return <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline break-all font-bold" onClick={(e)=>e.stopPropagation()}>{part}</a>;
+        }
+        return part;
+    });
+};
+
 const getWeatherTypeFromCode = (code) => {
     if (code === undefined || code === null) return 'sunny';
     if (code <= 1) return 'sunny'; 
@@ -169,17 +183,15 @@ const INITIAL_ITINERARY = [
 ];
 function App(){
     const [data,setData]=useState(()=>{
-        const saved=localStorage.getItem('kanto_v2026_final_plus_v3');
+        const saved=localStorage.getItem('kanto_v2026_final_plus_v17'); // Update version
         if(saved) { try { return JSON.parse(saved); } catch(e){} }
         return INITIAL_ITINERARY;
     });
-    // Independent Memos State (相容性修復)
     const [memos, setMemos] = useState(()=>{
-        const saved = localStorage.getItem('kanto_v2026_memos_v2');
+        const saved = localStorage.getItem('kanto_v2026_memos_v17'); // Update version
         if (!saved) return [];
         try {
             const parsed = JSON.parse(saved);
-            // 如果讀到的是舊版物件格式，轉換為陣列
             return Array.isArray(parsed) ? parsed : Object.values(parsed);
         } catch (e) { return []; }
     });
@@ -215,8 +227,8 @@ function App(){
     const memoSortableInstance = useRef(null); 
     const longPressTimer = useRef(null);
 
-    useEffect(()=>{localStorage.setItem('kanto_v2026_final_plus_v3',JSON.stringify(data))},[data]);
-    useEffect(()=>{localStorage.setItem('kanto_v2026_memos_v2',JSON.stringify(memos))}, [memos]);
+    useEffect(()=>{localStorage.setItem('kanto_v2026_final_plus_v17',JSON.stringify(data))},[data]);
+    useEffect(()=>{localStorage.setItem('kanto_v2026_memos_v17',JSON.stringify(memos))}, [memos]);
 
     useEffect(()=>{
         if(stepModal) {
@@ -224,11 +236,9 @@ function App(){
             setSaveBtnText('儲存紀錄');
         }
     },[stepModal]);
-    // 重置大輸入框狀態
     useEffect(() => {
         if(viewImgIdx === null) setShowLargeInput(false);
     }, [viewImgIdx]);
-    // 📡 Fetch Real-time Weather from Open-Meteo
     useEffect(() => {
         const fetchWeather = async () => {
             const coord = LOCATIONS_COORD.find(c => c.id === data[idx].id);
@@ -250,11 +260,10 @@ function App(){
         fetchWeather();
     }, [idx]);
     
-    // SortableJS Init for Itinerary
     useEffect(() => {
         if (sort && sortableRef.current) {
             sortableInstance.current = new Sortable(sortableRef.current, {
-                animation: 300,
+                animation: 150,
                 handle: ".drag-handle",
                 delay: 0, 
                 ghostClass: "opacity-50",
@@ -280,13 +289,13 @@ function App(){
         }
     }, [sort, idx]);
 
-    // SortableJS Init for Memos
     useEffect(() => {
         if (memoSort && memoSortableRef.current) {
             memoSortableInstance.current = new Sortable(memoSortableRef.current, {
-                animation: 300,
+                animation: 150,
                 handle: ".drag-handle-memo",
-                delay: 0,
+                delay: 100, 
+                touchStartThreshold: 5,
                 ghostClass: "opacity-50",
                 onChoose: () => { if (navigator.vibrate) navigator.vibrate(50); },
                 onEnd: (evt) => {
@@ -308,7 +317,6 @@ function App(){
         }
     }, [memoSort]);
 
-    // 長按觸發排序 (Itinerary)
     const startLongPress = useCallback(() => {
         if (sort) return;
         longPressTimer.current = setTimeout(() => {
@@ -319,7 +327,6 @@ function App(){
         }, 800);
     }, [sort, data]);
 
-    // 長按觸發排序 (Memo)
     const startMemoLongPress = useCallback(() => {
         if (memoSort) return;
         longPressTimer.current = setTimeout(() => {
@@ -363,7 +370,7 @@ function App(){
             if(!expensesByCategory[cat]) expensesByCategory[cat] = { nt:0, jpy:0, label:CATS[cat]?.l || '其他', color:CATS[cat]?.c || 'bg-gray-100 text-gray-600' };
             if(ex.currency === 'NT') expensesByCategory[cat].nt += amount;
             else expensesByCategory[cat].jpy += amount;
-            allExpenses.push({date: d.date, time: i.time, title: i.title, label: ex.label, amount: amount, currency: ex.currency, category: cat});
+            allExpenses.push({date: d.date, time: i.time, title: i.title, label: ex.label, amount: amount, currency: ex.currency, category: cat, dayId: d.id, itemId: i.id});
         });
     }));
     allExpenses.sort((a, b) => {
@@ -390,10 +397,6 @@ function App(){
         setTimeout(() => setSaveBtnText('儲存紀錄'), 1500);
     };
 
-    const toggleWeather = (e) => {
-        e.stopPropagation();
-        // Weather toggle removed for simplicity with live weather
-    };
     const exportData=()=>{
         const backup = { itinerary: data, memos: memos };
         const a=document.createElement('a');
@@ -401,7 +404,6 @@ function App(){
         a.download='行程與筆記備份.json';a.click()
     };
     
-    // Import Data Fix: Compatibility for old object-based memos
     const importData=(e)=>{
         const r=new FileReader();
         r.onload=(ev)=>{
@@ -410,7 +412,6 @@ function App(){
                 if(d.itinerary){
                     setData(d.itinerary);
                     if (d.memos) {
-                        // Check if memos is array, if not convert object to array
                         setMemos(Array.isArray(d.memos) ? d.memos : Object.values(d.memos));
                     } else {
                         setMemos([]);
@@ -428,68 +429,92 @@ function App(){
     const calcDur=(s,e)=>{if(!s||!e)return null;const [sh,sm]=s.split(':').map(Number);const [eh,em]=e.split(':').map(Number);const diff=(eh*60+em)-(sh*60+sm);if(diff<0)return{t:'重疊',bad:true};const h=Math.floor(diff/60),m=diff%60;if(h===0&&m===0)return{t:'無空檔',bad:false};return{t:(h>0?h+'時':'')+(m>0?m+'分':''),bad:false}};
     const gMap=(i)=>`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(i.searchKeyword?.trim()||`${i.title} 日本`)}`;
     const getWeatherUrl = () => { const zip = WEATHER_LOCATIONS[day.id] || '282-0004'; return `https://tenki.jp/search/?keyword=${encodeURIComponent(zip)}`; };
-    const getDailyRouteUrl = (items) => `https://www.google.com/maps/dir/${items.map(item => encodeURIComponent(item.searchKeyword?.trim() || item.title)).join('/')}`;
+    const getDailyRouteUrl = (items) => {
+        const validItems = items.filter(i => i.type !== 'memo');
+        return `https://www.google.com/maps/dir/${validItems.map(item => encodeURIComponent(item.searchKeyword?.trim() || item.title)).join('/')}`;
+    };
 
     const toggle=(id)=>{const newData=[...data];const item=newData[idx].items.find(i=>i.id===id);if(item){item.completed=!item.completed;setData(newData)}};
     const toggleNote=(id)=>{const newSet = new Set(expandedNotes);
     if(newSet.has(id)) newSet.delete(id); else newSet.add(id); setExpandedNotes(newSet);};
 
+    const handleLedgerClick = (dayId, itemId) => {
+        const d = data.find(day => day.id === dayId);
+        if (d) {
+            const item = d.items.find(i => i.id === itemId);
+            if (item) {
+                setEditItem({...item, dayId: dayId, originalDayId: dayId}); 
+                setModal(true);
+                setLedgerModal(false);
+            }
+        }
+    };
+
     const saveItem=()=>{
-        if(!editItem.title)return;
+        if (editItem.type === 'memo') {
+             if (!editItem.title) {
+                 const dateStr = new Date().toLocaleString('zh-TW', { hour12: false, month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                 if (editItem.note) {
+                     editItem.title = editItem.note.substring(0, 10) + (editItem.note.length>10?"...":"");
+                 } else if (editItem.images && editItem.images.length > 0) {
+                     editItem.title = "圖片便條";
+                 } else {
+                     editItem.title = "隨手便條"; 
+                 }
+             }
+        } else {
+            if(!editItem.title) return alert('請輸入行程標題');
+        }
+        
         if(editItem.type === 'normal' && editItem._h !== undefined && editItem._m !== undefined) { 
             editItem.time = `${editItem._h}:${editItem._m}`;
             delete editItem._h; delete editItem._m;
         }
 
         const newData=[...data];
-        
-        // 1. Check if moving to a different day
         const isMovingDay = editItem.originalDayId && editItem.originalDayId !== editItem.dayId;
-
         if (isMovingDay) {
-            // Remove from source
             const sourceDay = newData.find(d => d.id === editItem.originalDayId);
             if (sourceDay) sourceDay.items = sourceDay.items.filter(x => x.id !== editItem.id);
-            // Add to target (append to end)
             const targetDay = newData.find(d => d.id === editItem.dayId);
             if (targetDay) targetDay.items.push(editItem);
         } else {
-            // Same Day: Update strictly in place
             const targetDay = newData.find(d => d.id === editItem.dayId);
             if (targetDay) {
                 const existingIdx = targetDay.items.findIndex(x => x.id === editItem.id);
                 if (existingIdx > -1) {
-                    targetDay.items[existingIdx] = editItem; // Update in place
+                    targetDay.items[existingIdx] = editItem; 
                 } else {
-                    targetDay.items.push(editItem); // New item, append
+                    targetDay.items.push(editItem); 
                 }
             }
         }
-
         setData(newData);
         setModal(false);
     };
     
-    // Memo Logic
     const saveMemo = () => {
-        if (!editMemoItem.title) return;
+        let itemToSave = { ...editMemoItem };
+        if (!itemToSave.title.trim()) {
+            const dateStr = new Date().toLocaleString('zh-TW', { hour12: false, month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            itemToSave.title = itemToSave.content.trim() ? (itemToSave.content.substring(0, 10) + (itemToSave.content.length > 10 ? "..." : "")) : `筆記 ${dateStr}`;
+        }
         setMemos(prev => {
-            const idx = prev.findIndex(m => m.id === editMemoItem.id);
+            const idx = prev.findIndex(m => m.id === itemToSave.id);
             if (idx > -1) {
                 const newMemos = [...prev];
-                newMemos[idx] = editMemoItem;
+                newMemos[idx] = itemToSave;
                 return newMemos;
             } else {
-                return [...prev, editMemoItem];
+                return [...prev, itemToSave];
             }
         });
-        setNotebookModal(false);
-        setEditMemoItem(null);
+        setEditMemoItem(null); // Return to list, keep modal open
     };
+
     const deleteMemo = (id) => {
         if(confirm('刪除此筆記?')){
             setMemos(prev => prev.filter(m => m.id !== id));
-            setNotebookModal(false);
             setEditMemoItem(null);
         }
     };
@@ -507,7 +532,6 @@ function App(){
     const updateExpense=(idx, field, val)=>{const newExps=[...editItem.expenses];newExps[idx][field]=val;setEditItem({...editItem, expenses:newExps})};
     const removeExpense=(idx)=>{const newExps=editItem.expenses.filter((_,i)=>i!==idx);setEditItem({...editItem, expenses:newExps})};
     
-    // Image Handling Logic (Integrated from Memo)
     const handleImageUpload = (e, isMemo = false) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -551,6 +575,43 @@ function App(){
             }
         }
     };
+    const handlePaste = useCallback((e, isMemo = false) => {
+        const items = e.clipboardData.items;
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf("image") !== -1) {
+                const blob = items[i].getAsFile();
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        const MAX_SIZE = 800;
+                        if (width > height && width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE;
+                        }
+                        else if (height > MAX_SIZE) { width *= MAX_SIZE / height;
+                        height = MAX_SIZE; }
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                        if(isMemo) {
+                            setEditMemoItem(prev => ({...prev, images: [...(prev.images||[]), {url: dataUrl, text: ''}]}));
+                        } else {
+                            setEditItem(prev => ({...prev, images: [...(prev.images||[]), {url: dataUrl, text: ''}]}));
+                        }
+                    }
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(blob);
+                e.preventDefault(); // Prevent default paste if image
+                return;
+            }
+        }
+    }, [editMemoItem, editItem]);
+
     const moveImg = (e, idx, dir, isMemo = false) => {
         e.stopPropagation(); 
         const currentItem = isMemo ? editMemoItem : editItem;
@@ -674,7 +735,7 @@ function App(){
                                             ) : (
                                                 <div className="flex flex-col gap-2">
                                                     <h3 className="font-bold text-slate-800 text-base leading-snug">{item.title}</h3>
-                                                    {item.note && <div className="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed">{item.note}</div>}
+                                                    {item.note && <div className="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed"><Linkify text={item.note}/></div>}
                                                     {item.images && item.images.length > 0 && (
                                                         <div className="memo-grid mt-2">
                                                             {item.images.map((img, idx) => (
@@ -738,7 +799,7 @@ function App(){
                                                 <h3 className={`font-black text-lg leading-snug font-rounded flex items-start gap-1 ${item.completed?'text-slate-400 line-through decoration-slate-300':'text-slate-800'}`}>
                                                     {item.title}
                                                 </h3>
-                                                <div className={`note-expand ${isExpanded || (item.note && isExpanded) ? 'open' : ''} ${!isExpanded && item.note ? 'max-h-0 opacity-0' : ''}`}>{item.note && (<div onClick={(e)=>{e.stopPropagation(); toggleNote(item.id)}} className="cursor-pointer text-sm font-medium text-slate-600 bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-400 leading-relaxed whitespace-pre-line active:bg-yellow-100 transition-colors">{item.note}</div>)}</div>
+                                                <div className={`note-expand ${isExpanded || (item.note && isExpanded) ? 'open' : ''} ${!isExpanded && item.note ? 'max-h-0 opacity-0' : ''}`}>{item.note && (<div onClick={(e)=>{e.stopPropagation(); toggleNote(item.id)}} className="cursor-pointer text-sm font-medium text-slate-600 bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-400 leading-relaxed whitespace-pre-line active:bg-yellow-100 transition-colors"><Linkify text={item.note}/></div>)}</div>
                                                 {!isExpanded && item.note && <div onClick={()=>toggleNote(item.id)} className="text-[10px] text-slate-400 text-center cursor-pointer hover:text-blue-500 font-bold">📝 點擊查看備註...</div>}
                                                 
                                                 <div className="mt-2 pt-2 border-t border-slate-50 flex justify-between items-center">
@@ -844,6 +905,7 @@ function App(){
                                 </div>
                             </div>
                         </div>
+                        <div className="text-[10px] text-slate-300 mt-2 text-center">App Version: 17.0</div>
                     </div>
                 )}
             </div>
@@ -863,7 +925,7 @@ function App(){
                             <div className="flex justify-between items-center mb-3"><h3 className="font-bold text-slate-700 text-lg">分類統計 <span className="text-xs text-slate-400 font-normal ml-2">(點擊篩選)</span></h3>{filterCategory && <button onClick={()=>setFilterCategory(null)} className="text-xs text-pink-500 font-bold bg-pink-50 px-2 py-1 rounded-lg">清除篩選</button>}</div>
                             <div className="space-y-3">{Object.entries(expensesByCategory).map(([key, val]) => (val.nt > 0 || val.jpy > 0) && (<div key={key} onClick={() => setFilterCategory(filterCategory === key ? null : key)} className={`rounded-xl p-3 border transition-all cursor-pointer active:scale-95 ${filterCategory === key ? 'bg-pink-50 border-pink-300 ring-2 ring-pink-200 shadow-md' : 'bg-slate-50 border-slate-100 hover:bg-slate-100'}`}><div className="flex justify-between items-center mb-2"><div className="flex items-center gap-2"><div className={`w-8 h-8 rounded-full flex items-center justify-center ${val.color.replace('text-', 'bg-').split(' ')[0]} text-white shadow-sm`}><Icon n={CATS[key]?.i || 'DollarSign'} s={16}/></div><span className={`font-bold ${filterCategory === key ? 'text-pink-700' : 'text-slate-700'}`}>{val.label}</span></div>{filterCategory === key && <div className="text-pink-500"><Icon n="Check" s={16}/></div>}</div><div className="flex justify-end gap-4 text-sm font-mono font-bold text-slate-600">{val.nt > 0 && <span>NT$ {fmtMoney(val.nt)}</span>}{val.jpy > 0 && <span>¥ {fmtMoney(val.jpy)}</span>}</div></div>))}</div>
                         </div>
-                        <div><h3 className="font-bold text-slate-700 mb-3 text-lg flex items-center gap-2">{filterCategory ? <><span className="text-pink-500"><Icon n={CATS[filterCategory]?.i} s={20}/></span> {CATS[filterCategory]?.l}明細</> : '所有消費明細'}</h3><div className="space-y-2">{displayedExpenses.length > 0 ? displayedExpenses.map((ex, i) => (<div key={i} className="flex justify-between items-center p-3 border-b border-slate-100 last:border-0 animate-fade-in"><div className="flex-1"><div className="text-xs text-slate-400 mb-0.5">{ex.date} {ex.time} · {CATS[ex.category]?.l || '其他'}</div><div className="font-bold text-slate-800 text-sm line-clamp-1">{ex.title}</div><div className="text-xs text-slate-500 mt-0.5">{ex.label}</div></div><div className="font-mono font-bold text-slate-700 text-right"><span className="text-xs text-slate-400 mr-1">{ex.currency}</span>{fmtMoney(ex.amount)}</div></div>)) : <div className="text-center py-8 text-slate-400 text-sm">此分類尚無消費紀錄</div>}</div></div>
+                        <div><h3 className="font-bold text-slate-700 mb-3 text-lg flex items-center gap-2">{filterCategory ? <><span className="text-pink-500"><Icon n={CATS[filterCategory]?.i} s={20}/></span> {CATS[filterCategory]?.l}明細</> : '所有消費明細'}</h3><div className="space-y-2">{displayedExpenses.length > 0 ? displayedExpenses.map((ex, i) => (<div key={i} onClick={() => handleLedgerClick(ex.dayId, ex.itemId)} className="flex justify-between items-center p-3 border-b border-slate-100 last:border-0 animate-fade-in cursor-pointer hover:bg-slate-50 active:bg-slate-100 transition-colors rounded-lg"><div className="flex-1"><div className="text-xs text-slate-400 mb-0.5">{ex.date} {ex.time} · {CATS[ex.category]?.l || '其他'}</div><div className="font-bold text-slate-800 text-sm line-clamp-1">{ex.title}</div><div className="text-xs text-slate-500 mt-0.5">{ex.label}</div></div><div className="font-mono font-bold text-slate-700 text-right"><span className="text-xs text-slate-400 mr-1">{ex.currency}</span>{fmtMoney(ex.amount)}</div></div>)) : <div className="text-center py-8 text-slate-400 text-sm">此分類尚無消費紀錄</div>}</div></div>
                     </div>
                 </div>
             </div>}
@@ -874,16 +936,23 @@ function App(){
                     <div className="bg-white w-full sm:w-[95%] max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[95vh] h-[95vh]">
                         <div className="px-6 py-5 border-b flex justify-between items-center bg-yellow-50 rounded-t-3xl">
                             <h2 className="font-bold text-xl text-yellow-600 flex items-center gap-2"><Icon n="Book" s={24}/> 隨身筆記本</h2>
-                            <div className="flex gap-2">
-                                {!editMemoItem && !memoSort && <button onClick={()=>setEditMemoItem({id:Date.now().toString(), title:'', content:'', images:[]})} className="bg-yellow-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-sm active:scale-95">+ 新增</button>}
-                                <button onClick={()=>{setNotebookModal(false); setEditMemoItem(null); setMemoSort(false)}} className="p-2 bg-white rounded-full shadow-sm text-slate-500"><Icon n="X" s={20}/></button>
-                            </div>
+                            {memoSort ? (
+                                <button onClick={() => setMemoSort(false)} className="bg-blue-500 text-white px-6 py-2 rounded-full font-bold shadow-lg transition-transform active:scale-95 flex items-center gap-2">
+                                    <Icon n="Check" s={18}/> 完成
+                                </button>
+                            ) : (
+                                <div className="flex gap-2">
+                                    <button onClick={() => setMemoSort(true)} className="p-2 bg-yellow-100 text-yellow-600 rounded-full active:scale-90 transition-transform"><Icon n="Sort" s={20}/></button>
+                                    {!editMemoItem && <button onClick={()=>setEditMemoItem({id:Date.now().toString(), title:'', content:'', images:[]})} className="bg-yellow-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-sm active:scale-95">+ 新增</button>}
+                                    <button onClick={()=>{setNotebookModal(false); setEditMemoItem(null); setMemoSort(false)}} className="p-2 bg-white rounded-full shadow-sm text-slate-500"><Icon n="X" s={20}/></button>
+                                </div>
+                            )}
                         </div>
                         <div className="p-4 flex-1 flex flex-col bg-slate-50 overflow-y-auto">
                             {editMemoItem ? (
-                                <div className="space-y-4 animate-fade-in">
+                                <div className="space-y-4 animate-fade-in" onPaste={(e)=>handlePaste(e, true)}>
                                     <input type="text" value={editMemoItem.title} onChange={e=>setEditMemoItem({...editMemoItem, title:e.target.value})} placeholder="筆記標題 (例如: 必買清單)" className="w-full bg-white p-4 rounded-2xl font-bold text-lg border-2 border-yellow-100 outline-none focus:border-yellow-400"/>
-                                    <textarea value={editMemoItem.content} onChange={e=>setEditMemoItem({...editMemoItem, content:e.target.value})} placeholder="輸入詳細內容..." className="w-full bg-white p-4 rounded-2xl text-base border-2 border-slate-100 outline-none focus:border-yellow-400 h-40"/>
+                                    <textarea value={editMemoItem.content} onChange={e=>setEditMemoItem({...editMemoItem, content:e.target.value})} placeholder="輸入詳細內容... (支援直接貼上圖片)" className="w-full bg-white p-4 rounded-2xl text-base border-2 border-slate-100 outline-none focus:border-yellow-400 h-40"/>
                                     
                                     <div>
                                         <div className="text-sm font-bold text-slate-500 mb-2">圖片 (上傳/貼連結)</div>
@@ -925,7 +994,7 @@ function App(){
                                     {memos.length === 0 && <div className="text-center py-10 text-slate-400">尚無筆記，點擊右上角新增！</div>}
                                     {memoSort && <div className="text-center text-xs font-bold text-yellow-600 mb-2 animate-pulse">長按拖曳排序中...</div>}
                                     {memos.map(memo => (
-                                        <div key={memo.id} className={`bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex gap-4 ${memoSort ? 'mb-2 border-yellow-400 border-2' : 'active:scale-98 transition-transform'}`} onClick={()=>!memoSort && setEditMemoItem(memo)}>
+                                        <div key={memo.id} className={`bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex gap-4 ${memoSort ? 'mb-2 border-yellow-400 border-2 no-scale-anim' : 'active:scale-98 transition-transform'}`} onClick={()=>!memoSort && setEditMemoItem(memo)}>
                                             {memoSort && <div className="drag-handle-memo flex items-center justify-center text-slate-300 pr-2 cursor-grab"><Icon n="DragHandle" s={20}/></div>}
                                             {memo.images && memo.images.length > 0 && (
                                                 <div className="w-20 h-20 shrink-0 rounded-xl overflow-hidden bg-slate-100 relative border border-slate-100">
@@ -934,7 +1003,7 @@ function App(){
                                             )}
                                             <div className="flex-1 min-w-0">
                                                 <h3 className="font-bold text-slate-800 mb-1 line-clamp-1 text-lg">{memo.title}</h3>
-                                                <p className="text-sm text-slate-500 line-clamp-2">{memo.content}</p>
+                                                <p className="text-sm text-slate-500 line-clamp-2"><Linkify text={memo.content}/></p>
                                             </div>
                                         </div>
                                     ))}
@@ -1001,7 +1070,7 @@ function App(){
                         <button onClick={()=>setModal(false)} className="p-3 bg-white rounded-full text-slate-500 hover:bg-slate-100 transition-colors shadow-sm"><Icon n="X" s={28}/></button>
                     </div>
                     
-                    <div className="p-6 overflow-y-auto space-y-6">
+                    <div className="p-6 overflow-y-auto space-y-6" onPaste={(e)=>handlePaste(e, false)}>
                         {/* 📅 日期與時間選擇 (跨日移動) */}
                         <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex gap-4">
                             <div className="flex-1">
@@ -1020,15 +1089,28 @@ function App(){
                             )}
                         </div>
 
-                        {/* 標題 */}
-                        <div>
-                             <input type="text" value={editItem.title} onChange={e=>setEditItem({...editItem,title:e.target.value})} className="w-full h-[60px] bg-white border-2 border-slate-200 rounded-2xl px-4 font-bold text-2xl outline-none focus:border-blue-400 transition-colors placeholder:text-slate-300" placeholder={editItem.type==='memo'?"便條標題...":"行程名稱..."}/>
-                        </div>
+                        {/* 標題 (70/30 佔比優化) */}
+                        {editItem.type === 'normal' && (
+                            <div className="flex gap-2 items-end">
+                                <div className="w-[30%] space-y-1">
+                                    <label className="text-xs font-bold text-slate-500 block">時間</label>
+                                     <TimeScroll val={editItem.time} setVal={(v)=>setEditItem({...editItem,time:v})}/>
+                                </div>
+                                <div className="w-[70%] space-y-1">
+                                    <label className="text-xs font-bold text-slate-500 block">標題</label>
+                                    <input type="text" value={editItem.title} onChange={e=>setEditItem({...editItem,title:e.target.value})} className="w-full h-[60px] bg-white border-2 border-slate-200 rounded-2xl px-4 font-bold text-xl outline-none focus:border-blue-400 transition-colors placeholder:text-slate-300" placeholder="行程名稱..."/>
+                                </div>
+                            </div>
+                        )}
+                        
+                        {editItem.type === 'memo' && (
+                             <input type="text" value={editItem.title} onChange={e=>setEditItem({...editItem,title:e.target.value})} className="w-full h-[60px] bg-white border-2 border-yellow-200 rounded-2xl px-4 font-bold text-2xl outline-none focus:border-yellow-400 transition-colors placeholder:text-slate-300" placeholder="便條標題..."/>
+                        )}
 
                         {/* 便條專屬：內容與圖片 */}
                         {editItem.type === 'memo' ? (
                             <>
-                                <textarea value={editItem.note} onChange={e=>setEditItem({...editItem,note:e.target.value})} placeholder="輸入詳細內容..." className="w-full bg-yellow-50 p-4 rounded-2xl text-base border-2 border-yellow-100 outline-none focus:border-yellow-400 h-40"/>
+                                <textarea value={editItem.note} onChange={e=>setEditItem({...editItem,note:e.target.value})} placeholder="輸入詳細內容... (支援直接貼上圖片)" className="w-full bg-yellow-50 p-4 rounded-2xl text-base border-2 border-yellow-100 outline-none focus:border-yellow-400 h-40"/>
                                 
                                 <div>
                                     <div className="text-sm font-bold text-slate-500 mb-2">圖片 (上傳/貼連結)</div>
