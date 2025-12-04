@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>關東新春自駕遊 2026 (V17 筆記流暢版) 🎌</title>
+<title>關東新春自駕遊 2026 (V25 滾動修復版) 🎌</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
@@ -35,7 +35,6 @@
     .note-expand.open { max-height: 500px; opacity: 1; margin-bottom: 12px; }
     .sort-mode-bg { background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 20px 20px; }
     .memo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; }
-    /* 🚫 禁止在排序模式下的縮放動畫，解決飄移問題 */
     .no-scale-anim { transform: none !important; transition: none !important; }
 </style>
 </head>
@@ -139,56 +138,630 @@ const getWeatherTypeFromCode = (code) => {
 };
 const INITIAL_ITINERARY = [
     {id:'day1',date:'12/28',dayOfWeek:'(日)',weather:'sunny',location:'成田 -> 佐野',items:[
-        {id:'1-1',time:'11:25',title:'吉 抵達 (BR108)',category:'transport',expenses:[{id:'1',label:'機票',amount:0,currency:'NT',category:'transport'}],note:'11:25 吉 BR108 NRT T1',mapcode:'',searchKeyword:'',completed:false,steps:500,type:'normal'},
-        {id:'1-1b',time:'12:00',title:'王方 抵達 (BR184)',category:'transport',expenses:[],note:'12:00 王方 BR184 NRT T1',mapcode:'',searchKeyword:'',completed:false,steps:0,type:'normal'},
-        {id:'1-2',time:'13:00',title:'取車 Sakura Rent A Car',category:'transport',expenses:[{id:'1',label:'租車費',amount:25446,currency:'NT',category:'transport'}],note:'Toyota Estima 4WD\n取車點: 成田空港 P1駐車場',mapcode:'137 647 682*14',searchKeyword:'成田空港 P1駐車場',completed:false,steps:200,type:'normal'},
-        {id:'1-3',time:'15:00',title:'佐野拉麵 & 磯山弁財天',category:'sightseeing',expenses:[{id:'1',label:'預估餐費',amount:3000,currency:'JPY',category:'food'}],note:'磯山弁財天、出流原弁天池。風景優美，日本名水百選。',mapcode:'64 695 571*64',searchKeyword:'磯山弁財天',completed:false,steps:2000,type:'normal'},
-        {id:'1-4',time:'18:00',title:'足利花卉公園 (光之花庭)',category:'sightseeing',expenses:[{id:'1',label:'夜間門票',amount:0,currency:'JPY',category:'sightseeing'}],note:'夜間票 15:30~21:30。日本三大燈飾之一。',mapcode:'64 512 293*12',searchKeyword:'あしかがフラワーパーク',completed:false,steps:6000,type:'normal'},
-        {id:'1-5',time:'21:00',title:'ホテル一乃館',category:'accommodation',expenses:[{id:'1',label:'住宿費',amount:13332,currency:'NT',category:'accommodation'}],note:'一間房，有早餐。\n地址：1262 Izuruharacho, Sano, Tochigi 327-0102\n電話：283-25-0228',mapcode:'64 695 540*84',searchKeyword:'ホテル一乃館',completed:false,steps:100,type:'normal'}
+        {id:'d1-01',time:'11:25',title:'吉 抵達 (BR108)',category:'transport',expenses:[{id:'1',label:'機票',amount:0,currency:'NT',category:'transport'}],note:'11:25 吉 BR108 NRT T1',mapcode:'',searchKeyword:'',completed:false,steps:500,type:'normal'},
+        {id:'d1-02',time:'12:00',title:'王方 抵達 (BR184)',category:'transport',expenses:[],note:'12:00 王方 BR184 NRT T1',mapcode:'',searchKeyword:'',completed:false,steps:0,type:'normal'},
+        {
+          "id": "d1-1",
+          "time": "13:00",
+          "title": "成田機場：取車出發",
+          "category": "transport",
+          "note": "座駕：Toyota Estima 4WD (Sakura Rent A Car)\n導航設定：請工作人員設定「電話號碼搜尋」模式。\n目標：直奔佐野 (車程約 1.5 ~ 2 小時)。\n天氣：晴時多雲 (2°C ~ 10°C) ❄️晚上極冷，請備好圍巾暖暖包。",
+          "completed": false,
+          "type": "normal",
+          "expenses": [
+            { "id": "e1", "label": "租車費", "amount": 25446, "currency": "NT", "category": "transport" }
+          ]
+        },
+        {
+          "id": "d1-2",
+          "time": "14:00",
+          "title": "中途休息：羽生 PA (下行)",
+          "category": "food",
+          "note": "地點：Pasar 羽生 (下り) ※注意不要跑到對向的鬼平江戶處。\n任務：\n1. 上廁所 (這裡設施很新又乾淨)。\n2. 買「Mini One」可頌 或 星巴克 (車上解饞用)。\n停留時間：約 20 分鐘。",
+          "completed": false,
+          "type": "normal",
+          "expenses": [
+             { "id": "e1", "label": "點心飲料", "amount": 1500, "currency": "JPY", "category": "food" }
+          ]
+        },
+        {
+          "id": "d1-3",
+          "time": "15:00",
+          "title": "第一站：佐野拉麵 おぐら屋",
+          "category": "food",
+          "searchKeyword": "佐野拉麵 おぐら屋",
+          "mapcode": "",
+          "note": "【首選】Oguraya\n位置：就在飯店隔壁 (佐野北部)。\n電話：0283-25-1128\n攻略：停車場超大。進去直接點「ラーメン (拉麵) + 餃子 (大顆)」。只收現金。\n\n【備案】拉麵 太七 (0283-21-8448)：離飯店15分，推薦「青蔥拉麵」+「烤內臟」。",
+          "expenses": [
+            { "id": "e1", "label": "預估餐費", "amount": 3000, "currency": "JPY", "category": "food" }
+          ],
+          "completed": false,
+          "type": "normal"
+        },
+        {
+          "id": "d1-4",
+          "time": "16:00",
+          "title": "第二站：磯山弁財天",
+          "category": "sightseeing",
+          "searchKeyword": "磯山弁財天",
+          "note": "關鍵：Check-in 前先去逛！(16:30 日落，要趁有光線)。\n停車：直接停飯店停車場，用走的過去。\n必看重點：\n1. 出流原弁天池 (名水百選，水質清澈)。\n2. 風穴 (岩石洞口)。\n3. 白蛇像 (求財)。",
+          "completed": false,
+          "type": "normal"
+        },
+        {
+          "id": "d1-5",
+          "time": "16:40",
+          "title": "飯店 Check-in (一乃館)",
+          "category": "accommodation",
+          "searchKeyword": "ホテル一乃館",
+          "note": "地點：Hotel Ichinokan\n電話：0283-25-0228\n任務：\n1. 辦理入住、放行李。\n2. 確認明早早餐時間 (約 07:30)。\n3. 拿房間的冰桶 (去走廊製冰機裝冰)。",
+          "completed": false,
+          "type": "normal",
+          "expenses": [
+             { "id": "e1", "label": "住宿費", "amount": 13332, "currency": "NT", "category": "accommodation" }
+          ]
+        },
+        {
+          "id": "d1-6",
+          "time": "17:15",
+          "title": "第四站：買酒軍火庫 (YAMAYA)",
+          "category": "shopping",
+          "searchKeyword": "酒のやまや 佐野店",
+          "note": "地點：酒的 YAMAYA 佐野店 (やまや)\n電話：0283-20-4828 (開到 21:00)\n🛒 必買梅酒清單：\n1. 梅乃宿 あらごし梅酒 (果肉系王者，必買！)\n2. 鳳凰美田 熟成秘蔵梅酒 (櫪木限定)\n3. 山崎焙煎樽梅酒\n4. CHOYA 黑糖梅酒\n補給：順便買 2L 大瓶水、無糖綠茶。",
+          "expenses": [
+             { "id": "e2", "label": "酒水採購", "amount": 10000, "currency": "JPY", "category": "shopping" }
+          ],
+          "completed": false,
+          "type": "normal"
+        },
+        {
+          "id": "d1-7",
+          "time": "18:00",
+          "title": "第五站：足利花卉公園 (光之花庭)",
+          "category": "sightseeing",
+          "searchKeyword": "あしかがフラワーパーク",
+          "note": "移動：往西開約 15 分鐘。\n電話：0284-91-4939\n重點：日本三大燈飾，非常壯觀。\n注意：這裡非常冷！空曠風大，請全副武裝 (圍巾/手套)。",
+          "expenses": [
+             { "id": "e3", "label": "夜間門票", "amount": 0, "currency": "JPY", "category": "sightseeing" }
+          ],
+          "completed": false,
+          "type": "normal"
+        },
+        {
+          "id": "d1-8",
+          "time": "20:30",
+          "title": "第六站：消夜補給 (AEON)",
+          "category": "shopping",
+          "searchKeyword": "イオンスタイル佐野新都市",
+          "note": "地點：AEON Style 佐野新都市\n電話：0283-20-5252\n目標區：1F 食品賣場 (開到 23:00)。\n必買清單：\n1. 半額熟食/炸物/壽司。\n2. 櫪木縣產草莓 (Tochiotome)。\n3. 酒類補給。",
+          "completed": false,
+          "type": "normal",
+           "expenses": [
+             { "id": "e1", "label": "超市採購", "amount": 5000, "currency": "JPY", "category": "shopping" }
+          ]
+        },
+        {
+          "id": "d1-9",
+          "time": "21:30",
+          "title": "返回飯店：微醺 Party",
+          "category": "other",
+          "note": "享受滿桌半價熟食 + 鮮甜草莓 + 梅乃宿梅酒。\n⚠️ 駕駛備忘錄：晚餐/消夜若在外面只能喝茶，回房間才能開喝。明天要去茨城買百年梅酒。",
+          "completed": false,
+          "type": "normal"
+        }
     ]},
-    {id:'day2',date:'12/29',dayOfWeek:'(一)',weather:'cloudy',location:'佐野 -> 奧日光',items:[
-        {id:'2-1',time:'10:00',title:'前往日光 (移動)',category:'transport',expenses:[],note:'足利往奧日光，車程約1.5小時。',mapcode:'',searchKeyword:'',completed:false,steps:0,type:'normal'},
-        {id:'2-2',time:'12:00',title:'日光東照宮',category:'sightseeing',expenses:[{id:'1',label:'門票',amount:2600,currency:'JPY',category:'sightseeing'}],note:'世界遺產。',mapcode:'367 312 407*16',searchKeyword:'日光東照宮',completed:false,steps:5000,type:'normal'},
-        {id:'2-3',time:'16:00',title:'Iwaiyado Jyuan (壽庵)',category:'accommodation',expenses:[{id:'1',label:'住宿費',amount:18311,currency:'NT',category:'accommodation'}],note:'日式四人房，有早餐。\n地址：321-2611 櫪木縣, 日光, Kawaji 52\n電話：288-78-1101',mapcode:'367 835 100*67',searchKeyword:'祝い宿 寿庵',completed:false,steps:0,type:'normal'}
-    ]},
-    {id:'day3',date:'12/30',dayOfWeek:'(二)',weather:'snow',location:'奧日光',items:[
-        {id:'3-1',time:'10:00',title:'龍王峽',category:'sightseeing',expenses:[],note:'鬼怒川上游的溪谷美景，冬天雪景別有一番風味。',mapcode:'367 686 704*87',searchKeyword:'龍王峡',completed:false,steps:3000,type:'normal'},
-        {id:'3-2',time:'12:00',title:'午餐：山產/蕎麥麵',category:'food',expenses:[{id:'1',label:'預估餐費',amount:3000,currency:'JPY',category:'food'}],note:'往湯西川溫泉沿途的在地食堂。',mapcode:'',searchKeyword:'湯西川溫泉 ランチ',completed:false,steps:0,type:'normal'},
-        {id:'3-3',time:'14:00',title:'平家之里',category:'sightseeing',expenses:[{id:'1',label:'門票',amount:1020,currency:'JPY',category:'sightseeing'}],note:'復原平家落人村落的茅草屋建築，雪景非常夢幻。',mapcode:'716 161 037*14',searchKeyword:'平家の里',completed:false,steps:2000,type:'normal'},
-        {id:'3-4',time:'16:00',title:'Honke Bankyu (本家伴久)',category:'accommodation',expenses:[{id:'1',label:'住宿費',amount:24134,currency:'NT',category:'accommodation'}],note:'日式四人房，有晚餐、早餐。\n地址：321-2601 櫪木縣, 日光, Yunishikawa 749\n電話：288-98-0011',mapcode:'716 161 037*14',searchKeyword:'本家伴久',completed:false,steps:0,type:'normal'}
-    ]},
-    {id:'day4',date:'12/31',dayOfWeek:'(三)',weather:'sunny',location:'日光 -> 大洗',items:[
-        {id:'4-1',time:'10:00',title:'前往大洗 (移動)',category:'transport',expenses:[],note:'奧日光往大洗，車程較長。',mapcode:'',searchKeyword:'',completed:false,steps:0,type:'normal'},
-        {id:'4-2',time:'13:00',title:'大洗磯前神社',category:'sightseeing',expenses:[],note:'海上鳥居。',mapcode:'239 535 445*58',searchKeyword:'大洗磯前神社',completed:false,steps:2000,type:'normal'},
-        {id:'4-3',time:'15:00',title:'大洗 Seaside Station',category:'shopping',expenses:[],note:'採買跨年晚餐食材。',mapcode:'239 506 461*34',searchKeyword:'大洗シーサイドステーション',completed:false,steps:1500,type:'normal'},
-        {id:'4-4',time:'17:00',title:'Mito House (水戶)',category:'accommodation',expenses:[{id:'1',label:'住宿費',amount:9316,currency:'NT',category:'accommodation'}],note:'包棟，沒早餐。\n地址：1 Chome-2-55 Kanemachi, Mito, Ibaraki 310-0066\n電話：90-5639-7300',mapcode:'47 161 388*03',searchKeyword:'一棟貸しの宿 水戸ハウス',completed:false,steps:0,type:'normal'}
-    ]},
-    {id:'day5',date:'1/1',dayOfWeek:'(四)',weather:'sunny',location:'大洗 -> 筑波',items:[
-        {id:'5-1',time:'10:00',title:'筑波山神社 (初詣)',category:'sightseeing',expenses:[],note:'新年參拜。',mapcode:'123 477 072*85',searchKeyword:'筑波山神社',completed:false,steps:3000,type:'normal'},
-        {id:'5-2',time:'12:00',title:'那珂湊魚市場',category:'food',expenses:[{id:'1',label:'預估餐費',amount:5000,currency:'JPY',category:'food'}],note:'午餐。',mapcode:'47 027 304*48',searchKeyword:'那珂湊おさかな市場',completed:false,steps:1000,type:'normal'},
-        {id:'5-3',time:'15:00',title:'筑波山纜車',category:'sightseeing',expenses:[{id:'1',label:'纜車票',amount:2000,currency:'JPY',category:'sightseeing'}],note:'遠眺關東平原。',mapcode:'',searchKeyword:'筑波山ロープウェイ',completed:false,steps:2000,type:'normal'},
-        {id:'5-4',time:'17:00',title:'Kamenoi Hotel Tsukubasan',category:'accommodation',expenses:[{id:'1',label:'住宿費',amount:23951,currency:'NT',category:'accommodation'}],note:'日式四人房，有晚餐、早餐。\n地址：1050-1 Tsukuba, Ibaraki 300-4352\n電話：29-866-1111',mapcode:'123 477 064*47',searchKeyword:'亀の井ホテル 筑波山',completed:false,steps:0,type:'normal'}
-    ]},
-    {id:'day6',date:'1/2',dayOfWeek:'(五)',weather:'cloudy',location:'筑波 -> 東京',items:[
-        {id:'6-1',time:'09:30',title:'GRANBERRY 草莓採摘',category:'food',expenses:[{id:'1',label:'體驗費',amount:2800,currency:'JPY',category:'food'}],note:'40分鐘吃到飽。\nMapcode: 18 853 864*14',mapcode:'18 853 864*14',searchKeyword:'GRANBERRY 大地',completed:false,steps:500,type:'normal'},
-        {id:'6-2',time:'12:00',title:'牛久大佛',category:'sightseeing',expenses:[{id:'1',label:'門票',amount:800,currency:'JPY',category:'sightseeing'}],note:'世界最大青銅佛像。',mapcode:'65 086 720*25',searchKeyword:'牛久大仏',completed:false,steps:2000,type:'normal'},
-        {id:'6-3',time:'14:00',title:'前往東京 (阿美橫丁)',category:'shopping',expenses:[],note:'上野逛街採買。',mapcode:'',searchKeyword:'アメ横',completed:false,steps:5000,type:'normal'},
-        {id:'6-4',time:'18:00',title:'上野悠悠之家',category:'accommodation',expenses:[{id:'1',label:'住宿費',amount:10115,currency:'NT',category:'accommodation'}],note:'包棟，沒早餐，有廚房。\n地址：2 Chome-4-9 Kitaueno, Taito City, Tokyo 110-0014\n電話：70-8960-5885',mapcode:'769 494*86',searchKeyword:'上野悠悠之家',completed:false,steps:0,type:'normal'}
-    ]},
-    {id:'day7',date:'1/3',dayOfWeek:'(六)',weather:'sunny',location:'東京 -> 回家',items:[
-        {id:'7-1',time:'08:30',title:'前往成田機場',category:'transport',expenses:[],note:'預留塞車時間，早點出發。',mapcode:'',searchKeyword:'',completed:false,steps:0,type:'normal'},
-        {id:'7-2',time:'10:30',title:'機場還車 (P1駐車場)',category:'transport',expenses:[],note:'還車地點：成田空港P1駐車場。',mapcode:'137 647 682*14',searchKeyword:'成田空港 P1駐車場',completed:false,steps:500,type:'normal'},
-        {id:'7-3',time:'12:25',title:'搭機返台 (成田T1)',category:'transport',expenses:[],note:'12:25 吉 BR107 NRT T1\n13:00 王方 BR183 NRT T1',mapcode:'',searchKeyword:'',completed:false,steps:2000,type:'normal'}
-    ]}
+    {
+      "id": "day2",
+      "date": "12/29",
+      "dayOfWeek": "(一)",
+      "weather": "cloudy",
+      "location": "佐野 → 奧日光 → 川治",
+      "steps": 8000,
+      "items": [
+        {
+          "id": "d2-1",
+          "time": "07:30",
+          "title": "早餐 & 退房",
+          "category": "food",
+          "note": "地點：Hotel Ichinokan (日式定食)。\n準備：吃飽後退房。請將厚外套、圍巾拿出來放在車內座位旁，上山馬上要穿。",
+          "completed": false,
+          "type": "normal"
+        },
+        {
+          "id": "d2-2",
+          "time": "09:00",
+          "title": "準時出發 (目標：日光)",
+          "category": "transport",
+          "note": "導航設定：輸入電話 0288-54-0560 (東照宮大駐車場)。\n車程：約 50-60 分鐘 (走高速)。\n⚠️ 關鍵：絕對不要拖到 10:00 才出門，否則排停車場會耗掉 1 小時。",
+          "completed": false,
+          "type": "normal"
+        },
+        {
+          "id": "d2-3",
+          "time": "10:00",
+          "title": "停車策略",
+          "category": "transport",
+          "note": "【首選】日光東照宮 大駐車場 (0288-54-0560)：表參道正下方。若隊伍有在動就排。\n【備案】西参道第1駐車場 (0288-53-0909)：若首選動彈不得，馬上掉頭停這裡 (走路10分鐘上坡)。",
+          "completed": false,
+          "type": "normal",
+          "expenses": [
+             { "id": "e1", "label": "停車費預估", "amount": 1000, "currency": "JPY", "category": "transport" }
+          ]
+        },
+        {
+          "id": "d2-4",
+          "time": "10:15",
+          "title": "景點：日光東照宮",
+          "category": "sightseeing",
+          "searchKeyword": "日光東照宮",
+          "note": "停留時間：約 2 ~ 2.5 小時。\n必看：\n1. 陽明門 (國寶)。\n2. 眠貓 (通往奧宮入口)。\n3. 鳴龍 (藥師堂聽回音，需脫鞋)。\n4. 神廄舍 (三猿)。",
+          "completed": false,
+          "type": "normal",
+          "expenses": [
+             { "id": "e1", "label": "門票", "amount": 2600, "currency": "JPY", "category": "sightseeing" }
+          ]
+        },
+        {
+          "id": "d2-5",
+          "time": "12:45",
+          "title": "午餐：順路外帶 (金谷飯店歷史館)",
+          "category": "food",
+          "searchKeyword": "金谷ホテル歴史館 カテッジイン・レストラン",
+          "note": "位置：國道120號上，經過神橋後約 3-5 分鐘 (右手邊)。\n電話：0288-50-1873\n必買菜單：\n🥇 夢幻豬排三明治 (¥1,200)\n🥈 日光鮭魚咖哩飯 (¥1,500)\n🍞 金谷咖哩麵包\n備案：れんがya (炒麵老店) 0288-54-0733。",
+          "completed": false,
+          "type": "normal",
+          "expenses": [
+             { "id": "e1", "label": "豬排三明治", "amount": 1200, "currency": "JPY", "category": "food" },
+             { "id": "e2", "label": "鮭魚咖哩", "amount": 1500, "currency": "JPY", "category": "food" }
+          ]
+        },
+        {
+          "id": "d2-6",
+          "time": "13:30",
+          "title": "兜風：挑戰「伊いろは坂」",
+          "category": "transport",
+          "note": "路況：單向通行的山路，48 個髮夾彎。\n駕駛注意：容易暈車者請先吃藥。邊開邊享受車上的三明治午餐！",
+          "completed": false,
+          "type": "normal"
+        },
+        {
+          "id": "d2-7",
+          "time": "14:15",
+          "title": "景點：奧日光 (華嚴瀑布)",
+          "category": "sightseeing",
+          "searchKeyword": "華厳の滝",
+          "note": "電話：0288-55-0030 (縣營停車場)。\n必做：\n1. 搭電梯 (570円) 下去觀瀑台看冰瀑。\n2. 中禪寺湖散步。\n⚠️ 撤退死線：16:00 前必須下山。太陽下山後路面易結冰。",
+          "completed": false,
+          "type": "normal",
+          "expenses": [
+             { "id": "e1", "label": "觀瀑電梯", "amount": 570, "currency": "JPY", "category": "sightseeing" }
+          ]
+        },
+        {
+          "id": "d2-8",
+          "time": "17:30",
+          "title": "晚餐：今市炸豬排 (あづま)",
+          "category": "food",
+          "searchKeyword": "とんかつ あづま",
+          "note": "位置：下山往川治的順路途中。\n電話：0288-22-5878\n必點：和豚もちぶた炸豬排定食。\n⚠️ 備案確認：Google Maps 顯示營業中不一定準。若到現場沒開，直接去備案超市。\n備案：Lion D'or 鬼怒川店 (超市) 0288-70-1311。",
+          "completed": false,
+          "type": "normal",
+          "expenses": [
+             { "id": "e1", "label": "預估餐費", "amount": 4000, "currency": "JPY", "category": "food" }
+          ]
+        },
+        {
+          "id": "d2-9",
+          "time": "19:00",
+          "title": "飯店 Check-in (寿庵)",
+          "category": "accommodation",
+          "searchKeyword": "祝い宿 寿庵",
+          "note": "地點：川治溫泉\n電話：0288-78-1101\n⚠️ 重要：因會晚到 (19:00)，請在 **D1 飯店退房時**，請櫃台幫忙打電話給今晚飯店告知會晚到 (19:00)，以免被鎖門。",
+          "completed": false,
+          "type": "normal",
+          "expenses": [
+             { "id": "e1", "label": "住宿費", "amount": 18311, "currency": "NT", "category": "accommodation" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "day3",
+      "date": "12/30",
+      "dayOfWeek": "(二)",
+      "weather": "snow",
+      "location": "奧日光與秘境湯西川",
+      "steps": 8000,
+      "items": [
+        {
+          "id": "d3-1",
+          "time": "10:00",
+          "title": "出發：川治溫泉 寿庵",
+          "category": "transport",
+          "note": "準備：退房，確認車上雪刷位置。",
+          "completed": false,
+          "type": "normal"
+        },
+        {
+          "id": "d3-2",
+          "time": "10:10",
+          "title": "景點：龍王峽",
+          "category": "sightseeing",
+          "searchKeyword": "龍王峡",
+          "mapcode": "367 686 704*87",
+          "note": "導航電話：0288-77-1053 (旬菜蔵)\n停車：免費。\n玩法：走「白龍峽」步道至虹見橋拍照。若步道結冰請勿勉強。\n天氣預警：❄️ 極冷/大雪機率高。",
+          "completed": false,
+          "type": "normal"
+        },
+        {
+          "id": "d3-new-1",
+          "time": "11:15",
+          "title": "【重要】最後補給：7-Eleven 鬼怒川立岩店",
+          "category": "shopping",
+          "searchKeyword": "セブン-イレブン 鬼怒川立岩店",
+          "note": "導航電話：0288-77-2277\n任務：這是進深山前最後一家 24h 超商。必買酒、零食、宵夜、水、暖暖包。\n買完後調頭往北，正式前往湯西川。",
+          "completed": false,
+          "type": "normal"
+        },
+        {
+          "id": "d3-3",
+          "time": "12:10",
+          "title": "午餐：道の駅 湯西川",
+          "category": "food",
+          "searchKeyword": "道の駅 湯西川",
+          "note": "導航電話：0288-78-1222\n🚫🐂 不吃牛攻略：\n1. 鴨肉蒸籠蕎麥麵 (鴨肉是名產)\n2. 水壩咖哩 (點鴨肉或野菜口味)\n3. 鹿肉可樂餅 (野味)\n門口有免費足湯。",
+          "completed": false,
+          "type": "normal",
+          "expenses": [
+            { "id": "1", "label": "預估餐費", "amount": 3000, "currency": "JPY", "category": "food" }
+          ]
+        },
+        {
+          "id": "d3-4",
+          "time": "14:00",
+          "title": "景點：平家之里",
+          "category": "sightseeing",
+          "searchKeyword": "平家の里",
+          "mapcode": "716 161 037*14",
+          "note": "導航電話：0288-98-0126\n營業：~16:30 (最終入場 16:00)\n看點：茅草屋聚落與雪景。內有茶屋可喝熱紅豆湯。",
+          "completed": false,
+          "type": "normal",
+          "expenses": [
+            { "id": "1", "label": "門票", "amount": 1020, "currency": "JPY", "category": "sightseeing" }
+          ]
+        },
+        {
+          "id": "d3-5",
+          "time": "15:10",
+          "title": "飯店 Check-in (本家伴久)",
+          "category": "accommodation",
+          "searchKeyword": "本家伴久",
+          "mapcode": "716 161 037*14",
+          "note": "導航電話：0288-98-0011\n入住 SOP：\n1. 代客泊車。\n2. 確認晚餐 (Check-in 時再次提醒不吃牛：予約時に牛肉NGと伝えました)。\n3. 預約早餐時間 (7:30/8:00/8:30)。\n享受：露天風呂 & 圍爐裏晚餐。",
+          "completed": false,
+          "type": "normal",
+          "expenses": [
+            { "id": "1", "label": "住宿費", "amount": 24134, "currency": "NT", "category": "accommodation" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "day4",
+      "date": "12/31",
+      "dayOfWeek": "(三)",
+      "weather": "sunny",
+      "location": "雪山 → 海濱 (除夕圍爐)",
+      "steps": 6000,
+      "items": [
+        {
+          "id": "d4-1",
+          "time": "10:00",
+          "title": "出發：前往大洗 (移動日)",
+          "category": "transport",
+          "note": "⚠️ 駕駛注意：下山路段 (國道121號) 隧道出口可能有黑冰，勿急煞。\n導航設定：第一站設定「笠間 PA (0296-70-1200)」。",
+          "completed": false,
+          "type": "normal"
+        },
+        {
+          "id": "d4-new-1",
+          "time": "11:45",
+          "title": "休息：笠間 PA (Kasama)",
+          "category": "food",
+          "note": "特色：設施新、廁所乾淨。\n必吃：笠間稻荷壽司 (核桃/舞菇口味，無牛OK)、絲滑地瓜蒙布朗。\n注意：別逛太久，留肚子去大洗吃海鮮。",
+          "completed": false,
+          "type": "normal"
+        },
+        {
+          "id": "d4-2",
+          "time": "13:00",
+          "title": "午餐：大洗海鮮 (二選一)",
+          "category": "food",
+          "searchKeyword": "大洗海鮮市場",
+          "note": "選項 A (快速)：明太公園 (029-219-4101) - 巨無霸飯糰。\n選項 B (豐盛)：大洗海鮮市場 (029-267-0111) - 海鮮丼、濱燒、鮟鱇魚鍋。\n注意：除夕人潮多可能需排隊。",
+          "completed": false,
+          "type": "normal"
+        },
+        {
+          "id": "d4-3",
+          "time": "14:30",
+          "title": "景點：大洗磯前神社",
+          "category": "sightseeing",
+          "searchKeyword": "大洗磯前神社",
+          "mapcode": "239 535 445*58",
+          "note": "導航電話：029-267-2637\n玩法：先參拜本殿，再走下去海邊拍「神磯鳥居」。\n注意：海風極強，請戴帽子圍巾。",
+          "completed": false,
+          "type": "normal"
+        },
+        {
+          "id": "d4-4",
+          "time": "15:40",
+          "title": "買酒：大洗 Seaside Station",
+          "category": "shopping",
+          "searchKeyword": "大洗シーサイドステーション",
+          "mapcode": "239 506 461*34",
+          "note": "導航電話：029-264-9123\n目標：大洗まいわい市場。\n必買：百年梅酒 (明利酒類，藍標或紅標)、地瓜乾 (茨城特產)。\n生鮮去下一站超市買。",
+          "completed": false,
+          "type": "normal"
+        },
+        {
+          "id": "d4-new-2",
+          "time": "16:40",
+          "title": "【戰場】除夕晚餐採買：Kasumi 超市",
+          "category": "shopping",
+          "searchKeyword": "カスミ フードスクエア 水戸西原店",
+          "note": "地點：Kasumi Food Square 水戶西原店 (029-253-4611)。\n必買 (不吃牛)：\n1. 茨城産ローズポーク (Rose Pork) 豬肉片。\n2. 火鍋湯底 (海鮮/雞湯/豆乳，確認無牛油)。\n3. 豪華生魚片、跨年蕎麥麵 (炸蝦)。\n4. 茨城草莓。\n⚠️ 17:00 前入場，以免熟食被搶光。",
+          "completed": false,
+          "type": "normal",
+          "expenses": [
+             { "id": "e-ny", "label": "除夕採購預算", "amount": 5000, "currency": "JPY", "category": "shopping" }
+          ]
+        },
+        {
+          "id": "d4-5",
+          "time": "18:00",
+          "title": "民宿 Check-in (Mito House)",
+          "category": "accommodation",
+          "searchKeyword": "一棟貸しの宿 水戸ハウス",
+          "mapcode": "47 161 388*03",
+          "note": "地址：1 Chome-2-55 Kanemachi, Mito\n晚上：煮火鍋、吃蕎麥麵、喝梅酒、看紅白。",
+          "completed": false,
+          "type": "normal",
+          "expenses": [
+            { "id": "1", "label": "住宿費", "amount": 9316, "currency": "NT", "category": "accommodation" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "day5",
+      "date": "1/1",
+      "dayOfWeek": "(四)",
+      "weather": "sunny",
+      "location": "世界大佛與筑波山迎新",
+      "steps": 10000,
+      "items": [
+        {
+          "id": "d5-1",
+          "time": "10:00",
+          "title": "出發：前往 Outlet",
+          "category": "transport",
+          "note": "策略：避開神社車潮，走內陸舒適路線。\n導航：Ami Premium Outlets (029-829-5770)。\n路徑：上常磐道 (高速)，避開平面。",
+          "completed": false,
+          "type": "normal"
+        },
+        {
+          "id": "d5-2",
+          "time": "11:00",
+          "title": "午餐+逛街：Ami Premium Outlets",
+          "category": "shopping",
+          "searchKeyword": "あみプレミアム・アウトレット",
+          "note": "特色：1/1 初売り，好停車。\n🍽️ 不吃牛午餐：\n1. Kua`Aina (酪梨雞肉三明治/炸魚)。\n2. Chinrai (珍來) - 炒飯、大餃子。\n3. 成田夢牧場霜淇淋。",
+          "completed": false,
+          "type": "normal",
+          "expenses": [
+            { "id": "1", "label": "午餐+購物預算", "amount": 5000, "currency": "JPY", "category": "food" }
+          ]
+        },
+        {
+          "id": "d5-3",
+          "time": "13:40",
+          "title": "景點：牛久大佛",
+          "category": "sightseeing",
+          "searchKeyword": "牛久大仏",
+          "mapcode": "65 086 720*25",
+          "note": "導航電話：029-889-2931 (離 Outlet 5分鐘)。\n攻略：拍外觀就好。若進內部電梯排隊超過 30 分鐘建議放棄，在大佛腳下敲鐘祈福即可。",
+          "completed": false,
+          "type": "normal",
+          "expenses": [
+            { "id": "1", "label": "門票預算", "amount": 2000, "currency": "JPY", "category": "sightseeing" }
+          ]
+        },
+        {
+          "id": "d5-4",
+          "time": "15:30",
+          "title": "飯店 Check-in (龜之井 筑波山)",
+          "category": "accommodation",
+          "searchKeyword": "亀の井ホテル 筑波山",
+          "mapcode": "123 477 064*47",
+          "note": "導航電話：029-866-1111\n避塞車：若遇神社車潮，出示訂房畫面給交管看「Hotel Check-in」可優先通過。\n享受：趁天亮去泡無邊際露天溫泉看夕陽。",
+          "completed": false,
+          "type": "normal",
+          "expenses": [
+            { "id": "1", "label": "住宿費", "amount": 23951, "currency": "NT", "category": "accommodation" }
+          ]
+        },
+        {
+          "id": "d5-5",
+          "time": "16:30",
+          "title": "散步：筑波山神社 (初詣)",
+          "category": "sightseeing",
+          "searchKeyword": "筑波山神社",
+          "mapcode": "123 477 072*85",
+          "note": "交通：從飯店走路 5-10 分鐘。\n特色：傍晚燈籠亮起氣氛佳，避開白天人潮。參拜後可買屋台小吃。",
+          "completed": false,
+          "type": "normal"
+        },
+        {
+          "id": "d5-6",
+          "time": "18:00",
+          "title": "晚餐：飯店自助餐",
+          "category": "food",
+          "note": "攻略：專攻生魚片、天婦羅、茨城豬肉料理。注意咖哩通常含牛。",
+          "completed": false,
+          "type": "normal"
+        }
+      ]
+    },
+    {
+      "id": "day6",
+      "date": "1/2",
+      "dayOfWeek": "(五)",
+      "weather": "cloudy",
+      "location": "茨城草莓 → 東京阿美橫丁",
+      "steps": 12000,
+      "items": [
+        {
+          "id": "d6-1",
+          "time": "10:00",
+          "title": "出發：前往草莓園",
+          "category": "transport",
+          "note": "導航設定：GRANBERRY (0297-44-6615)。\n路況：往常總市方向，路好走。",
+          "completed": false,
+          "type": "normal"
+        },
+        {
+          "id": "d6-2",
+          "time": "11:00",
+          "title": "體驗：GRANBERRY 草莓吃到飽",
+          "category": "food",
+          "searchKeyword": "GRANBERRY 大地",
+          "mapcode": "18 853 864*14",
+          "note": "特色：高架栽培不髒鞋，40分鐘吃到飽。\n⚠️ 重要：強烈建議預約。若客滿，備案是去下一站 Pasar 守谷買草莓。",
+          "completed": false,
+          "type": "normal",
+          "expenses": [
+            { "id": "1", "label": "體驗費", "amount": 2800, "currency": "JPY", "category": "food" }
+          ]
+        },
+        {
+          "id": "d6-new-1",
+          "time": "12:30",
+          "title": "午餐：Pasar 守谷 (上行)",
+          "category": "food",
+          "note": "位置：常磐道往東京方向休息站。\n不吃牛推薦：大洗志むら(海鮮丼)、鶏三和(親子丼)。",
+          "completed": false,
+          "type": "normal"
+        },
+        {
+          "id": "d6-new-2",
+          "time": "15:30",
+          "title": "抵達東京：民宿下行李 & 停車",
+          "category": "transport",
+          "note": "地址：2 Chome-4-9 Kitaueno, Taito City (上野悠悠之家)。\n🅿️ 停車攻略：先下行李。務必找看板寫「入庫後24時間 最大料金」的停車場 (約 ¥2500~3500)。停好後改搭電車。",
+          "completed": false,
+          "type": "normal"
+        },
+        {
+          "id": "d6-3",
+          "time": "16:30",
+          "title": "逛街：上野阿美橫丁",
+          "category": "shopping",
+          "searchKeyword": "アメ横",
+          "note": "氣氛：新年首賣 (初売り) 非常熱鬧。\n必逛：二木的菓子 (伴手禮)、多慶屋 (紫色大樓)、藥妝店。",
+          "completed": false,
+          "type": "normal"
+        },
+        {
+          "id": "d6-new-3",
+          "time": "19:00",
+          "title": "晚餐：上野炸豬排 (不吃牛首選)",
+          "category": "food",
+          "searchKeyword": "蓬莱屋",
+          "note": "推薦 1：蓬萊屋 (松坂屋後) - 必點腰內肉 (Hire-katsu)。\n推薦 2：井泉 本店 (湯島站) - 筷子能切斷的豬排。",
+          "completed": false,
+          "type": "normal",
+          "expenses": [
+             { "id": "e1", "label": "預估餐費", "amount": 3000, "currency": "JPY", "category": "food" }
+          ]
+        },
+        {
+          "id": "d6-4",
+          "time": "20:30",
+          "title": "民宿休息 (上野悠悠之家)",
+          "category": "accommodation",
+          "searchKeyword": "上野悠悠之家",
+          "mapcode": "769 494*86",
+          "note": "整理戰利品，準備明天回國。",
+          "completed": false,
+          "type": "normal",
+          "expenses": [
+            { "id": "1", "label": "住宿費", "amount": 10115, "currency": "NT", "category": "accommodation" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "day7",
+      "date": "1/3",
+      "dayOfWeek": "(六)",
+      "weather": "sunny",
+      "location": "東京 → 回家",
+      "steps": 5000,
+      "items": [
+        {
+          "id": "d7-1",
+          "time": "08:00",
+          "title": "出發：前往成田機場",
+          "category": "transport",
+          "note": "⚠️ 提早出發：避開首都高/機場塞車。最後一天請預留充裕時間。",
+          "completed": false,
+          "type": "normal"
+        },
+        {
+          "id": "d7-2",
+          "time": "10:00",
+          "title": "機場還車 (P1駐車場)",
+          "category": "transport",
+          "note": "還車地點：成田空港P1駐車場 (Sakura Rent A Car)。\n動作：滿油還車、檢查車況。",
+          "mapcode": "137 647 682*14",
+          "completed": false,
+          "type": "normal"
+        },
+        {
+          "id": "d7-etc",
+          "time": "10:10",
+          "title": "【結算】ETC 與 加油",
+          "category": "transport",
+          "note": "請在此處記錄這七天的過路費與最後加油金額。",
+          "completed": false,
+          "type": "normal",
+          "expenses": [
+             { "id": "etc", "label": "ETC總過路費", "amount": 15000, "currency": "JPY", "category": "transport" },
+             { "id": "gas", "label": "加油費", "amount": 5000, "currency": "JPY", "category": "transport" }
+          ]
+        },
+        {
+          "id": "d7-3",
+          "time": "12:25",
+          "title": "搭機返台 (成田T1)",
+          "category": "transport",
+          "note": "12:25 吉 BR107 NRT T1\n13:00 王方 BR183 NRT T1\n一路順風！✈️",
+          "completed": false,
+          "type": "normal"
+        }
+      ]
+    }
 ];
 function App(){
     const [data,setData]=useState(()=>{
-        const saved=localStorage.getItem('kanto_v2026_final_plus_v17'); // Update version
+        const saved=localStorage.getItem('kanto_v2026_final_plus_v25');
         if(saved) { try { return JSON.parse(saved); } catch(e){} }
         return INITIAL_ITINERARY;
     });
+    // Independent Memos State
     const [memos, setMemos] = useState(()=>{
-        const saved = localStorage.getItem('kanto_v2026_memos_v17'); // Update version
+        const saved = localStorage.getItem('kanto_v2026_memos_v25');
         if (!saved) return [];
         try {
             const parsed = JSON.parse(saved);
@@ -217,6 +790,8 @@ function App(){
     const [viewImgIdx, setViewImgIdx] = useState(null); 
     const [showLargeInput, setShowLargeInput] = useState(false);
     
+    // 🆕 SCROLL REF FIX
+    const scrollRef = useRef(null);
     const fileRef=useRef(null);
     const stepRef=useRef(null);
     const imgInputRef=useRef(null);
@@ -227,8 +802,8 @@ function App(){
     const memoSortableInstance = useRef(null); 
     const longPressTimer = useRef(null);
 
-    useEffect(()=>{localStorage.setItem('kanto_v2026_final_plus_v17',JSON.stringify(data))},[data]);
-    useEffect(()=>{localStorage.setItem('kanto_v2026_memos_v17',JSON.stringify(memos))}, [memos]);
+    useEffect(()=>{localStorage.setItem('kanto_v2026_final_plus_v25',JSON.stringify(data))},[data]);
+    useEffect(()=>{localStorage.setItem('kanto_v2026_memos_v25',JSON.stringify(memos))}, [memos]);
 
     useEffect(()=>{
         if(stepModal) {
@@ -236,9 +811,11 @@ function App(){
             setSaveBtnText('儲存紀錄');
         }
     },[stepModal]);
+    // 重置大輸入框狀態
     useEffect(() => {
         if(viewImgIdx === null) setShowLargeInput(false);
     }, [viewImgIdx]);
+    // 📡 Fetch Real-time Weather from Open-Meteo
     useEffect(() => {
         const fetchWeather = async () => {
             const coord = LOCATIONS_COORD.find(c => c.id === data[idx].id);
@@ -260,10 +837,11 @@ function App(){
         fetchWeather();
     }, [idx]);
     
+    // SortableJS Init for Itinerary
     useEffect(() => {
         if (sort && sortableRef.current) {
             sortableInstance.current = new Sortable(sortableRef.current, {
-                animation: 150,
+                animation: 150, // Smoother animation
                 handle: ".drag-handle",
                 delay: 0, 
                 ghostClass: "opacity-50",
@@ -289,10 +867,11 @@ function App(){
         }
     }, [sort, idx]);
 
+    // SortableJS Init for Memos (Refined)
     useEffect(() => {
         if (memoSort && memoSortableRef.current) {
             memoSortableInstance.current = new Sortable(memoSortableRef.current, {
-                animation: 150,
+                animation: 150, // Smoother animation
                 handle: ".drag-handle-memo",
                 delay: 100, 
                 touchStartThreshold: 5,
@@ -317,6 +896,7 @@ function App(){
         }
     }, [memoSort]);
 
+    // 長按觸發排序 (Itinerary)
     const startLongPress = useCallback(() => {
         if (sort) return;
         longPressTimer.current = setTimeout(() => {
@@ -327,6 +907,7 @@ function App(){
         }, 800);
     }, [sort, data]);
 
+    // 長按觸發排序 (Memo)
     const startMemoLongPress = useCallback(() => {
         if (memoSort) return;
         longPressTimer.current = setTimeout(() => {
@@ -370,6 +951,7 @@ function App(){
             if(!expensesByCategory[cat]) expensesByCategory[cat] = { nt:0, jpy:0, label:CATS[cat]?.l || '其他', color:CATS[cat]?.c || 'bg-gray-100 text-gray-600' };
             if(ex.currency === 'NT') expensesByCategory[cat].nt += amount;
             else expensesByCategory[cat].jpy += amount;
+            // 🆕 Added dayId and itemId for click-to-edit
             allExpenses.push({date: d.date, time: i.time, title: i.title, label: ex.label, amount: amount, currency: ex.currency, category: cat, dayId: d.id, itemId: i.id});
         });
     }));
@@ -397,6 +979,10 @@ function App(){
         setTimeout(() => setSaveBtnText('儲存紀錄'), 1500);
     };
 
+    const toggleWeather = (e) => {
+        e.stopPropagation();
+        // Weather toggle removed for simplicity with live weather
+    };
     const exportData=()=>{
         const backup = { itinerary: data, memos: memos };
         const a=document.createElement('a');
@@ -404,6 +990,7 @@ function App(){
         a.download='行程與筆記備份.json';a.click()
     };
     
+    // Import Data Fix: Compatibility for old object-based memos
     const importData=(e)=>{
         const r=new FileReader();
         r.onload=(ev)=>{
@@ -412,6 +999,7 @@ function App(){
                 if(d.itinerary){
                     setData(d.itinerary);
                     if (d.memos) {
+                        // Check if memos is array, if not convert object to array
                         setMemos(Array.isArray(d.memos) ? d.memos : Object.values(d.memos));
                     } else {
                         setMemos([]);
@@ -429,6 +1017,8 @@ function App(){
     const calcDur=(s,e)=>{if(!s||!e)return null;const [sh,sm]=s.split(':').map(Number);const [eh,em]=e.split(':').map(Number);const diff=(eh*60+em)-(sh*60+sm);if(diff<0)return{t:'重疊',bad:true};const h=Math.floor(diff/60),m=diff%60;if(h===0&&m===0)return{t:'無空檔',bad:false};return{t:(h>0?h+'時':'')+(m>0?m+'分':''),bad:false}};
     const gMap=(i)=>`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(i.searchKeyword?.trim()||`${i.title} 日本`)}`;
     const getWeatherUrl = () => { const zip = WEATHER_LOCATIONS[day.id] || '282-0004'; return `https://tenki.jp/search/?keyword=${encodeURIComponent(zip)}`; };
+    
+    // 🚦 ROUTE LINK FIX: Filter out items with type 'memo'
     const getDailyRouteUrl = (items) => {
         const validItems = items.filter(i => i.type !== 'memo');
         return `https://www.google.com/maps/dir/${validItems.map(item => encodeURIComponent(item.searchKeyword?.trim() || item.title)).join('/')}`;
@@ -438,6 +1028,7 @@ function App(){
     const toggleNote=(id)=>{const newSet = new Set(expandedNotes);
     if(newSet.has(id)) newSet.delete(id); else newSet.add(id); setExpandedNotes(newSet);};
 
+    // 🆕 Ledger Click Handler
     const handleLedgerClick = (dayId, itemId) => {
         const d = data.find(day => day.id === dayId);
         if (d) {
@@ -451,6 +1042,7 @@ function App(){
     };
 
     const saveItem=()=>{
+        // 🟢 V15 FIX: Allow completely blank Memos (Both Title and Note can be empty if Image exists)
         if (editItem.type === 'memo') {
              if (!editItem.title) {
                  const dateStr = new Date().toLocaleString('zh-TW', { hour12: false, month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -459,10 +1051,12 @@ function App(){
                  } else if (editItem.images && editItem.images.length > 0) {
                      editItem.title = "圖片便條";
                  } else {
-                     editItem.title = "隨手便條"; 
+                     // Completely blank save
+                     editItem.title = `隨手便條 ${dateStr}`; 
                  }
              }
         } else {
+            // Normal items (sightseeing, food etc) still need title for Google Maps
             if(!editItem.title) return alert('請輸入行程標題');
         }
         
@@ -472,33 +1066,46 @@ function App(){
         }
 
         const newData=[...data];
+        
+        // 1. Check if moving to a different day
         const isMovingDay = editItem.originalDayId && editItem.originalDayId !== editItem.dayId;
+
         if (isMovingDay) {
+            // Remove from source
             const sourceDay = newData.find(d => d.id === editItem.originalDayId);
             if (sourceDay) sourceDay.items = sourceDay.items.filter(x => x.id !== editItem.id);
+            // Add to target (append to end)
             const targetDay = newData.find(d => d.id === editItem.dayId);
             if (targetDay) targetDay.items.push(editItem);
         } else {
+            // Same Day: Update strictly in place
             const targetDay = newData.find(d => d.id === editItem.dayId);
             if (targetDay) {
                 const existingIdx = targetDay.items.findIndex(x => x.id === editItem.id);
                 if (existingIdx > -1) {
-                    targetDay.items[existingIdx] = editItem; 
+                    targetDay.items[existingIdx] = editItem; // Update in place
                 } else {
-                    targetDay.items.push(editItem); 
+                    targetDay.items.push(editItem); // New item, append
                 }
             }
         }
+
         setData(newData);
         setModal(false);
     };
     
+    // Memo Logic
     const saveMemo = () => {
+        // Auto-generate title if empty but content/image exists
         let itemToSave = { ...editMemoItem };
+        
+        // 🆕 Relaxed Validation: Allow saving even if title/content is empty (Pure Photo or Empty Note)
         if (!itemToSave.title.trim()) {
             const dateStr = new Date().toLocaleString('zh-TW', { hour12: false, month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            // Use content preview or just date
             itemToSave.title = itemToSave.content.trim() ? (itemToSave.content.substring(0, 10) + (itemToSave.content.length > 10 ? "..." : "")) : `筆記 ${dateStr}`;
         }
+
         setMemos(prev => {
             const idx = prev.findIndex(m => m.id === itemToSave.id);
             if (idx > -1) {
@@ -509,9 +1116,9 @@ function App(){
                 return [...prev, itemToSave];
             }
         });
-        setEditMemoItem(null); // Return to list, keep modal open
+        // 🆕 UX Fix: Don't close notebook modal, just go back to list
+        setEditMemoItem(null);
     };
-
     const deleteMemo = (id) => {
         if(confirm('刪除此筆記?')){
             setMemos(prev => prev.filter(m => m.id !== id));
@@ -532,6 +1139,7 @@ function App(){
     const updateExpense=(idx, field, val)=>{const newExps=[...editItem.expenses];newExps[idx][field]=val;setEditItem({...editItem, expenses:newExps})};
     const removeExpense=(idx)=>{const newExps=editItem.expenses.filter((_,i)=>i!==idx);setEditItem({...editItem, expenses:newExps})};
     
+    // Image Handling Logic (Integrated from Memo)
     const handleImageUpload = (e, isMemo = false) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -673,7 +1281,7 @@ function App(){
                     </div>
                     
                     <div className={`flex gap-1 hide-scrollbar py-4 px-2 overflow-x-auto mt-1 scroll-smooth-mobile ${sort?'opacity-30 pointer-events-none':''}`}>
-                        {data.map((d,i)=>(<button key={d.id} onClick={()=>{setIdx(i);setSort(false)}} className={`flex-shrink-0 rounded-full transition-all shadow-none tap-transparent sakura-btn-container ${idx===i?'sakura-active':''}`}>
+                        {data.map((d,i)=>(<button key={d.id} onClick={()=>{setIdx(i);setSort(false); scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });}} className={`flex-shrink-0 rounded-full transition-all shadow-none tap-transparent sakura-btn-container ${idx===i?'sakura-active':''}`}>
                             {idx===i ? (<div className="sakura-icon-active text-rose-200"><Icon n="Sakura" s={54} c="w-full h-full"/></div>) : (<div className="sakura-icon-inactive text-white"><Icon n="Sakura" s={46} c="w-full h-full"/></div>)}
                             <span className={idx===i ? 'sakura-text-active' : 'sakura-text-inactive'}>D{i+1}</span>
                         </button>))}
@@ -681,7 +1289,7 @@ function App(){
                 </div>
             </div>
 
-            <div className={`flex-1 overflow-y-auto relative scroll-smooth-mobile -mt-2 pt-4`}>
+            <div ref={scrollRef} className={`flex-1 overflow-y-auto relative scroll-smooth-mobile -mt-2 pt-4`}>
                 <div className="py-2 pb-32 space-y-6">
                     {!sort && liveWeather && (getWeatherTypeFromCode(liveWeather.code) === 'snow' || getWeatherTypeFromCode(liveWeather.code) === 'rain') && (
                         <div className={`mx-4 border-2 rounded-3xl p-3 shadow-sm flex items-center gap-3 mb-4 animate-fade-in ${getWeatherTypeFromCode(liveWeather.code) === 'snow' ? 'bg-gradient-to-r from-cyan-50 to-blue-50 border-cyan-200' : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'}`}>
@@ -905,7 +1513,7 @@ function App(){
                                 </div>
                             </div>
                         </div>
-                        <div className="text-[10px] text-slate-300 mt-2 text-center">App Version: 17.0</div>
+                        <div className="text-[10px] text-slate-300 mt-2 text-center">App Version: 25.0 (Scroll Fixed)</div>
                     </div>
                 )}
             </div>
