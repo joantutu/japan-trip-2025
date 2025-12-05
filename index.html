@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>關東新春自駕遊 2026 (V25 滾動修復版) 🎌</title>
+<title>關東新春自駕遊 2026 (V39 步數修復版) 🎌</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 <style>
     body{touch-action:manipulation;background-color:#fff7ed;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none;-webkit-user-select:none;user-select:none;}
     input,textarea{-webkit-user-select:auto;user-select:auto;font-size:16px!important}
@@ -17,7 +17,10 @@
     .pb-safe{padding-bottom:env(safe-area-inset-bottom,24px)}.pt-safe{padding-top:env(safe-area-inset-top,0px)}
     .card-shadow{box-shadow:0 2px 10px -1px rgba(0,0,0,0.05)}
     .font-rounded{font-weight:800;letter-spacing:0.03em;}
-    .drag-handle{cursor:grab;touch-action:none;padding:10px}.drag-handle:active{cursor:grabbing}
+    .drag-handle, .drag-handle-memo { cursor: grab; touch-action: none !important; user-select: none; -webkit-user-select: none; }
+    .drag-handle:active, .drag-handle-memo:active { cursor: grabbing; }
+    .sortable-ghost { opacity: 0.4; background-color: #fef9c3; border: 2px dashed #fcd34d; }
+    .sortable-drag { opacity: 1; background: white; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); transform: scale(1.02); z-index: 100; }
     .weather-spin { animation: spin-slow 10s linear infinite; }
     .weather-float { animation: float 3s ease-in-out infinite; }
     .weather-pulse { animation: pulse-soft 2s infinite; }
@@ -42,7 +45,6 @@
 <div id="root"></div>
 <script type="text/babel">
 const {useState,useEffect,useRef,useCallback}=React;
-// 🎨 圖示集
 const Icons={
     MapPin:<g><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="10" r="3"/></g>,
     Plus:<path d="M12 5v14M5 12h14" strokeLinecap="round" strokeLinejoin="round"/>,
@@ -116,8 +118,6 @@ const LOCATIONS_COORD = [
     { id: 'day7', lat: 35.7767, lng: 140.3188 }  
 ];
 const fmtMoney=(v)=>v.toString().replace(/\B(?=(\d{3})+(?!\d))/g,",");
-
-// Helper to auto-linkify text
 const Linkify = ({ text }) => {
     if (!text) return null;
     const parts = text.split(/(https?:\/\/[^\s]+)/g);
@@ -128,7 +128,6 @@ const Linkify = ({ text }) => {
         return part;
     });
 };
-
 const getWeatherTypeFromCode = (code) => {
     if (code === undefined || code === null) return 'sunny';
     if (code <= 1) return 'sunny'; 
@@ -137,7 +136,7 @@ const getWeatherTypeFromCode = (code) => {
     return 'rain'; 
 };
 const INITIAL_ITINERARY = [
-    {id:'day1',date:'12/28',dayOfWeek:'(日)',weather:'sunny',location:'成田 -> 佐野',items:[
+    {id:'day1',date:'12/28',dayOfWeek:'(日)',weather:'sunny',location:'成田 -> 佐野',steps:0,items:[
         {id:'d1-01',time:'11:25',title:'吉 抵達 (BR108)',category:'transport',expenses:[{id:'1',label:'機票',amount:0,currency:'NT',category:'transport'}],note:'11:25 吉 BR108 NRT T1',mapcode:'',searchKeyword:'',completed:false,steps:500,type:'normal'},
         {id:'d1-02',time:'12:00',title:'王方 抵達 (BR184)',category:'transport',expenses:[],note:'12:00 王方 BR184 NRT T1',mapcode:'',searchKeyword:'',completed:false,steps:0,type:'normal'},
         {
@@ -145,12 +144,13 @@ const INITIAL_ITINERARY = [
           "time": "13:00",
           "title": "成田機場：取車出發",
           "category": "transport",
-          "note": "座駕：Toyota Estima 4WD (Sakura Rent A Car)\n導航設定：請工作人員設定「電話號碼搜尋」模式。\n目標：直奔佐野 (車程約 1.5 ~ 2 小時)。\n天氣：晴時多雲 (2°C ~ 10°C) ❄️晚上極冷，請備好圍巾暖暖包。",
+          "note": "座駕：Toyota Estima 4WD (Sakura Rent A Car)\n🚙 備註：已預約雪胎 (Snow Tires)\n導航設定：請工作人員設定「電話號碼搜尋」模式。\n目標：直奔佐野 (車程約 1.5 ~ 2 小時)。",
           "completed": false,
           "type": "normal",
           "expenses": [
             { "id": "e1", "label": "租車費", "amount": 25446, "currency": "NT", "category": "transport" }
-          ]
+          ],
+          "steps": 2000
         },
         {
           "id": "d1-2",
@@ -162,7 +162,8 @@ const INITIAL_ITINERARY = [
           "type": "normal",
           "expenses": [
              { "id": "e1", "label": "點心飲料", "amount": 1500, "currency": "JPY", "category": "food" }
-          ]
+          ],
+          "steps": 500
         },
         {
           "id": "d1-3",
@@ -176,7 +177,8 @@ const INITIAL_ITINERARY = [
             { "id": "e1", "label": "預估餐費", "amount": 3000, "currency": "JPY", "category": "food" }
           ],
           "completed": false,
-          "type": "normal"
+          "type": "normal",
+          "steps": 200
         },
         {
           "id": "d1-4",
@@ -184,9 +186,11 @@ const INITIAL_ITINERARY = [
           "title": "第二站：磯山弁財天",
           "category": "sightseeing",
           "searchKeyword": "磯山弁財天",
-          "note": "關鍵：Check-in 前先去逛！(16:30 日落，要趁有光線)。\n停車：直接停飯店停車場，用走的過去。\n必看重點：\n1. 出流原弁天池 (名水百選，水質清澈)。\n2. 風穴 (岩石洞口)。\n3. 白蛇像 (求財)。",
+          "mapcode": "64 695 571*64",
+          "note": "Mapcode: 64 695 571*64\n關鍵：Check-in 前先去逛！(16:30 日落，要趁有光線)。\n停車：直接停飯店停車場，用走的過去。\n必看重點：\n1. 出流原弁天池 (名水百選，水質清澈)。\n2. 風穴 (岩石洞口)。\n3. 白蛇像 (求財)。",
           "completed": false,
-          "type": "normal"
+          "type": "normal",
+          "steps": 1500
         },
         {
           "id": "d1-5",
@@ -194,12 +198,14 @@ const INITIAL_ITINERARY = [
           "title": "飯店 Check-in (一乃館)",
           "category": "accommodation",
           "searchKeyword": "ホテル一乃館",
-          "note": "地點：Hotel Ichinokan\n電話：0283-25-0228\n任務：\n1. 辦理入住、放行李。\n2. 確認明早早餐時間 (約 07:30)。\n3. 拿房間的冰桶 (去走廊製冰機裝冰)。",
+          "mapcode": "64 695 540*84",
+          "note": "🛏️ 房型：一間房，有早餐\n📍 地址：1262 Izuruharacho, Sano, Tochigi 327-0102\n電話：0283-25-0228\nMapcode: 64 695 540*84\n任務：\n1. 辦理入住、放行李。\n2. 確認明早早餐時間 (約 07:30)。\n3. 拿房間的冰桶 (去走廊製冰機裝冰)。",
           "completed": false,
           "type": "normal",
           "expenses": [
              { "id": "e1", "label": "住宿費", "amount": 13332, "currency": "NT", "category": "accommodation" }
-          ]
+          ],
+          "steps": 500
         },
         {
           "id": "d1-6",
@@ -212,7 +218,8 @@ const INITIAL_ITINERARY = [
              { "id": "e2", "label": "酒水採購", "amount": 10000, "currency": "JPY", "category": "shopping" }
           ],
           "completed": false,
-          "type": "normal"
+          "type": "normal",
+          "steps": 800
         },
         {
           "id": "d1-7",
@@ -220,12 +227,14 @@ const INITIAL_ITINERARY = [
           "title": "第五站：足利花卉公園 (光之花庭)",
           "category": "sightseeing",
           "searchKeyword": "あしかがフラワーパーク",
-          "note": "移動：往西開約 15 分鐘。\n電話：0284-91-4939\n重點：日本三大燈飾，非常壯觀。\n注意：這裡非常冷！空曠風大，請全副武裝 (圍巾/手套)。",
+          "mapcode": "64 512 293*12",
+          "note": "Mapcode: 64 512 293*12\n移動：往西開約 15 分鐘。\n電話：0284-91-4939\n重點：日本三大燈飾，非常壯觀。\n注意：這裡非常冷！空曠風大，請全副武裝 (圍巾/手套)。",
           "expenses": [
              { "id": "e3", "label": "夜間門票", "amount": 0, "currency": "JPY", "category": "sightseeing" }
           ],
           "completed": false,
-          "type": "normal"
+          "type": "normal",
+          "steps": 4000
         },
         {
           "id": "d1-8",
@@ -238,14 +247,15 @@ const INITIAL_ITINERARY = [
           "type": "normal",
            "expenses": [
              { "id": "e1", "label": "超市採購", "amount": 5000, "currency": "JPY", "category": "shopping" }
-          ]
+          ],
+          "steps": 1500
         },
         {
           "id": "d1-9",
           "time": "21:30",
           "title": "返回飯店：微醺 Party",
           "category": "other",
-          "note": "享受滿桌半價熟食 + 鮮甜草莓 + 梅乃宿梅酒。\n⚠️ 駕駛備忘錄：晚餐/消夜若在外面只能喝茶，回房間才能開喝。明天要去茨城買百年梅酒。",
+          "note": "享受滿桌半價熟食 + 鮮甜草莓 + 梅乃宿梅酒。\n⚠️ D4 才要去茨城買百年梅酒，今晚先喝便利商店的。",
           "completed": false,
           "type": "normal"
         }
@@ -256,7 +266,7 @@ const INITIAL_ITINERARY = [
       "dayOfWeek": "(一)",
       "weather": "cloudy",
       "location": "佐野 → 奧日光 → 川治",
-      "steps": 8000,
+      "steps": 0,
       "items": [
         {
           "id": "d2-1",
@@ -286,7 +296,8 @@ const INITIAL_ITINERARY = [
           "type": "normal",
           "expenses": [
              { "id": "e1", "label": "停車費預估", "amount": 1000, "currency": "JPY", "category": "transport" }
-          ]
+          ],
+          "steps": 500
         },
         {
           "id": "d2-4",
@@ -299,7 +310,8 @@ const INITIAL_ITINERARY = [
           "type": "normal",
           "expenses": [
              { "id": "e1", "label": "門票", "amount": 2600, "currency": "JPY", "category": "sightseeing" }
-          ]
+          ],
+          "steps": 6000
         },
         {
           "id": "d2-5",
@@ -335,7 +347,8 @@ const INITIAL_ITINERARY = [
           "type": "normal",
           "expenses": [
              { "id": "e1", "label": "觀瀑電梯", "amount": 570, "currency": "JPY", "category": "sightseeing" }
-          ]
+          ],
+          "steps": 2500
         },
         {
           "id": "d2-8",
@@ -356,7 +369,8 @@ const INITIAL_ITINERARY = [
           "title": "飯店 Check-in (寿庵)",
           "category": "accommodation",
           "searchKeyword": "祝い宿 寿庵",
-          "note": "地點：川治溫泉\n電話：0288-78-1101\n⚠️ 重要：因會晚到 (19:00)，請在 **D1 飯店退房時**，請櫃台幫忙打電話給今晚飯店告知會晚到 (19:00)，以免被鎖門。",
+          "mapcode": "367 835 100*67",
+          "note": "🛏️ 房型：日式四人房，有早餐\n📍 地址：Kawaji 52, Nikko, Tochigi 321-2611\n電話：0288-78-1101\nMapcode: 367 835 100*67\n⚠️ 重要：因會晚到 (19:00)，請在 **D1 飯店退房時**，請櫃台幫忙打電話給今晚飯店告知會晚到 (19:00)，以免被鎖門。",
           "completed": false,
           "type": "normal",
           "expenses": [
@@ -371,7 +385,7 @@ const INITIAL_ITINERARY = [
       "dayOfWeek": "(二)",
       "weather": "snow",
       "location": "奧日光與秘境湯西川",
-      "steps": 8000,
+      "steps": 0,
       "items": [
         {
           "id": "d3-1",
@@ -389,9 +403,10 @@ const INITIAL_ITINERARY = [
           "category": "sightseeing",
           "searchKeyword": "龍王峡",
           "mapcode": "367 686 704*87",
-          "note": "導航電話：0288-77-1053 (旬菜蔵)\n停車：免費。\n玩法：走「白龍峽」步道至虹見橋拍照。若步道結冰請勿勉強。\n天氣預警：❄️ 極冷/大雪機率高。",
+          "note": "導航電話：0288-77-1053 (旬菜蔵)\nMapcode: 367 686 704*87\n停車：免費。\n玩法：走「白龍峽」步道至虹見橋拍照。若步道結冰請勿勉強。\n天氣預警：❄️ 極冷/大雪機率高。",
           "completed": false,
-          "type": "normal"
+          "type": "normal",
+          "steps": 3000
         },
         {
           "id": "d3-new-1",
@@ -401,7 +416,8 @@ const INITIAL_ITINERARY = [
           "searchKeyword": "セブン-イレブン 鬼怒川立岩店",
           "note": "導航電話：0288-77-2277\n任務：這是進深山前最後一家 24h 超商。必買酒、零食、宵夜、水、暖暖包。\n買完後調頭往北，正式前往湯西川。",
           "completed": false,
-          "type": "normal"
+          "type": "normal",
+          "steps": 500
         },
         {
           "id": "d3-3",
@@ -428,7 +444,8 @@ const INITIAL_ITINERARY = [
           "type": "normal",
           "expenses": [
             { "id": "1", "label": "門票", "amount": 1020, "currency": "JPY", "category": "sightseeing" }
-          ]
+          ],
+          "steps": 2500
         },
         {
           "id": "d3-5",
@@ -437,7 +454,7 @@ const INITIAL_ITINERARY = [
           "category": "accommodation",
           "searchKeyword": "本家伴久",
           "mapcode": "716 161 037*14",
-          "note": "導航電話：0288-98-0011\n入住 SOP：\n1. 代客泊車。\n2. 確認晚餐 (Check-in 時再次提醒不吃牛：予約時に牛肉NGと伝えました)。\n3. 預約早餐時間 (7:30/8:00/8:30)。\n享受：露天風呂 & 圍爐裏晚餐。",
+          "note": "🛏️ 房型：日式四人房，有晚餐、早餐\n📍 地址：Yunishikawa 749, Nikko, Tochigi 321-2601\n導航電話：0288-98-0011\nMapcode: 716 161 037*14\n入住 SOP：\n1. 代客泊車。\n2. 確認晚餐 (Check-in 時再次提醒不吃牛：予約時に牛肉NGと伝えました)。\n3. 預約早餐時間 (7:30/8:00/8:30)。\n享受：露天風呂 & 圍爐裏晚餐。",
           "completed": false,
           "type": "normal",
           "expenses": [
@@ -452,7 +469,7 @@ const INITIAL_ITINERARY = [
       "dayOfWeek": "(三)",
       "weather": "sunny",
       "location": "雪山 → 海濱 (除夕圍爐)",
-      "steps": 6000,
+      "steps": 0,
       "items": [
         {
           "id": "d4-1",
@@ -470,7 +487,8 @@ const INITIAL_ITINERARY = [
           "category": "food",
           "note": "特色：設施新、廁所乾淨。\n必吃：笠間稻荷壽司 (核桃/舞菇口味，無牛OK)、絲滑地瓜蒙布朗。\n注意：別逛太久，留肚子去大洗吃海鮮。",
           "completed": false,
-          "type": "normal"
+          "type": "normal",
+          "steps": 500
         },
         {
           "id": "d4-2",
@@ -489,9 +507,10 @@ const INITIAL_ITINERARY = [
           "category": "sightseeing",
           "searchKeyword": "大洗磯前神社",
           "mapcode": "239 535 445*58",
-          "note": "導航電話：029-267-2637\n玩法：先參拜本殿，再走下去海邊拍「神磯鳥居」。\n注意：海風極強，請戴帽子圍巾。",
+          "note": "導航電話：029-267-2637\nMapcode: 239 535 445*58\n玩法：先參拜本殿，再走下去海邊拍「神磯鳥居」。\n注意：海風極強，請戴帽子圍巾。",
           "completed": false,
-          "type": "normal"
+          "type": "normal",
+          "steps": 2500
         },
         {
           "id": "d4-4",
@@ -500,9 +519,10 @@ const INITIAL_ITINERARY = [
           "category": "shopping",
           "searchKeyword": "大洗シーサイドステーション",
           "mapcode": "239 506 461*34",
-          "note": "導航電話：029-264-9123\n目標：大洗まいわい市場。\n必買：百年梅酒 (明利酒類，藍標或紅標)、地瓜乾 (茨城特產)。\n生鮮去下一站超市買。",
+          "note": "導航電話：029-264-9123\nMapcode: 239 506 461*34\n目標：大洗まいわい市場。\n必買：百年梅酒 (明利酒類，藍標或紅標)、地瓜乾 (茨城特產)。\n生鮮去下一站超市買。",
           "completed": false,
-          "type": "normal"
+          "type": "normal",
+          "steps": 1000
         },
         {
           "id": "d4-new-2",
@@ -515,7 +535,8 @@ const INITIAL_ITINERARY = [
           "type": "normal",
           "expenses": [
              { "id": "e-ny", "label": "除夕採購預算", "amount": 5000, "currency": "JPY", "category": "shopping" }
-          ]
+          ],
+          "steps": 1500
         },
         {
           "id": "d4-5",
@@ -524,7 +545,7 @@ const INITIAL_ITINERARY = [
           "category": "accommodation",
           "searchKeyword": "一棟貸しの宿 水戸ハウス",
           "mapcode": "47 161 388*03",
-          "note": "地址：1 Chome-2-55 Kanemachi, Mito\n晚上：煮火鍋、吃蕎麥麵、喝梅酒、看紅白。",
+          "note": "🛏️ 房型：包棟，沒早餐\n📍 地址：1 Chome-2-55 Kanemachi, Mito, Ibaraki 310-0066\n電話：090-5639-7300\nMapcode: 47 161 388*03\n晚上：煮火鍋、吃蕎麥麵、喝梅酒、看紅白。",
           "completed": false,
           "type": "normal",
           "expenses": [
@@ -539,7 +560,7 @@ const INITIAL_ITINERARY = [
       "dayOfWeek": "(四)",
       "weather": "sunny",
       "location": "世界大佛與筑波山迎新",
-      "steps": 10000,
+      "steps": 0,
       "items": [
         {
           "id": "d5-1",
@@ -561,7 +582,8 @@ const INITIAL_ITINERARY = [
           "type": "normal",
           "expenses": [
             { "id": "1", "label": "午餐+購物預算", "amount": 5000, "currency": "JPY", "category": "food" }
-          ]
+          ],
+          "steps": 6000
         },
         {
           "id": "d5-3",
@@ -573,9 +595,10 @@ const INITIAL_ITINERARY = [
           "note": "導航電話：029-889-2931 (離 Outlet 5分鐘)。\n攻略：拍外觀就好。若進內部電梯排隊超過 30 分鐘建議放棄，在大佛腳下敲鐘祈福即可。",
           "completed": false,
           "type": "normal",
-          "expenses": [
+           "expenses": [
             { "id": "1", "label": "門票預算", "amount": 2000, "currency": "JPY", "category": "sightseeing" }
-          ]
+          ],
+          "steps": 2000
         },
         {
           "id": "d5-4",
@@ -584,7 +607,7 @@ const INITIAL_ITINERARY = [
           "category": "accommodation",
           "searchKeyword": "亀の井ホテル 筑波山",
           "mapcode": "123 477 064*47",
-          "note": "導航電話：029-866-1111\n避塞車：若遇神社車潮，出示訂房畫面給交管看「Hotel Check-in」可優先通過。\n享受：趁天亮去泡無邊際露天溫泉看夕陽。",
+          "note": "🛏️ 房型：日式四人房，有晚餐、早餐\n📍 地址：1050-1 Tsukuba, Ibaraki 300-4352\n導航電話：029-866-1111\nMapcode: 123 477 064*47\n避塞車：若遇神社車潮，出示訂房畫面給交管看「Hotel Check-in」可優先通過。\n享受：趁天亮去泡無邊際露天溫泉看夕陽。",
           "completed": false,
           "type": "normal",
           "expenses": [
@@ -600,7 +623,8 @@ const INITIAL_ITINERARY = [
           "mapcode": "123 477 072*85",
           "note": "交通：從飯店走路 5-10 分鐘。\n特色：傍晚燈籠亮起氣氛佳，避開白天人潮。參拜後可買屋台小吃。",
           "completed": false,
-          "type": "normal"
+          "type": "normal",
+          "steps": 1500
         },
         {
           "id": "d5-6",
@@ -619,7 +643,7 @@ const INITIAL_ITINERARY = [
       "dayOfWeek": "(五)",
       "weather": "cloudy",
       "location": "茨城草莓 → 東京阿美橫丁",
-      "steps": 12000,
+      "steps": 0,
       "items": [
         {
           "id": "d6-1",
@@ -637,12 +661,13 @@ const INITIAL_ITINERARY = [
           "category": "food",
           "searchKeyword": "GRANBERRY 大地",
           "mapcode": "18 853 864*14",
-          "note": "特色：高架栽培不髒鞋，40分鐘吃到飽。\n⚠️ 重要：強烈建議預約。若客滿，備案是去下一站 Pasar 守谷買草莓。",
+          "note": "Mapcode: 18 853 864*14\n特色：高架栽培不髒鞋，40分鐘吃到飽。\n⚠️ 重要：強烈建議預約。若客滿，備案是去下一站 Pasar 守谷買草莓。",
           "completed": false,
           "type": "normal",
           "expenses": [
             { "id": "1", "label": "體驗費", "amount": 2800, "currency": "JPY", "category": "food" }
-          ]
+          ],
+          "steps": 500
         },
         {
           "id": "d6-new-1",
@@ -658,7 +683,7 @@ const INITIAL_ITINERARY = [
           "time": "15:30",
           "title": "抵達東京：民宿下行李 & 停車",
           "category": "transport",
-          "note": "地址：2 Chome-4-9 Kitaueno, Taito City (上野悠悠之家)。\n🅿️ 停車攻略：先下行李。務必找看板寫「入庫後24時間 最大料金」的停車場 (約 ¥2500~3500)。停好後改搭電車。",
+          "note": "🛏️ 房型：包棟 沒早餐 有廚房\n📍 地址：2 Chome-4-9 Kitaueno, Taito City 110-0014\n電話：070-8960-5885\nMapcode: 769 494*86\n🅿️ 停車攻略：先下行李。務必找看板寫「入庫後24時間 最大料金」的停車場 (約 ¥2500~3500)。停好後改搭電車。",
           "completed": false,
           "type": "normal"
         },
@@ -670,7 +695,8 @@ const INITIAL_ITINERARY = [
           "searchKeyword": "アメ横",
           "note": "氣氛：新年首賣 (初売り) 非常熱鬧。\n必逛：二木的菓子 (伴手禮)、多慶屋 (紫色大樓)、藥妝店。",
           "completed": false,
-          "type": "normal"
+          "type": "normal",
+          "steps": 6000
         },
         {
           "id": "d6-new-3",
@@ -707,7 +733,7 @@ const INITIAL_ITINERARY = [
       "dayOfWeek": "(六)",
       "weather": "sunny",
       "location": "東京 → 回家",
-      "steps": 5000,
+      "steps": 0,
       "items": [
         {
           "id": "d7-1",
@@ -726,7 +752,8 @@ const INITIAL_ITINERARY = [
           "note": "還車地點：成田空港P1駐車場 (Sakura Rent A Car)。\n動作：滿油還車、檢查車況。",
           "mapcode": "137 647 682*14",
           "completed": false,
-          "type": "normal"
+          "type": "normal",
+          "steps": 1000
         },
         {
           "id": "d7-etc",
@@ -748,27 +775,26 @@ const INITIAL_ITINERARY = [
           "category": "transport",
           "note": "12:25 吉 BR107 NRT T1\n13:00 王方 BR183 NRT T1\n一路順風！✈️",
           "completed": false,
-          "type": "normal"
+          "type": "normal",
+          "steps": 2000
         }
       ]
     }
 ];
 function App(){
     const [data,setData]=useState(()=>{
-        const saved=localStorage.getItem('kanto_v2026_final_plus_v25');
+        const saved=localStorage.getItem('kanto_v2026_final_plus_v39');
         if(saved) { try { return JSON.parse(saved); } catch(e){} }
         return INITIAL_ITINERARY;
     });
-    // Independent Memos State
     const [memos, setMemos] = useState(()=>{
-        const saved = localStorage.getItem('kanto_v2026_memos_v25');
+        const saved = localStorage.getItem('kanto_v2026_memos_v39');
         if (!saved) return [];
         try {
             const parsed = JSON.parse(saved);
             return Array.isArray(parsed) ? parsed : Object.values(parsed);
         } catch (e) { return []; }
     });
-
     const [idx,setIdx]=useState(0);
     const [modal,setModal]=useState(false);
     const [ledgerModal, setLedgerModal] = useState(false);
@@ -789,8 +815,6 @@ function App(){
     const [addMenuOpen, setAddMenuOpen] = useState(false);
     const [viewImgIdx, setViewImgIdx] = useState(null); 
     const [showLargeInput, setShowLargeInput] = useState(false);
-    
-    // 🆕 SCROLL REF FIX
     const scrollRef = useRef(null);
     const fileRef=useRef(null);
     const stepRef=useRef(null);
@@ -799,23 +823,26 @@ function App(){
     const sortableRef = useRef(null);
     const memoSortableRef = useRef(null); 
     const sortableInstance = useRef(null);
-    const memoSortableInstance = useRef(null); 
+    const memoSortableInstance = useRef(null);
     const longPressTimer = useRef(null);
 
-    useEffect(()=>{localStorage.setItem('kanto_v2026_final_plus_v25',JSON.stringify(data))},[data]);
-    useEffect(()=>{localStorage.setItem('kanto_v2026_memos_v25',JSON.stringify(memos))}, [memos]);
+    useEffect(()=>{localStorage.setItem('kanto_v2026_final_plus_v39',JSON.stringify(data))},[data]);
+    useEffect(()=>{localStorage.setItem('kanto_v2026_memos_v39',JSON.stringify(memos))}, [memos]);
 
+    // ✅ 修復：步數視窗開啟後延遲聚焦，並加入安全檢查
     useEffect(()=>{
         if(stepModal) {
-            setTimeout(()=>stepRef.current?.focus(),100);
+            setTimeout(() => {
+                if(stepRef.current) stepRef.current.focus();
+            }, 300);
             setSaveBtnText('儲存紀錄');
         }
     },[stepModal]);
-    // 重置大輸入框狀態
+    
     useEffect(() => {
         if(viewImgIdx === null) setShowLargeInput(false);
     }, [viewImgIdx]);
-    // 📡 Fetch Real-time Weather from Open-Meteo
+
     useEffect(() => {
         const fetchWeather = async () => {
             const coord = LOCATIONS_COORD.find(c => c.id === data[idx].id);
@@ -837,15 +864,15 @@ function App(){
         fetchWeather();
     }, [idx]);
     
-    // SortableJS Init for Itinerary
+    // 行程卡排序
     useEffect(() => {
         if (sort && sortableRef.current) {
             sortableInstance.current = new Sortable(sortableRef.current, {
-                animation: 150, // Smoother animation
+                animation: 150, 
                 handle: ".drag-handle",
                 delay: 0, 
-                ghostClass: "opacity-50",
-                onChoose: () => { if (navigator.vibrate) navigator.vibrate(50); },
+                ghostClass: "sortable-ghost",
+                dragClass: "sortable-drag",
                 onEnd: (evt) => {
                     const { oldIndex, newIndex } = evt;
                     if (oldIndex === newIndex) return;
@@ -867,16 +894,16 @@ function App(){
         }
     }, [sort, idx]);
 
-    // SortableJS Init for Memos (Refined)
+    // 筆記本排序
     useEffect(() => {
         if (memoSort && memoSortableRef.current) {
             memoSortableInstance.current = new Sortable(memoSortableRef.current, {
-                animation: 150, // Smoother animation
+                animation: 150, 
                 handle: ".drag-handle-memo",
-                delay: 100, 
-                touchStartThreshold: 5,
-                ghostClass: "opacity-50",
-                onChoose: () => { if (navigator.vibrate) navigator.vibrate(50); },
+                delay: 0,
+                ghostClass: "sortable-ghost",
+                dragClass: "sortable-drag",
+                touchStartThreshold: 3,
                 onEnd: (evt) => {
                     const { oldIndex, newIndex } = evt;
                     if (oldIndex === newIndex) return;
@@ -896,7 +923,6 @@ function App(){
         }
     }, [memoSort]);
 
-    // 長按觸發排序 (Itinerary)
     const startLongPress = useCallback(() => {
         if (sort) return;
         longPressTimer.current = setTimeout(() => {
@@ -906,15 +932,6 @@ function App(){
             setFooterExpanded(true);
         }, 800);
     }, [sort, data]);
-
-    // 長按觸發排序 (Memo)
-    const startMemoLongPress = useCallback(() => {
-        if (memoSort) return;
-        longPressTimer.current = setTimeout(() => {
-            if (navigator.vibrate) navigator.vibrate(50);
-            setMemoSort(true);
-        }, 800);
-    }, [memoSort, memos]);
 
     const endLongPress = useCallback(() => {
         if (longPressTimer.current) {
@@ -951,7 +968,6 @@ function App(){
             if(!expensesByCategory[cat]) expensesByCategory[cat] = { nt:0, jpy:0, label:CATS[cat]?.l || '其他', color:CATS[cat]?.c || 'bg-gray-100 text-gray-600' };
             if(ex.currency === 'NT') expensesByCategory[cat].nt += amount;
             else expensesByCategory[cat].jpy += amount;
-            // 🆕 Added dayId and itemId for click-to-edit
             allExpenses.push({date: d.date, time: i.time, title: i.title, label: ex.label, amount: amount, currency: ex.currency, category: cat, dayId: d.id, itemId: i.id});
         });
     }));
@@ -962,9 +978,9 @@ function App(){
         return a.time.localeCompare(b.time);
     });
     const displayedExpenses = filterCategory ? allExpenses.filter(ex => ex.category === filterCategory) : allExpenses;
+    
     const planSteps = day.items.reduce((sum, i) => sum + Number(i.steps || 0), 0);
-    const currentSteps = Number(day.steps) > 0 ? Number(day.steps) : planSteps; 
-    const displaySteps = day.steps > 0 ? day.steps : planSteps;
+    const displaySteps = day.steps > 0 ? day.steps : planSteps; 
 
     const liveWeatherType = liveWeather ? getWeatherTypeFromCode(liveWeather.code) : null;
     const weatherIconName = liveWeatherType ? W_ICONS[liveWeatherType] : W_ICONS[day.weather];
@@ -979,10 +995,6 @@ function App(){
         setTimeout(() => setSaveBtnText('儲存紀錄'), 1500);
     };
 
-    const toggleWeather = (e) => {
-        e.stopPropagation();
-        // Weather toggle removed for simplicity with live weather
-    };
     const exportData=()=>{
         const backup = { itinerary: data, memos: memos };
         const a=document.createElement('a');
@@ -990,7 +1002,6 @@ function App(){
         a.download='行程與筆記備份.json';a.click()
     };
     
-    // Import Data Fix: Compatibility for old object-based memos
     const importData=(e)=>{
         const r=new FileReader();
         r.onload=(ev)=>{
@@ -999,7 +1010,6 @@ function App(){
                 if(d.itinerary){
                     setData(d.itinerary);
                     if (d.memos) {
-                        // Check if memos is array, if not convert object to array
                         setMemos(Array.isArray(d.memos) ? d.memos : Object.values(d.memos));
                     } else {
                         setMemos([]);
@@ -1017,8 +1027,6 @@ function App(){
     const calcDur=(s,e)=>{if(!s||!e)return null;const [sh,sm]=s.split(':').map(Number);const [eh,em]=e.split(':').map(Number);const diff=(eh*60+em)-(sh*60+sm);if(diff<0)return{t:'重疊',bad:true};const h=Math.floor(diff/60),m=diff%60;if(h===0&&m===0)return{t:'無空檔',bad:false};return{t:(h>0?h+'時':'')+(m>0?m+'分':''),bad:false}};
     const gMap=(i)=>`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(i.searchKeyword?.trim()||`${i.title} 日本`)}`;
     const getWeatherUrl = () => { const zip = WEATHER_LOCATIONS[day.id] || '282-0004'; return `https://tenki.jp/search/?keyword=${encodeURIComponent(zip)}`; };
-    
-    // 🚦 ROUTE LINK FIX: Filter out items with type 'memo'
     const getDailyRouteUrl = (items) => {
         const validItems = items.filter(i => i.type !== 'memo');
         return `https://www.google.com/maps/dir/${validItems.map(item => encodeURIComponent(item.searchKeyword?.trim() || item.title)).join('/')}`;
@@ -1026,15 +1034,15 @@ function App(){
 
     const toggle=(id)=>{const newData=[...data];const item=newData[idx].items.find(i=>i.id===id);if(item){item.completed=!item.completed;setData(newData)}};
     const toggleNote=(id)=>{const newSet = new Set(expandedNotes);
-    if(newSet.has(id)) newSet.delete(id); else newSet.add(id); setExpandedNotes(newSet);};
+    if(newSet.has(id)) newSet.delete(id);
+    else newSet.add(id); setExpandedNotes(newSet);};
 
-    // 🆕 Ledger Click Handler
     const handleLedgerClick = (dayId, itemId) => {
         const d = data.find(day => day.id === dayId);
         if (d) {
             const item = d.items.find(i => i.id === itemId);
             if (item) {
-                setEditItem({...item, dayId: dayId, originalDayId: dayId}); 
+                setEditItem({...item, dayId: dayId, originalDayId: dayId});
                 setModal(true);
                 setLedgerModal(false);
             }
@@ -1042,7 +1050,6 @@ function App(){
     };
 
     const saveItem=()=>{
-        // 🟢 V15 FIX: Allow completely blank Memos (Both Title and Note can be empty if Image exists)
         if (editItem.type === 'memo') {
              if (!editItem.title) {
                  const dateStr = new Date().toLocaleString('zh-TW', { hour12: false, month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -1051,12 +1058,10 @@ function App(){
                  } else if (editItem.images && editItem.images.length > 0) {
                      editItem.title = "圖片便條";
                  } else {
-                     // Completely blank save
-                     editItem.title = `隨手便條 ${dateStr}`; 
+                     editItem.title = `隨手便條 ${dateStr}`;
                  }
              }
         } else {
-            // Normal items (sightseeing, food etc) still need title for Google Maps
             if(!editItem.title) return alert('請輸入行程標題');
         }
         
@@ -1066,46 +1071,33 @@ function App(){
         }
 
         const newData=[...data];
-        
-        // 1. Check if moving to a different day
         const isMovingDay = editItem.originalDayId && editItem.originalDayId !== editItem.dayId;
-
         if (isMovingDay) {
-            // Remove from source
             const sourceDay = newData.find(d => d.id === editItem.originalDayId);
             if (sourceDay) sourceDay.items = sourceDay.items.filter(x => x.id !== editItem.id);
-            // Add to target (append to end)
             const targetDay = newData.find(d => d.id === editItem.dayId);
             if (targetDay) targetDay.items.push(editItem);
         } else {
-            // Same Day: Update strictly in place
             const targetDay = newData.find(d => d.id === editItem.dayId);
             if (targetDay) {
                 const existingIdx = targetDay.items.findIndex(x => x.id === editItem.id);
                 if (existingIdx > -1) {
-                    targetDay.items[existingIdx] = editItem; // Update in place
+                    targetDay.items[existingIdx] = editItem;
                 } else {
-                    targetDay.items.push(editItem); // New item, append
+                    targetDay.items.push(editItem);
                 }
             }
         }
-
         setData(newData);
         setModal(false);
     };
     
-    // Memo Logic
     const saveMemo = () => {
-        // Auto-generate title if empty but content/image exists
         let itemToSave = { ...editMemoItem };
-        
-        // 🆕 Relaxed Validation: Allow saving even if title/content is empty (Pure Photo or Empty Note)
         if (!itemToSave.title.trim()) {
             const dateStr = new Date().toLocaleString('zh-TW', { hour12: false, month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-            // Use content preview or just date
             itemToSave.title = itemToSave.content.trim() ? (itemToSave.content.substring(0, 10) + (itemToSave.content.length > 10 ? "..." : "")) : `筆記 ${dateStr}`;
         }
-
         setMemos(prev => {
             const idx = prev.findIndex(m => m.id === itemToSave.id);
             if (idx > -1) {
@@ -1116,7 +1108,6 @@ function App(){
                 return [...prev, itemToSave];
             }
         });
-        // 🆕 UX Fix: Don't close notebook modal, just go back to list
         setEditMemoItem(null);
     };
     const deleteMemo = (id) => {
@@ -1139,7 +1130,6 @@ function App(){
     const updateExpense=(idx, field, val)=>{const newExps=[...editItem.expenses];newExps[idx][field]=val;setEditItem({...editItem, expenses:newExps})};
     const removeExpense=(idx)=>{const newExps=editItem.expenses.filter((_,i)=>i!==idx);setEditItem({...editItem, expenses:newExps})};
     
-    // Image Handling Logic (Integrated from Memo)
     const handleImageUpload = (e, isMemo = false) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -1176,9 +1166,9 @@ function App(){
             if(val) {
                  if(isMemo) {
                     setEditMemoItem(prev => ({...prev, images: [...(prev.images||[]), {url: val, text: ''}]}));
-                 } else {
+                } else {
                     setEditItem(prev => ({...prev, images: [...(prev.images||[]), {url: val, text: ''}]}));
-                 }
+                }
                 urlInputRef.current.value = '';
             }
         }
@@ -1196,10 +1186,9 @@ function App(){
                         let width = img.width;
                         let height = img.height;
                         const MAX_SIZE = 800;
-                        if (width > height && width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE;
-                        }
-                        else if (height > MAX_SIZE) { width *= MAX_SIZE / height;
-                        height = MAX_SIZE; }
+                        if (width > height && width > MAX_SIZE) { 
+                        height *= MAX_SIZE / width; width = MAX_SIZE; }
+                        else if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; }
                         canvas.width = width;
                         canvas.height = height;
                         const ctx = canvas.getContext('2d');
@@ -1214,14 +1203,14 @@ function App(){
                     img.src = event.target.result;
                 };
                 reader.readAsDataURL(blob);
-                e.preventDefault(); // Prevent default paste if image
+                e.preventDefault(); 
                 return;
             }
         }
     }, [editMemoItem, editItem]);
 
     const moveImg = (e, idx, dir, isMemo = false) => {
-        e.stopPropagation(); 
+        e.stopPropagation();
         const currentItem = isMemo ? editMemoItem : editItem;
         const newImgs = [...currentItem.images];
         const target = idx + dir;
@@ -1257,7 +1246,7 @@ function App(){
                                 <span className="text-base font-bold text-white/80 absolute -top-4 left-0.5">{day.date.startsWith('12') ? '2025' : '2026'}</span>
                                 <h1 className="font-black text-5xl tracking-wide leading-none drop-shadow-md mt-1">{day.date}</h1>
                                 <span className="text-xl font-bold opacity-90 self-end mb-1">{day.dayOfWeek}</span>
-                            </div>
+                             </div>
                             <div className="text-sm font-bold text-white flex items-center gap-1 mt-1 drop-shadow-sm"><Icon n="MapPin" s={14} c="shrink-0 text-yellow-200"/><span className="truncate max-w-[220px] leading-none">{day.location}</span></div>
                         </div>
                         <div className="flex flex-col items-end gap-2">
@@ -1294,7 +1283,7 @@ function App(){
                     {!sort && liveWeather && (getWeatherTypeFromCode(liveWeather.code) === 'snow' || getWeatherTypeFromCode(liveWeather.code) === 'rain') && (
                         <div className={`mx-4 border-2 rounded-3xl p-3 shadow-sm flex items-center gap-3 mb-4 animate-fade-in ${getWeatherTypeFromCode(liveWeather.code) === 'snow' ? 'bg-gradient-to-r from-cyan-50 to-blue-50 border-cyan-200' : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'}`}>
                             <div className={getWeatherTypeFromCode(liveWeather.code) === 'snow' ? 'text-cyan-500' : 'text-blue-500'}>
-                                <Icon n={getWeatherTypeFromCode(liveWeather.code) === 'snow' ? 'CloudSnow' : 'CloudRain'} s={24}/>
+                                 <Icon n={getWeatherTypeFromCode(liveWeather.code) === 'snow' ? 'CloudSnow' : 'CloudRain'} s={24}/>
                             </div>
                             <div className="flex-1">
                                 <div className={`font-bold text-sm ${getWeatherTypeFromCode(liveWeather.code) === 'snow' ? 'text-cyan-800' : 'text-blue-800'}`}>
@@ -1320,9 +1309,7 @@ function App(){
                             // Memo Card
                             if (isMemo) {
                                 return (
-                                    <div key={item.id} className={`relative ${sort?'mb-3 px-4':'mb-4 pl-12 pr-6'}`}
-                                        onTouchStart={startLongPress} onTouchEnd={endLongPress} onMouseDown={startLongPress} onMouseUp={endLongPress} onMouseLeave={endLongPress}>
-                                        
+                                     <div key={item.id} className={`relative ${sort?'mb-3 px-4':'mb-4 pl-12 pr-6'}`} onTouchStart={startLongPress} onTouchEnd={endLongPress} onMouseDown={startLongPress} onMouseUp={endLongPress} onMouseLeave={endLongPress}>
                                         {!sort && (
                                             <>
                                                 <div className="absolute right-0 top-0 z-20">
@@ -1330,66 +1317,63 @@ function App(){
                                                 </div>
                                                 <div className="absolute left-1 top-4 w-8 h-8 rounded-full z-20 flex items-center justify-center bg-yellow-100 text-yellow-600 border-2 border-[#fff7ed] shadow-sm">
                                                     <Icon n="StickyNote" s={14}/>
-                                                </div>
+                                                 </div>
                                             </>
-                                        )}
-
+                                         )}
                                         <div onClick={()=>!sort && toggleNote(item.id)} className={`bg-yellow-50 rounded-xl border border-yellow-200 relative z-10 transition-all tap-transparent ${sort?'p-2 border-yellow-400 border-2 shadow-lg':'p-3 card-shadow'}`}>
                                             {sort ? (
                                                  <div className="flex items-center gap-3">
-                                                    <div className="drag-handle w-8 flex items-center justify-center flex-shrink-0 text-yellow-400"><Icon n="DragHandle" s={20}/></div>
+                                                     <div className="drag-handle w-8 flex items-center justify-center flex-shrink-0 text-yellow-400"><Icon n="DragHandle" s={20}/></div>
                                                     <div className="font-bold text-slate-800 text-sm line-clamp-1">{item.title}</div>
-                                                </div>
+                                                 </div>
                                             ) : (
                                                 <div className="flex flex-col gap-2">
                                                     <h3 className="font-bold text-slate-800 text-base leading-snug">{item.title}</h3>
                                                     {item.note && <div className="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed"><Linkify text={item.note}/></div>}
                                                     {item.images && item.images.length > 0 && (
-                                                        <div className="memo-grid mt-2">
-                                                            {item.images.map((img, idx) => (
+                                                         <div className="memo-grid mt-2">
+                                                             {item.images.map((img, idx) => (
                                                                 <div key={idx} className="aspect-square rounded-lg overflow-hidden border border-yellow-100 bg-white" onClick={(e)=>{e.stopPropagation(); setEditItem(item); setViewImgIdx(idx);}}>
                                                                     <img src={typeof img === 'string' ? img : img.url} className="w-full h-full object-cover"/>
                                                                 </div>
-                                                            ))}
+                                                              ))}
                                                         </div>
-                                                    )}
+                                                     )}
                                                 </div>
-                                            )}
+                                             )}
                                         </div>
-                                    </div>
+                                     </div>
                                 );
                             }
 
                             // Standard Itinerary Card
                             return (
-                                <div key={item.id} className={`relative ${sort?'mb-3 px-4':'mb-8 pl-16 pr-6'}`}
-                                    onTouchStart={startLongPress} onTouchEnd={endLongPress} onMouseDown={startLongPress} onMouseUp={endLongPress} onMouseLeave={endLongPress}>
-                                    
+                                <div key={item.id} className={`relative ${sort?'mb-3 px-4':'mb-8 pl-16 pr-6'}`} onTouchStart={startLongPress} onTouchEnd={endLongPress} onMouseDown={startLongPress} onMouseUp={endLongPress} onMouseLeave={endLongPress}>
                                     {!sort && (
                                         <>
-                                            <div className="absolute right-0 top-0 z-20">
+                                             <div className="absolute right-0 top-0 z-20">
                                                 <button onClick={(e)=>{e.stopPropagation();setEditItem({...item, dayId: day.id, originalDayId: day.id});setModal(true)}} className="w-9 h-9 bg-blue-50 rounded-full flex items-center justify-center shadow-sm border border-blue-100 text-blue-500 active:scale-90 transition-transform">
                                                     <Icon n="Edit" s={18}/>
                                                 </button>
-                                            </div>
+                                             </div>
 
                                             <div onClick={(e)=>{e.stopPropagation();toggle(item.id)}} className={`absolute left-0 top-0 w-12 h-12 rounded-full border-[4px] border-[#fff7ed] z-20 flex items-center justify-center transition-all shadow-md cursor-pointer ${item.completed?'bg-emerald-500 text-white scale-90':'bg-white text-slate-400 ' + cat.c.replace('bg-', 'text-').replace('text-', 'border-')} ring-1 ring-slate-100`}>
                                                 <div className={`w-full h-full rounded-full flex items-center justify-center ${!item.completed && cat.c}`}>
-                                                    {item.completed ? <Icon n="Check" s={24}/> : <Icon n={cat.i} s={20}/>}
+                                                     {item.completed ? <Icon n="Check" s={24}/> : <Icon n={cat.i} s={20}/>}
                                                 </div>
                                             </div>
                                             {dur && <div className="absolute left-[6px] -bottom-6 z-10 flex flex-col items-center w-10 pointer-events-none"><div className="bg-white border border-slate-200 rounded-full px-1.5 py-0.5 text-[9px] text-slate-400 font-bold shadow-sm whitespace-nowrap flex items-center gap-1"><Icon n="Clock" s={10}/>{dur.t}</div></div>}
-                                        </>
+                                         </>
                                     )}
 
                                     <div 
                                         onClick={()=>!sort && toggleNote(item.id)} 
                                         className={`bg-white rounded-2xl border border-slate-100 relative z-10 transition-all tap-transparent ${sort?'p-0 border-blue-400 border-2 shadow-lg flex items-stretch bg-blue-50/20 overflow-hidden':'p-4 hover:shadow-lg active:scale-[0.98] card-shadow '+(item.completed?'bg-slate-50/80 grayscale-[0.5]':'')}`}
-                                        >
+                                         >
                                         {sort?(
                                             <>
                                                 <div className="drag-handle w-14 bg-slate-100 flex items-center justify-center flex-shrink-0 border-r border-slate-200 cursor-grab active:cursor-grabbing touch-none">
-                                                    <Icon n="DragHandle" s={24} c="text-slate-400"/>
+                                                     <Icon n="DragHandle" s={24} c="text-slate-400"/>
                                                 </div>
                                                 <div className="flex-1 p-3 pointer-events-none select-none flex flex-col justify-center min-w-0">
                                                     <div className="text-xs font-bold text-blue-600 mb-0.5">{item.time}</div>
@@ -1399,7 +1383,7 @@ function App(){
                                         ):(
                                             <div className="relative flex flex-col gap-2">
                                                 <div className="flex justify-between items-start pr-10"> 
-                                                    <div className="flex items-baseline gap-2">
+                                                     <div className="flex items-baseline gap-2">
                                                         <span className="text-xl font-black text-slate-800 font-mono tracking-tight">{item.time}</span>
                                                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${cat.c.replace('text-','border-').replace('100','200')}`}>{cat.l}</span>
                                                     </div>
@@ -1409,7 +1393,7 @@ function App(){
                                                 </h3>
                                                 <div className={`note-expand ${isExpanded || (item.note && isExpanded) ? 'open' : ''} ${!isExpanded && item.note ? 'max-h-0 opacity-0' : ''}`}>{item.note && (<div onClick={(e)=>{e.stopPropagation(); toggleNote(item.id)}} className="cursor-pointer text-sm font-medium text-slate-600 bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-400 leading-relaxed whitespace-pre-line active:bg-yellow-100 transition-colors"><Linkify text={item.note}/></div>)}</div>
                                                 {!isExpanded && item.note && <div onClick={()=>toggleNote(item.id)} className="text-[10px] text-slate-400 text-center cursor-pointer hover:text-blue-500 font-bold">📝 點擊查看備註...</div>}
-                                                
+                                                 
                                                 <div className="mt-2 pt-2 border-t border-slate-50 flex justify-between items-center">
                                                     <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-bold text-slate-500 items-center">
                                                         {(totalItemJPY > 0 || totalItemNT > 0) && (
@@ -1417,7 +1401,7 @@ function App(){
                                                                 <Icon n="DollarSign" s={12}/>
                                                                 <span>{totalItemJPY > 0 ? `¥${fmtMoney(totalItemJPY)}` : ''} {totalItemNT > 0 ? `NT${fmtMoney(totalItemNT)}` : ''}</span>
                                                             </div>
-                                                        )}
+                                                         )}
                                                         {item.steps > 0 && (
                                                             <div className="flex items-center gap-1 text-pink-500">
                                                                 <Icon n="Footprints" s={12}/>
@@ -1432,12 +1416,12 @@ function App(){
                                                     </div>
                                                     <a href={gMap(item)} target="_blank" onClick={e=>e.stopPropagation()} className="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-500 rounded-full active:scale-90 transition-transform shadow-sm border border-blue-100">
                                                         <Icon n="Navigation" s={16}/>
-                                                    </a>
+                                                     </a>
                                                 </div>
-                                            </div>
+                                             </div>
                                         )}
                                     </div>
-                                </div>
+                                 </div>
                             );
                         })}
                     </div>
@@ -1453,7 +1437,7 @@ function App(){
                     >
                         <div className={`text-slate-400 transition-transform duration-300 ${footerExpanded ? 'rotate-180' : ''}`}>
                             <Icon n="ChevronUp" s={20}/>
-                        </div>
+                         </div>
                     </div>
                 )}
 
@@ -1470,7 +1454,7 @@ function App(){
                                 <div className="flex flex-wrap items-baseline gap-x-2">
                                     <span className="font-black text-slate-800 text-xl">NT${fmtMoney(totalNT)}</span>
                                     <span className="font-bold text-slate-500 text-sm">¥{fmtMoney(totalJPY)}</span>
-                                </div>
+                                 </div>
                             </div>
                             <div className="flex gap-2 shrink-0">
                                 <button onClick={()=>setNotebookModal(true)} className="p-3 bg-yellow-50 text-yellow-600 rounded-xl active:scale-90 transition-transform mr-2"><Icon n="Book" s={20}/></button>
@@ -1485,10 +1469,10 @@ function App(){
                                             <div className="absolute bottom-full right-0 mb-2 w-40 bg-white rounded-xl shadow-xl border border-slate-100 p-1 z-50 animate-fade-in flex flex-col gap-1">
                                                 <button onClick={()=>{setAddMenuOpen(false); setEditItem({id:Date.now().toString(),time:'12:00',title:'',category:'sightseeing',expenses:[],note:'',mapcode:'',searchKeyword:'',completed:false,dayId:day.id,originalDayId:day.id,steps:0,type:'normal'});setModal(true)}} className="text-left px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-2">
                                                     <span className="text-blue-500"><Icon n="MapPin" s={18}/></span> 新增行程
-                                                </button>
+                                                 </button>
                                                 <button onClick={()=>{setAddMenuOpen(false); setEditItem({id:Date.now().toString(),title:'',note:'',images:[],dayId:day.id,originalDayId:day.id,type:'memo', category: 'memo'});setModal(true)}} className="text-left px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-2">
                                                     <span className="text-yellow-500"><Icon n="StickyNote" s={18}/></span> 新增便條
-                                                </button>
+                                                 </button>
                                             </div>
                                         </>
                                     )}
@@ -1499,21 +1483,19 @@ function App(){
                                     <button className={`p-3 rounded-xl active:scale-90 transition-transform ${menuOpen ? 'bg-slate-200 text-slate-800' : 'bg-slate-50 text-slate-500'}`} onClick={() => setMenuOpen(!menuOpen)}>
                                         <Icon n="Menu" s={20}/>
                                     </button>
-                                     
-                                    {/* Menu Popover */}
-                                    {menuOpen && (
+                                     {menuOpen && (
                                         <>
-                                            <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)}></div>
+                                             <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)}></div>
                                             <div className="absolute bottom-full right-0 mb-2 w-36 bg-white rounded-xl shadow-2xl border border-slate-100 p-1 z-50 animate-fade-in">
-                                                <button onClick={() => { exportData(); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-2"><Icon n="Download" s={16}/> 備份資料</button>
+                                                 <button onClick={() => { exportData(); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-2"><Icon n="Download" s={16}/> 備份資料</button>
                                                 <button onClick={() => { fileRef.current.click(); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-2"><Icon n="Upload" s={16}/> 讀取備份</button>
                                             </div>
                                         </>
                                     )}
                                 </div>
                             </div>
-                        </div>
-                        <div className="text-[10px] text-slate-300 mt-2 text-center">App Version: 25.0 (Scroll Fixed)</div>
+                         </div>
+                        <div className="text-[10px] text-slate-300 mt-2 text-center">App Version: 39.0 (Ultimate Stable)</div>
                     </div>
                 )}
             </div>
@@ -1526,19 +1508,19 @@ function App(){
                     <div className="px-6 py-5 border-b flex justify-between items-center bg-blue-50 rounded-t-3xl"><h2 className="font-bold text-xl text-blue-600 flex items-center gap-2"><Icon n="Wallet" s={24}/> 旅遊帳本</h2><button onClick={()=>setLedgerModal(false)} className="p-2 bg-white rounded-full shadow-sm text-slate-500"><Icon n="X" s={20}/></button></div>
                     <div className="p-6 overflow-y-auto flex-1 space-y-6">
                         <div className="grid grid-cols-1 gap-4"> 
-                            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-white shadow-lg"><div className="text-xs font-bold opacity-80 mb-1">總支出 (NT)</div><div className="text-2xl font-black font-mono">NT${fmtMoney(totalNT)}</div></div>
+                             <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-white shadow-lg"><div className="text-xs font-bold opacity-80 mb-1">總支出 (NT)</div><div className="text-2xl font-black font-mono">NT${fmtMoney(totalNT)}</div></div>
                             <div className="bg-gradient-to-br from-orange-400 to-orange-500 rounded-2xl p-4 text-white shadow-lg"><div className="text-xs font-bold opacity-80 mb-1">總支出 (JPY)</div><div className="text-2xl font-black font-mono">¥{fmtMoney(totalJPY)}</div></div>
-                        </div>
+                         </div>
                         <div>
                             <div className="flex justify-between items-center mb-3"><h3 className="font-bold text-slate-700 text-lg">分類統計 <span className="text-xs text-slate-400 font-normal ml-2">(點擊篩選)</span></h3>{filterCategory && <button onClick={()=>setFilterCategory(null)} className="text-xs text-pink-500 font-bold bg-pink-50 px-2 py-1 rounded-lg">清除篩選</button>}</div>
-                            <div className="space-y-3">{Object.entries(expensesByCategory).map(([key, val]) => (val.nt > 0 || val.jpy > 0) && (<div key={key} onClick={() => setFilterCategory(filterCategory === key ? null : key)} className={`rounded-xl p-3 border transition-all cursor-pointer active:scale-95 ${filterCategory === key ? 'bg-pink-50 border-pink-300 ring-2 ring-pink-200 shadow-md' : 'bg-slate-50 border-slate-100 hover:bg-slate-100'}`}><div className="flex justify-between items-center mb-2"><div className="flex items-center gap-2"><div className={`w-8 h-8 rounded-full flex items-center justify-center ${val.color.replace('text-', 'bg-').split(' ')[0]} text-white shadow-sm`}><Icon n={CATS[key]?.i || 'DollarSign'} s={16}/></div><span className={`font-bold ${filterCategory === key ? 'text-pink-700' : 'text-slate-700'}`}>{val.label}</span></div>{filterCategory === key && <div className="text-pink-500"><Icon n="Check" s={16}/></div>}</div><div className="flex justify-end gap-4 text-sm font-mono font-bold text-slate-600">{val.nt > 0 && <span>NT$ {fmtMoney(val.nt)}</span>}{val.jpy > 0 && <span>¥ {fmtMoney(val.jpy)}</span>}</div></div>))}</div>
-                        </div>
+                             <div className="space-y-3">{Object.entries(expensesByCategory).map(([key, val]) => (val.nt > 0 || val.jpy > 0) && (<div key={key} onClick={() => setFilterCategory(filterCategory === key ? null : key)} className={`rounded-xl p-3 border transition-all cursor-pointer active:scale-95 ${filterCategory === key ? 'bg-pink-50 border-pink-300 ring-2 ring-pink-200 shadow-md' : 'bg-slate-50 border-slate-100 hover:bg-slate-100'}`}><div className="flex justify-between items-center mb-2"><div className="flex items-center gap-2"><div className={`w-8 h-8 rounded-full flex items-center justify-center ${val.color.replace('text-', 'bg-').split(' ')[0]} text-white shadow-sm`}><Icon n={CATS[key]?.i || 'DollarSign'} s={16}/></div><span className={`font-bold ${filterCategory === key ? 'text-pink-700' : 'text-slate-700'}`}>{val.label}</span></div>{filterCategory === key && <div className="text-pink-500"><Icon n="Check" s={16}/></div>}</div><div className="flex justify-end gap-4 text-sm font-mono font-bold text-slate-600">{val.nt > 0 && <span>NT$ {fmtMoney(val.nt)}</span>}{val.jpy > 0 && <span>¥ {fmtMoney(val.jpy)}</span>}</div></div>))}</div>
+                         </div>
                         <div><h3 className="font-bold text-slate-700 mb-3 text-lg flex items-center gap-2">{filterCategory ? <><span className="text-pink-500"><Icon n={CATS[filterCategory]?.i} s={20}/></span> {CATS[filterCategory]?.l}明細</> : '所有消費明細'}</h3><div className="space-y-2">{displayedExpenses.length > 0 ? displayedExpenses.map((ex, i) => (<div key={i} onClick={() => handleLedgerClick(ex.dayId, ex.itemId)} className="flex justify-between items-center p-3 border-b border-slate-100 last:border-0 animate-fade-in cursor-pointer hover:bg-slate-50 active:bg-slate-100 transition-colors rounded-lg"><div className="flex-1"><div className="text-xs text-slate-400 mb-0.5">{ex.date} {ex.time} · {CATS[ex.category]?.l || '其他'}</div><div className="font-bold text-slate-800 text-sm line-clamp-1">{ex.title}</div><div className="text-xs text-slate-500 mt-0.5">{ex.label}</div></div><div className="font-mono font-bold text-slate-700 text-right"><span className="text-xs text-slate-400 mr-1">{ex.currency}</span>{fmtMoney(ex.amount)}</div></div>)) : <div className="text-center py-8 text-slate-400 text-sm">此分類尚無消費紀錄</div>}</div></div>
                     </div>
                 </div>
             </div>}
             
-            {/* Independent Notebook Modal (Upgraded) */}
+            {/* Independent Notebook Modal (Stabilized) */}
             {notebookModal && (
                 <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center animate-fade-in">
                     <div className="bg-white w-full sm:w-[95%] max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[95vh] h-[95vh]">
@@ -1547,12 +1529,12 @@ function App(){
                             {memoSort ? (
                                 <button onClick={() => setMemoSort(false)} className="bg-blue-500 text-white px-6 py-2 rounded-full font-bold shadow-lg transition-transform active:scale-95 flex items-center gap-2">
                                     <Icon n="Check" s={18}/> 完成
-                                </button>
+                                 </button>
                             ) : (
                                 <div className="flex gap-2">
-                                    <button onClick={() => setMemoSort(true)} className="p-2 bg-yellow-100 text-yellow-600 rounded-full active:scale-90 transition-transform"><Icon n="Sort" s={20}/></button>
+                                     <button onClick={() => setMemoSort(true)} className="p-2 bg-yellow-100 text-yellow-600 rounded-full active:scale-90 transition-transform"><Icon n="Sort" s={20}/></button>
                                     {!editMemoItem && <button onClick={()=>setEditMemoItem({id:Date.now().toString(), title:'', content:'', images:[]})} className="bg-yellow-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-sm active:scale-95">+ 新增</button>}
-                                    <button onClick={()=>{setNotebookModal(false); setEditMemoItem(null); setMemoSort(false)}} className="p-2 bg-white rounded-full shadow-sm text-slate-500"><Icon n="X" s={20}/></button>
+                                     <button onClick={()=>{setNotebookModal(false); setEditMemoItem(null); setMemoSort(false)}} className="p-2 bg-white rounded-full shadow-sm text-slate-500"><Icon n="X" s={20}/></button>
                                 </div>
                             )}
                         </div>
@@ -1560,37 +1542,36 @@ function App(){
                             {editMemoItem ? (
                                 <div className="space-y-4 animate-fade-in" onPaste={(e)=>handlePaste(e, true)}>
                                     <input type="text" value={editMemoItem.title} onChange={e=>setEditMemoItem({...editMemoItem, title:e.target.value})} placeholder="筆記標題 (例如: 必買清單)" className="w-full bg-white p-4 rounded-2xl font-bold text-lg border-2 border-yellow-100 outline-none focus:border-yellow-400"/>
-                                    <textarea value={editMemoItem.content} onChange={e=>setEditMemoItem({...editMemoItem, content:e.target.value})} placeholder="輸入詳細內容... (支援直接貼上圖片)" className="w-full bg-white p-4 rounded-2xl text-base border-2 border-slate-100 outline-none focus:border-yellow-400 h-40"/>
+                                     <textarea value={editMemoItem.content} onChange={e=>setEditMemoItem({...editMemoItem, content:e.target.value})} placeholder="輸入詳細內容... (支援直接貼上圖片)" className="w-full bg-white p-4 rounded-2xl text-base border-2 border-slate-100 outline-none focus:border-yellow-400 h-40"/>
                                     
-                                    <div>
+                                     <div>
                                         <div className="text-sm font-bold text-slate-500 mb-2">圖片 (上傳/貼連結)</div>
                                         <div className="flex gap-2 mb-2">
                                             <input ref={urlInputRef} type="text" placeholder="貼上圖片網址..." className="flex-1 bg-white px-3 py-2 rounded-xl text-sm border border-slate-200 outline-none focus:border-yellow-400"/>
                                             <button onClick={()=>handleAddUrl(true)} className="bg-yellow-100 text-yellow-600 p-2.5 rounded-xl border border-yellow-200 active:scale-95 flex items-center justify-center"><Icon n="Plus" s={20}/></button>
                                             
-                                            {/* 📸 手機圖片上傳 (已包含拍照功能) */}
                                             <button onClick={()=>imgInputRef.current.click()} className="bg-slate-200 text-slate-600 px-3 py-2 rounded-xl text-sm font-bold active:scale-95 flex items-center gap-1"><Icon n="Image" s={18}/></button>
                                             <input type="file" ref={imgInputRef} className="hidden" accept="image/*" onChange={(e)=>handleImageUpload(e, true)}/>
                                         </div>
                                         <div className="grid grid-cols-3 gap-2">
                                             {(editMemoItem.images || []).map((imgItem, i) => {
                                                 const imgSrc = typeof imgItem === 'string' ? imgItem : imgItem.url;
-                                                return (
+                                                 return (
                                                     <div key={i} className="relative aspect-square rounded-xl overflow-hidden border-2 border-slate-200 bg-white group shadow-sm">
-                                                        <img src={imgSrc} onClick={()=>setViewImgIdx(i)} className="w-full h-full object-cover cursor-zoom-in"/>
+                                                         <img src={imgSrc} onClick={()=>setViewImgIdx(i)} className="w-full h-full object-cover cursor-zoom-in"/>
                                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-1 z-20 pointer-events-none">
                                                             <button onClick={(e)=>{e.stopPropagation(); setEditMemoItem({...editMemoItem, images: editMemoItem.images.filter((_, idx)=>idx!==i)})}} className="self-end text-white bg-red-500/80 rounded-full p-1 hover:bg-red-600 pointer-events-auto"><Icon n="X" s={14}/></button>
                                                             <div className="flex justify-between w-full pointer-events-auto">
                                                                 {i > 0 && <button onClick={(e)=>moveImg(e, i, -1, true)} className="text-white bg-slate-500/80 rounded-full p-1 hover:bg-slate-600"><Icon n="ChevronLeft" s={14}/></button>}
                                                                 {i < editMemoItem.images.length - 1 && <button onClick={(e)=>moveImg(e, i, 1, true)} className="text-white bg-slate-500/80 rounded-full p-1 ml-auto hover:bg-slate-600"><Icon n="ChevronRight" s={14}/></button>}
                                                             </div>
-                                                        </div>
+                                                         </div>
                                                     </div>
-                                                );
+                                                 );
                                             })}
                                         </div>
                                     </div>
-                                    
+                                     
                                     <div className="flex gap-3 pt-4">
                                          {memos.find(m=>m.id===editMemoItem.id) && <button onClick={(e)=>{e.stopPropagation(); deleteMemo(editMemoItem.id);}} className="p-4 rounded-2xl bg-red-50 text-red-500 font-bold"><Icon n="Trash2" s={20}/></button>}
                                          <button onClick={()=>{setEditMemoItem(null)}} className="p-4 rounded-2xl bg-slate-100 text-slate-500 font-bold">放棄</button>
@@ -1598,21 +1579,21 @@ function App(){
                                     </div>
                                 </div>
                             ) : (
-                                <div className="space-y-3 relative" ref={memoSortableRef} onTouchStart={startMemoLongPress} onMouseDown={startMemoLongPress} onTouchEnd={endLongPress} onMouseUp={endLongPress} onMouseLeave={endLongPress}>
+                                <div className="space-y-3 relative" ref={memoSortableRef}>
                                     {memos.length === 0 && <div className="text-center py-10 text-slate-400">尚無筆記，點擊右上角新增！</div>}
-                                    {memoSort && <div className="text-center text-xs font-bold text-yellow-600 mb-2 animate-pulse">長按拖曳排序中...</div>}
+                                     {memoSort && <div className="text-center text-xs font-bold text-yellow-600 mb-2">拖曳下方把手進行排序</div>}
                                     {memos.map(memo => (
-                                        <div key={memo.id} className={`bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex gap-4 ${memoSort ? 'mb-2 border-yellow-400 border-2 no-scale-anim' : 'active:scale-98 transition-transform'}`} onClick={()=>!memoSort && setEditMemoItem(memo)}>
+                                         <div key={memo.id} className={`bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex gap-4 ${memoSort ? 'mb-2 border-yellow-400 border-2 no-scale-anim' : 'active:scale-98 transition-transform'}`} onClick={()=>!memoSort && setEditMemoItem(memo)}>
                                             {memoSort && <div className="drag-handle-memo flex items-center justify-center text-slate-300 pr-2 cursor-grab"><Icon n="DragHandle" s={20}/></div>}
-                                            {memo.images && memo.images.length > 0 && (
+                                             {memo.images && memo.images.length > 0 && (
                                                 <div className="w-20 h-20 shrink-0 rounded-xl overflow-hidden bg-slate-100 relative border border-slate-100">
-                                                    <img src={typeof memo.images[0] === 'string' ? memo.images[0] : memo.images[0].url} className="w-full h-full object-cover"/>
+                                                     <img src={typeof memo.images[0] === 'string' ? memo.images[0] : memo.images[0].url} className="w-full h-full object-cover"/>
                                                 </div>
-                                            )}
+                                             )}
                                             <div className="flex-1 min-w-0">
-                                                <h3 className="font-bold text-slate-800 mb-1 line-clamp-1 text-lg">{memo.title}</h3>
+                                                 <h3 className="font-bold text-slate-800 mb-1 line-clamp-1 text-lg">{memo.title}</h3>
                                                 <p className="text-sm text-slate-500 line-clamp-2"><Linkify text={memo.content}/></p>
-                                            </div>
+                                             </div>
                                         </div>
                                     ))}
                                 </div>
@@ -1627,34 +1608,33 @@ function App(){
                 <div className="fixed inset-0 z-[120] bg-black/95 flex flex-col items-center justify-center p-4 animate-fade-in" onClick={()=>setViewImgIdx(null)}>
                     <button onClick={()=>setViewImgIdx(null)} className="absolute top-6 right-6 text-white/80 hover:text-white bg-white/10 rounded-full p-2 backdrop-blur-sm z-50"><Icon n="X" s={24}/></button>
                     <div className="flex-1 w-full flex items-center justify-center min-h-0 py-4" onClick={e=>e.stopPropagation()}>
-                        <img 
+                         <img 
                             src={
                                 (editMemoItem 
-                                    ? (typeof editMemoItem.images[viewImgIdx] === 'string' ? editMemoItem.images[viewImgIdx] : editMemoItem.images[viewImgIdx].url)
+                                     ? (typeof editMemoItem.images[viewImgIdx] === 'string' ? editMemoItem.images[viewImgIdx] : editMemoItem.images[viewImgIdx].url)
                                     : (typeof editItem.images[viewImgIdx] === 'string' ? editItem.images[viewImgIdx] : editItem.images[viewImgIdx].url)
                                 )
-                            } 
+                             } 
                             className="max-w-full max-h-full object-contain rounded-lg shadow-2xl cursor-default" 
                         />
-                    </div>
+                     </div>
                     <div className={`w-full max-w-lg bg-white transition-all duration-300 ease-out ${showLargeInput ? 'h-[50vh] rounded-t-3xl rounded-b-none' : 'rounded-2xl h-auto'} p-3 flex flex-col gap-2 shrink-0 mb-safe shadow-xl z-50`} onClick={e=>e.stopPropagation()}>
                         <div className="flex gap-3 items-start h-full">
                              <div className="text-slate-400 mt-2 shrink-0"><Icon n="Edit" s={20}/></div>
-                            <textarea 
+                              <textarea 
                                 placeholder="輸入圖片備註 (例如: 必買藥妝)..."
                                 value={
-                                    editMemoItem 
+                                     editMemoItem 
                                     ? (typeof editMemoItem.images[viewImgIdx] === 'string' ? '' : (editMemoItem.images[viewImgIdx].text || ''))
                                     : (typeof editItem.images[viewImgIdx] === 'string' ? '' : (editItem.images[viewImgIdx].text || ''))
                                 }
-                                onChange={(e)=>{
+                                 onChange={(e)=>{
                                     const isMemo = !!editMemoItem;
                                     const currentItem = isMemo ? editMemoItem : editItem;
                                     const newImgs = [...currentItem.images];
                                     const imgObj = newImgs[viewImgIdx];
                                     const url = typeof imgObj === 'string' ? imgObj : imgObj.url;
                                     newImgs[viewImgIdx] = { url: url, text: e.target.value };
-                                    
                                     if(isMemo) setEditMemoItem({...editMemoItem, images: newImgs});
                                     else setEditItem({...editItem, images: newImgs});
                                 }}
@@ -1679,70 +1659,67 @@ function App(){
                     </div>
                     
                     <div className="p-6 overflow-y-auto space-y-6" onPaste={(e)=>handlePaste(e, false)}>
-                        {/* 📅 日期與時間選擇 (跨日移動) */}
                         <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex gap-4">
                             <div className="flex-1">
-                                <label className="text-xs font-bold text-slate-500 block mb-1">日期 (可跨日移動)</label>
+                                 <label className="text-xs font-bold text-slate-500 block mb-1">日期 (可跨日移動)</label>
                                 <select value={editItem.dayId} onChange={e=>setEditItem({...editItem, dayId: e.target.value})} className="w-full bg-white p-2 rounded-xl font-bold text-slate-700 outline-none border border-slate-200 text-sm">
-                                    {data.map((d, i) => (
+                                     {data.map((d, i) => (
                                         <option key={d.id} value={d.id}>D{i+1} ({d.date})</option>
                                     ))}
-                                </select>
+                                 </select>
                             </div>
                             {editItem.type === 'normal' && (
-                                <div className="w-24">
+                                 <div className="w-24">
                                      <label className="text-xs font-bold text-slate-500 block mb-1">時間</label>
                                      <input type="time" value={editItem.time} onChange={e=>setEditItem({...editItem,time:e.target.value})} className="w-full bg-white p-2 rounded-xl font-bold text-slate-700 outline-none border border-slate-200 text-sm text-center"/>
                                 </div>
                             )}
                         </div>
 
-                        {/* 標題 (70/30 佔比優化) */}
-                        {editItem.type === 'normal' && (
+                         {editItem.type === 'normal' && (
                             <div className="flex gap-2 items-end">
                                 <div className="w-[30%] space-y-1">
-                                    <label className="text-xs font-bold text-slate-500 block">時間</label>
-                                     <TimeScroll val={editItem.time} setVal={(v)=>setEditItem({...editItem,time:v})}/>
+                                     <label className="text-xs font-bold text-slate-500 block">時間</label>
+                                    <TimeScroll val={editItem.time} setVal={(v)=>setEditItem({...editItem,time:v})}/>
                                 </div>
                                 <div className="w-[70%] space-y-1">
                                     <label className="text-xs font-bold text-slate-500 block">標題</label>
                                     <input type="text" value={editItem.title} onChange={e=>setEditItem({...editItem,title:e.target.value})} className="w-full h-[60px] bg-white border-2 border-slate-200 rounded-2xl px-4 font-bold text-xl outline-none focus:border-blue-400 transition-colors placeholder:text-slate-300" placeholder="行程名稱..."/>
                                 </div>
                             </div>
-                        )}
+                         )}
                         
                         {editItem.type === 'memo' && (
                              <input type="text" value={editItem.title} onChange={e=>setEditItem({...editItem,title:e.target.value})} className="w-full h-[60px] bg-white border-2 border-yellow-200 rounded-2xl px-4 font-bold text-2xl outline-none focus:border-yellow-400 transition-colors placeholder:text-slate-300" placeholder="便條標題..."/>
                         )}
 
-                        {/* 便條專屬：內容與圖片 */}
                         {editItem.type === 'memo' ? (
                             <>
                                 <textarea value={editItem.note} onChange={e=>setEditItem({...editItem,note:e.target.value})} placeholder="輸入詳細內容... (支援直接貼上圖片)" className="w-full bg-yellow-50 p-4 rounded-2xl text-base border-2 border-yellow-100 outline-none focus:border-yellow-400 h-40"/>
-                                
+                                 
                                 <div>
                                     <div className="text-sm font-bold text-slate-500 mb-2">圖片 (上傳/貼連結)</div>
-                                    <div className="flex gap-2 mb-2">
+                                     <div className="flex gap-2 mb-2">
                                         <input ref={urlInputRef} type="text" placeholder="貼上圖片網址..." className="flex-1 bg-white px-3 py-2 rounded-xl text-sm border border-slate-200 outline-none focus:border-yellow-400"/>
-                                        <button onClick={()=>handleAddUrl(false)} className="bg-yellow-100 text-yellow-600 p-2.5 rounded-xl border border-yellow-200 active:scale-95 flex items-center justify-center"><Icon n="Plus" s={20}/></button>
+                                         <button onClick={()=>handleAddUrl(false)} className="bg-yellow-100 text-yellow-600 p-2.5 rounded-xl border border-yellow-200 active:scale-95 flex items-center justify-center"><Icon n="Plus" s={20}/></button>
                                         
-                                        <button onClick={()=>imgInputRef.current.click()} className="bg-slate-200 text-slate-600 px-3 py-2 rounded-xl text-sm font-bold active:scale-95 flex items-center gap-1"><Icon n="Image" s={18}/></button>
+                                         <button onClick={()=>imgInputRef.current.click()} className="bg-slate-200 text-slate-600 px-3 py-2 rounded-xl text-sm font-bold active:scale-95 flex items-center gap-1"><Icon n="Image" s={18}/></button>
                                         <input type="file" ref={imgInputRef} className="hidden" accept="image/*" onChange={(e)=>handleImageUpload(e, false)}/>
                                     </div>
                                     <div className="grid grid-cols-3 gap-2">
                                         {(editItem.images || []).map((imgItem, i) => {
                                             const imgSrc = typeof imgItem === 'string' ? imgItem : imgItem.url;
-                                            return (
+                                             return (
                                                 <div key={i} className="relative aspect-square rounded-xl overflow-hidden border-2 border-slate-200 bg-white group shadow-sm">
-                                                    <img src={imgSrc} onClick={()=>setViewImgIdx(i)} className="w-full h-full object-cover cursor-zoom-in"/>
+                                                     <img src={imgSrc} onClick={()=>setViewImgIdx(i)} className="w-full h-full object-cover cursor-zoom-in"/>
                                                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-1 z-20 pointer-events-none">
-                                                        <button onClick={(e)=>{e.stopPropagation(); setEditItem({...editItem, images: editItem.images.filter((_, idx)=>idx!==i)})}} className="self-end text-white bg-red-500/80 rounded-full p-1 hover:bg-red-600 pointer-events-auto"><Icon n="X" s={14}/></button>
-                                                        <div className="flex justify-between w-full pointer-events-auto">
+                                                         <button onClick={(e)=>{e.stopPropagation(); setEditItem({...editItem, images: editItem.images.filter((_, idx)=>idx!==i)})}} className="self-end text-white bg-red-500/80 rounded-full p-1 hover:bg-red-600 pointer-events-auto"><Icon n="X" s={14}/></button>
+                                                         <div className="flex justify-between w-full pointer-events-auto">
                                                             {i > 0 && <button onClick={(e)=>moveImg(e, i, -1, false)} className="text-white bg-slate-500/80 rounded-full p-1 hover:bg-slate-600"><Icon n="ChevronLeft" s={14}/></button>}
                                                             {i < editItem.images.length - 1 && <button onClick={(e)=>moveImg(e, i, 1, false)} className="text-white bg-slate-500/80 rounded-full p-1 ml-auto hover:bg-slate-600"><Icon n="ChevronRight" s={14}/></button>}
-                                                        </div>
+                                                         </div>
                                                     </div>
-                                                </div>
+                                                 </div>
                                             );
                                         })}
                                     </div>
@@ -1751,14 +1728,14 @@ function App(){
                         ) : (
                             /* 行程專屬：分類、消費、備註、定位 */
                             <>
-                                <div>
+                                 <div>
                                     <label className="text-base font-bold text-slate-500 mb-2 block">分類</label>
                                     <div className="grid grid-cols-6 gap-1">
-                                        {Object.entries(CATS).filter(([k])=>k!=='memo').map(([k, v]) => (
+                                         {Object.entries(CATS).filter(([k])=>k!=='memo').map(([k, v]) => (
                                             <button key={k} onClick={()=>setEditItem({...editItem, category:k})} className={`h-14 rounded-lg font-bold border-2 transition-all flex flex-col items-center justify-center gap-0 ${editItem.category===k ? 'bg-blue-500 text-white border-blue-500 shadow-md scale-105' : 'bg-white text-slate-500 border-slate-200'}`}>
                                                 <Icon n={v.i} s={20}/> <span className="text-[10px]">{v.l}</span>
                                             </button>
-                                        ))}
+                                         ))}
                                     </div>
                                 </div>
                                 
@@ -1775,7 +1752,7 @@ function App(){
                     
                     <div className="p-5 border-t flex gap-4 bg-white pb-safe">
                         <button onClick={delItem} className="p-4 rounded-2xl bg-red-50 text-red-500 border-2 border-red-100 hover:bg-red-100 transition-colors"><Icon n="Trash2" s={24}/></button>
-                        <button onClick={saveItem} className={`flex-1 text-white rounded-2xl font-bold text-lg shadow-lg active:scale-95 transition-transform py-4 flex justify-center items-center gap-2 ${editItem.type==='memo'?'bg-yellow-500 shadow-yellow-200':'bg-gradient-to-r from-blue-500 to-blue-600 shadow-blue-200'}`}><Icon n="Save" s={20}/> 儲存</button>
+                         <button onClick={saveItem} className={`flex-1 text-white rounded-2xl font-bold text-lg shadow-lg active:scale-95 transition-transform py-4 flex justify-center items-center gap-2 ${editItem.type==='memo'?'bg-yellow-500 shadow-yellow-200':'bg-gradient-to-r from-blue-500 to-blue-600 shadow-blue-200'}`}><Icon n="Save" s={20}/> 儲存</button>
                     </div>
                 </div>
             </div>}
@@ -1787,7 +1764,7 @@ function App(){
                         <h3 className="font-black text-2xl text-slate-800 flex items-center gap-2"><span className="text-pink-500"><Icon n="Footprints" s={32}/></span>今日運動</h3>
                         <button onClick={()=>setStepModal(false)} className="w-10 h-10 flex items-center justify-center bg-slate-100 rounded-full text-slate-400 hover:bg-rose-100 hover:text-rose-500 transition-colors"><Icon n="X" s={24}/></button>
                     </div>
-                    
+                     
                     <div className="bg-gradient-to-br from-pink-50 to-rose-50 rounded-2xl p-5 mb-5 text-center border border-pink-100 relative z-10">
                         <div className="text-sm text-slate-500 font-bold mb-1 tracking-wide uppercase">行程預估步數</div>
                         <div className="text-3xl font-black text-slate-400 font-mono tracking-tight opacity-80">{planSteps.toLocaleString()}</div>
@@ -1795,22 +1772,22 @@ function App(){
 
                     <div className="space-y-3 mb-6 relative z-10">
                         <div className="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-100">
-                            <div className="flex items-center gap-2 text-slate-500 font-bold text-sm"><Icon n="Map" s={18}/> 距離</div>
-                            <div className="font-mono font-bold text-slate-700 text-lg">≈ {((tStep || currentSteps) * 0.0007).toFixed(1)} <span className="text-xs font-normal text-slate-400">km</span></div>
+                             <div className="flex items-center gap-2 text-slate-500 font-bold text-sm"><Icon n="Map" s={18}/> 距離</div>
+                            <div className="font-mono font-bold text-slate-700 text-lg">≈ {((Number(tStep) || 0) * 0.0007).toFixed(1)} <span className="text-xs font-normal text-slate-400">km</span></div>
                         </div>
                         <div className="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-100">
                             <div className="flex items-center gap-2 text-orange-500 font-bold text-sm"><Icon n="Fire" s={18}/> 熱量</div>
-                            <div className="font-mono font-bold text-slate-700 text-lg">≈ {Math.round((tStep || currentSteps) * 0.04)} <span className="text-xs font-normal text-slate-400">kcal</span></div>
+                             <div className="font-mono font-bold text-slate-700 text-lg">≈ {Math.round((Number(tStep) || 0) * 0.04)} <span className="text-xs font-normal text-slate-400">kcal</span></div>
                         </div>
                         <div className="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-100">
                              <div className="flex items-center gap-2 text-slate-500 font-bold text-sm">🍙 飯糰</div>
-                             <div className="font-mono font-bold text-slate-700 text-lg">≈ {(Math.round((tStep || currentSteps) * 0.04) / 200).toFixed(1)} <span className="text-xs font-normal text-slate-400">個</span></div>
+                             <div className="font-mono font-bold text-slate-700 text-lg">≈ {(Math.round((Number(tStep) || 0) * 0.04) / 200).toFixed(1)} <span className="text-xs font-normal text-slate-400">個</span></div>
                         </div>
-                    </div>
+                     </div>
 
                     <div className="mb-2 text-sm font-bold text-rose-500 ml-1 relative z-10">紀錄實際步數</div>
                     <input ref={stepRef} type="number" value={tStep} onChange={e=>setTStep(e.target.value)} className="w-full bg-white border-2 border-pink-200 rounded-2xl p-4 text-center font-bold font-mono text-3xl outline-none focus:border-pink-400 text-rose-500 placeholder:text-slate-200 mb-4 shadow-sm relative z-10 transition-all focus:shadow-md focus:-translate-y-0.5" placeholder="0"/>
-                    
+                     
                     <button onClick={saveStep} className="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-2xl py-4 font-bold text-lg shadow-lg shadow-pink-200 active:scale-95 transition-transform relative z-10">{saveBtnText}</button>
                 </div>
             </div>}
